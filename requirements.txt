@@ -1,0 +1,8 @@
+# Python 3.13. Versions match the CS239 tutorial's tested runtime where they overlap.
+mcp==2.1.1
+httpx==0.28.1
+uvicorn==0.54.0
+pydantic==2.14.1
+starlette==1.7.0
+pyyaml==6.0.3
+pytest==9.1.1

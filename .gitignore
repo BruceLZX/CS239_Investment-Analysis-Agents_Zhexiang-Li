@@ -1,0 +1,4 @@
+.venv/
+.env
+# Per-run case files, tool logs, raw Rakazo transcripts and the saved login session.
+runs/
