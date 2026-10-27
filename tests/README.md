@@ -1,8 +1,8 @@
 # Tests
 
-70 offline tests. They spend no tokens and need neither Rakazo nor a network:
+64 offline tests. They spend no tokens and need neither Rakazo nor a network:
 - **SEC and Yahoo:** recorded responses in `fixtures/` stand in for the live services.
-- **The trace exporter, replay and dashboard:** a captured run in Rakazo's transcript format, built in `test_export_trace.py`.
+- **The trace exporter and the dashboard:** a captured run in Rakazo's transcript format, built in `test_export_trace.py`.
 
 Run them from `src/`:
 
@@ -20,7 +20,5 @@ Run them from `src/`:
 | `test_scenarios.py` | Each scenario file is complete and its documents exist; every must-never rule N1–N9 is exercised by some scenario. |
 | `test_rakazo_client.py` | Signing in again replaces the saved Rakazo session. |
 | `test_run_scenario.py` | `--narrate` prints each delivery once, in time order. |
-| `test_replay.py` | `team.replay` prints a captured conversation and what was delivered. |
 | `test_export_trace.py` | A captured run becomes a complete trace. Rule observations catch planted breaks of N1, N5, N7 and N9. Runs resumed after an approval card are merged, and approval cards appear as platform-guard events. Replayed history and duplicate replies are dropped, and private details stay out. Usage is summed per agent, the Markdown reads as a timeline, and `check_trace` names what is missing. |
 | `test_dashboard.py` | The dashboard: a captured run shows each delivery once with its rule observations; a run counts as finished only once its outcome is written; each tool call is credited to the bot that could make it. A live run reads conversation, status and cost from Rakazo and says when Rakazo can't be read. Only this machine can reach the server, and a run starts once, only from a JSON request. |
-| `test_deliverables.py` | The submission files match the code: each LLM agent's file in `../agents/` holds its bot's exact instructions; `../tools.md` lists every tool a bot can call, once, and each one is implemented; `../policy.md` is consecutively numbered paragraphs, and `../policies.md` is the same file; every policy ID mentioned in the other documents exists. |

@@ -23,10 +23,7 @@ The app is a multi-agent version of the [investment-analysis skill](https://gith
 | Test cases | [`tests/`](tests/) and [`tests/README.md`](tests/README.md) |
 | Phase 1 traces, and which policies each scenario triggered | [`traces/phase1/`](traces/phase1/) and [`traces/README.md`](traces/README.md) |
 | Phase 2 source and traces | to come (Phase 2 starts 2026-11-12) |
-| Demo script for the class presentation | [`DEMO.md`](DEMO.md) |
 | Five-minute demo video | YouTube link to be added |
-
-The course's submission archives are built from this repository; see [Submission archives](#submission-archives).
 
 ## Quick start
 
@@ -44,18 +41,6 @@ cd src
 python3.13 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m pytest ../tests
 ```
-
-## Submission archives
-
-`make_submission.sh` builds the two archives the course's submission guidelines ask for, from the last commit, into `dist/` (gitignored):
-- `{name}-{appName}-{uid}-requirements.tar.gz`: `app.md`, `policy.md`, `tools.md`, `agents/` and `episodes/`, under `{appName}/`;
-- `{name}-{appName}-{uid}-whole.tar.gz`: the whole repository.
-
-```bash
-bash make_submission.sh <your UID>
-```
-
-The name and app name default to `ZhexiangLi` and `Investment-Analysis-Agents`; pass them as the second and third arguments to change them.
 
 ## License
 

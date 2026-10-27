@@ -79,8 +79,6 @@ Then run a scenario, export its trace and check it. For example:
   - `--approval-cards wait` leaves Rakazo's approval cards for you to answer (the default denies them, so unattended runs don't stall).
 - **`export_trace [run_id]`** turns a run (default: the latest) into `../traces/phase1/<scenario>.json` and `.md`. Use `--out` to write somewhere else.
 - **`check_trace`** confirms that a trace holds everything the course asks for: each agent's thoughts, tool calls with arguments, tool results and inter-agent messages.
-- **`team.replay <run_id>`** prints a captured run's conversation offline.
-- **`team.agent_docs`** rewrites `../agents/*.md` from the bots' prompts and tool lists.
 
 To watch a run in the browser instead, start the dashboard and open http://127.0.0.1:8770:
 

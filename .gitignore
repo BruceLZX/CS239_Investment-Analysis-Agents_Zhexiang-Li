@@ -2,8 +2,6 @@
 .env
 # Per-run case files, tool logs, raw Rakazo transcripts and the saved login session.
 runs/
-# Submission archives built by make_submission.sh.
-dist/
 __pycache__/
 .pytest_cache/
 .DS_Store
