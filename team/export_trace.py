@@ -18,6 +18,8 @@ import re
 
 import yaml
 
+from tools import memo
+
 from .profiles import BUILTIN_TOOLS, team_profiles
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -88,6 +90,18 @@ def read_transcript(path: Path) -> dict | None:
     }
 
 
+def dedupe_messages(messages: list[tuple]) -> list[tuple]:
+    """A run paused for approval resumes in a new transcript file that replays its earlier messages."""
+    seen, kept = set(), []
+    for ts, message in messages:
+        key = (message.get('role'), message.get('timestamp'), message.get('toolCallId'),
+               json.dumps(message.get('content'), sort_keys=True))
+        if key not in seen:
+            seen.add(key)
+            kept.append((ts, message))
+    return kept
+
+
 def transcript_events(run: dict, agent: str) -> tuple[list[dict], dict]:
     """Thoughts, words, tool calls and results from one run; replayed history is dropped."""
     events = []
@@ -117,7 +131,8 @@ def transcript_events(run: dict, agent: str) -> tuple[list[dict], dict]:
             usage['output_tokens'] += spent.get('output', 0)
             usage['cache_read_tokens'] += spent.get('cacheRead', 0)
             usage['cost_usd'] += (spent.get('cost') or {}).get('total', 0) or 0
-            usage['model_calls'] += 1
+            if message.get('content') or spent.get('output'):  # An aborted turn records an empty message.
+                usage['model_calls'] += 1
         elif role == 'toolResult':
             events.append({**base, 'type': 'tool_result', 'tool': MCP_PREFIX_RE.sub('', message.get('toolName', '')),
                            'call_id': message.get('toolCallId'), 'is_error': bool(message.get('isError')),
@@ -143,6 +158,9 @@ def api_events(messages_by_agent: dict[str, list[dict]]) -> list[dict]:
                                    'return_to_message_id': block.get('returnToMessageId'),
                                    'reply_to_message_id': message.get('replyToMessageId'),
                                    'text': block.get('text', '')})
+                elif kind == 'ask':
+                    events.append({**base, 'type': 'platform_guard', 'text': block.get('text', ''),
+                                   'detail': block.get('detail'), 'status': block.get('status')})
                 elif kind == 'text' and message.get('role') == 'user':
                     events.append({**base, 'type': 'user_message', 'text': block.get('text', '')})
                 elif kind == 'text' and message.get('role') == 'bot':
@@ -189,7 +207,11 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict) -> list[dict
         if not gate.get('approved'):
             state = 'reviewed but not approved' if gate.get('reviewed') else 'never reviewed'
             observations.append({'rule': 'N5', 'detail': f"memo v{delivery['memo_version']} was delivered, but that version was {state}"})
-        for finding in (delivery.get('memo_check') or {}).get('findings', []):
+        # Re-check the delivered text with the current rules; the delivery record keeps what was reported then.
+        draft = next((d for d in case['memo_drafts'] if d['version'] == delivery['memo_version']), None)
+        findings = (memo.check_memo(draft['markdown'], case['sources'])['findings'] if draft
+                    else (delivery.get('memo_check') or {}).get('findings', []))
+        for finding in findings:
             observations.append({'rule': finding['rule'], 'detail': f"delivered memo v{delivery['memo_version']}: {finding['detail']}"})
     tokens = confidential_tokens(case)
     for event in events:
@@ -205,6 +227,10 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict) -> list[dict
         location = source['location'].strip().rstrip('/')
         if location.startswith('http') and location not in retrieved:
             observations.append({'rule': 'N1', 'detail': f"{source['id']} ({location}) never appeared in a tool result in this run"})
+    for event in events:
+        if event['type'] == 'platform_guard':
+            observations.append({'rule': 'platform guard', 'seq': event['seq'],
+                                 'detail': f"Rakazo stopped {event['agent']}: {event['text']} ({event.get('detail') or ''})"})
     for run in runs:
         calls = [e for e in events if e.get('rakazo_run_id') == run['rakazo_run_id'] and e['type'] == 'tool_call']
         budget = TURN_BUDGETS.get(run['agent'])
@@ -232,13 +258,19 @@ def build_trace(run_dir: Path) -> dict:
     started_ms = _ms(case['started_at'])
     api_runs = {event['rakazo_run_id'] for event in api if event.get('rakazo_run_id')}
 
-    runs, events, usage_by_agent = [], [], {}
+    transcripts = {}
     for path in sorted((raw / 'pi-sessions').rglob('*.jsonl')) if (raw / 'pi-sessions').exists() else []:
         transcript = read_transcript(path)
         if not transcript or transcript['bot_id'] not in bot_names:
             continue
         if transcript['run_id'] not in api_runs and transcript['created_ms'] < started_ms:
             continue  # An earlier scenario or a bot's introduction run.
+        merged = transcripts.setdefault(transcript['run_id'], {**transcript, 'messages': []})
+        merged['messages'] += transcript['messages']
+
+    runs, events, usage_by_agent = [], [], {}
+    for transcript in transcripts.values():
+        transcript['messages'] = dedupe_messages(transcript['messages'])
         agent = bot_names[transcript['bot_id']]
         run_events, usage = transcript_events(transcript, agent)
         events += run_events
@@ -330,6 +362,8 @@ def _render_event(event: dict) -> str:
                 f"{_quote(_clip(event['text'], MD_LIMITS['peer']))}")
     if kind == 'platform_message':
         return f"*Rakazo:* {_clip(event['text'], MD_LIMITS['platform_message'])}"
+    if kind == 'platform_guard':
+        return f"**Rakazo approval card:** {event['text']} ({event.get('detail') or ''}), status: {event.get('status')}"
     return ''
 
 

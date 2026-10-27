@@ -21,6 +21,10 @@ SOURCE_ID_RE = _load_skill_citation_rules().SOURCE_ID_RE
 NUMBER_RE = re.compile(r'(?<![\w.])\$?\d[\d,]*(?:\.\d+)?\s?(?:%|x|bn|billion|million|mn|[MBK]\b)?')
 ISO_DATE_RE = re.compile(r'\b\d{4}-\d{2}-\d{2}\b')
 YEAR_RE = re.compile(r'^(?:19|20)\d{2}$')
+URL_RE = re.compile(r'https?://\S+')
+FORM_RE = re.compile(r'\b(?:10-K|10-Q|8-K|20-F|S-1|DEF 14A)(?:/A)?\b')
+LIST_MARKER_RE = re.compile(r'^(?:[-*+]|\d+[.)])\s+')
+SOURCES_HEADING_RE = re.compile(r'^#{1,6}\s*sources?\b', re.I)
 DISCLAIMER_RE = re.compile(r'not (?:investment|financial) advice|for research (?:purposes|reference) only', re.I)
 AS_OF_RE = re.compile(r'data as of|as of \d{4}-\d{2}-\d{2}', re.I)
 RATING_RE = re.compile(r'\b(?:rating|recommendation)\b\W{0,6}'
@@ -28,16 +32,22 @@ RATING_RE = re.compile(r'\b(?:rating|recommendation)\b\W{0,6}'
 VERIFICATION_RE = re.compile(r'company-provided|not independently verified|partially verified|unverified|contradicted', re.I)
 # Working material the skill keeps out of delivered reports ("mandatory cleanliness").
 INTERNAL_PHRASES_RE = re.compile(r'\bmust[- ]fix\b|\bshould[- ]fix\b|\bevidence packet\b|\bcase file\b|\bsource register\b'
-                                 r'|\b(?:get|save|list|find|read|register|deliver)_[a-z_]+\b|\bTODO\b', re.I)
+                                 r'|\b(?:get|save|list|find|read|register|deliver)_[a-z_]+\b|\bTODO\b'
+                                 r'|\bthis run\b|\bnot retrieved\b', re.I)
 INTERNAL_IDS_RE = re.compile(r'\b[ER]\d{1,3}\b')
 LISTED_DIRECTIONAL = {'buy', 'add', 'sell', 'reduce'}
 
 
 def _statements(markdown: str):
-    """Table rows and sentences, skipping headings and table separators."""
+    """Table rows and sentences, skipping headings, table separators, list markers and the Sources list."""
+    in_sources = False
     for line in markdown.splitlines():
         line = line.strip()
-        if not line or line.startswith('#') or set(line) <= set('|-: '):
+        if line.startswith('#'):
+            in_sources = bool(SOURCES_HEADING_RE.match(line))
+            continue
+        line = LIST_MARKER_RE.sub('', line)
+        if in_sources or not line or set(line) <= set('|-: '):
             continue
         if line.startswith('|'):
             yield line
@@ -47,7 +57,8 @@ def _statements(markdown: str):
 
 def _material_numbers(statement: str) -> list[str]:
     found = []
-    for match in NUMBER_RE.finditer(ISO_DATE_RE.sub('', SOURCE_ID_RE.sub('', statement))):
+    text = FORM_RE.sub('', URL_RE.sub('', ISO_DATE_RE.sub('', SOURCE_ID_RE.sub('', statement))))
+    for match in NUMBER_RE.finditer(text):
         token = match.group().strip()
         if not YEAR_RE.match(token.replace(',', '')):
             found.append(token)
@@ -60,6 +71,8 @@ def _is_company_provided(source: dict) -> bool:
 
 def check_memo(markdown: str, sources: list[dict]) -> dict:
     by_id = {source['id']: source for source in sources}
+    # Citations are visible tags like [S1]; a URL can contain S-numbers too (e.g. ScienceDirect's pii/S27…).
+    markdown = URL_RE.sub('', markdown)
     cited = set(SOURCE_ID_RE.findall(markdown))
     findings = []
 

@@ -27,10 +27,25 @@ def test_n1_source_ids_missing_from_the_register_are_flagged():
     assert 'S9' in report['findings'][0]['detail']
 
 
+def test_s_numbers_inside_urls_are_not_citations():
+    # Found in a live run: ScienceDirect's article URL ".../pii/S2772375524000595" was read as a citation.
+    linked = CLEAN + '\n## Sources\n- S4: Field robot study, https://www.sciencedirect.com/science/article/pii/S2772375524000595'
+    assert check_memo(linked, SOURCES)['findings'] == []
+
+
 def test_n2_numbers_without_sources_are_flagged_but_dates_and_years_are_not():
     report = check_memo(CLEAN + '\nServices margin is about 75% according to analysts in 2025.', SOURCES)
     assert rules(report) == ['N2']
     assert report['findings'][0]['examples'] == ['Services margin is about 75% according to analysts in 2025.']
+
+
+def test_list_numbers_filing_names_and_the_sources_list_are_not_unsourced_numbers():
+    # Found in the first live run: list markers and the Sources section's SEC URLs were miscounted as claims.
+    memo_text = (CLEAN + '\n## Three takeaways\n1. Services keep growing [S1].\n2. The price already reflects it [S2].\n'
+                 '## Sources\n- S1: Form 10-K FY2025 (filed 2025-10-31), '
+                 'https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/\n'
+                 '- S2: Yahoo Finance chart data, https://finance.yahoo.com/quote/AAPL')
+    assert check_memo(memo_text, SOURCES)['findings'] == []
 
 
 def test_n3_company_claims_need_a_verification_status():
@@ -59,6 +74,13 @@ def test_n6_internal_working_material_is_flagged():
     assert rules(report) == ['N6']
     for word in ('E1', 'R1', 'evidence packet', 'must-fix'):
         assert word in report['findings'][0]['detail']
+
+
+def test_n6_production_process_wording_is_flagged():
+    # Found in the first live run: the delivered memo said "not retrieved in this run" instead of "not disclosed".
+    report = check_memo(CLEAN + '\nForward estimates were not retrieved in this run.', SOURCES)
+    assert rules(report) == ['N6']
+    assert 'this run' in report['findings'][0]['detail']
 
 
 def test_missing_disclaimer_and_data_date_are_flagged():

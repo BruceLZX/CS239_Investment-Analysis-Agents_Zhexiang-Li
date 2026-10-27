@@ -63,12 +63,19 @@ class Rakazo:
     def __exit__(self, *exc):
         self.http.close()
 
+    def sign_up(self, name: str, email: str, password: str) -> None:
+        response = self.http.post('/api/auth/sign-up/email', json={'name': name, 'email': email, 'password': password})
+        if not response.is_success:
+            raise RakazoError(f'Sign-up failed (HTTP {response.status_code}). Check that sign-ups are enabled.')
+
     def login(self, email: str, password: str) -> None:
+        # A saved cookie has no domain; signing in again would add a second one with the same name.
+        self.http.cookies.clear()
         response = self.http.post('/api/auth/sign-in/email', json={'email': email, 'password': password})
         if not response.is_success:
             raise RakazoError(f'Login failed (HTTP {response.status_code}). Check the account and RAKAZO_URL.')
         self.session_file.parent.mkdir(parents=True, exist_ok=True)
-        self.session_file.write_text(json.dumps(dict(self.http.cookies)))
+        self.session_file.write_text(json.dumps({cookie.name: cookie.value for cookie in self.http.cookies.jar}))
         self.session_file.chmod(0o600)
 
     def rpc(self, route: str, data: dict | None = None):
@@ -140,6 +147,22 @@ class Rakazo:
             if time.monotonic() > deadline:
                 raise RakazoError(f'Timed out after {timeout:.0f}s waiting for bot {bot_id} to finish.')
             time.sleep(poll)
+
+    def pending_cards(self, bot_id: str) -> list[dict]:
+        """Approval cards a bot's waiting run is blocked on, e.g. Rakazo's check before fetching a new site."""
+        snapshot = self.rpc('threads/get', {'botId': bot_id})
+        waiting = {run['id'] for run in snapshot.get('activeRuns') or [] if run['status'] in WAITING_STATUSES}
+        cards = []
+        for message in snapshot['messages']:
+            for block in message.get('blocks') or []:
+                if block.get('kind') == 'ask' and block.get('status') == 'pending' and message.get('runId') in waiting:
+                    cards.append({'run_id': message['runId'], 'message_id': message['id'], 'text': block.get('text'),
+                                  'detail': block.get('detail'), 'actions': [a['id'] for a in block.get('actions') or []]})
+        return cards
+
+    def answer_card(self, bot_id: str, card: dict, answer: str) -> None:
+        self.rpc('threads/answer', {'botId': bot_id, 'runId': card['run_id'], 'messageId': card['message_id'],
+                                    'answer': answer})
 
     def send(self, bot_id: str, text: str) -> dict:
         # A busy bot queues the message and the response names the busy run instead.

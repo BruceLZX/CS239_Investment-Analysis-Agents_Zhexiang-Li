@@ -30,17 +30,29 @@ def load_scenario(name: str) -> dict:
     return yaml.safe_load(path.read_text())
 
 
-def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet: float) -> str:
+def handle_cards(app: Rakazo, name: str, bot_id: str, mode: str, warned: set) -> None:
+    """Answer Rakazo approval cards when unattended ('deny'), or point the operator at them ('wait')."""
+    for card in app.pending_cards(bot_id):
+        if mode == 'deny' and 'deny' in card['actions']:
+            app.answer_card(bot_id, card, 'deny')
+            record = {'ts': case_file.now(), 'bot': name, 'card': card['text'], 'detail': card['detail'], 'answer': 'deny'}
+            with (case_file.active_run_dir() / 'approval_cards.jsonl').open('a') as log:
+                log.write(json.dumps(record) + '\n')
+            print(f"! Denied for unattended run: {name}: {card['text']} ({card['detail']})", flush=True)
+        elif card['message_id'] not in warned:
+            warned.add(card['message_id'])
+            print(f"! {name} is waiting on \"{card['text']}\": answer it in the Rakazo app.", flush=True)
+
+
+def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet: float, cards: str) -> str:
     """Wait until the memo is delivered and every bot is idle, or the team goes quiet."""
     deadline = time.monotonic() + timeout
     idle_since, warned, last_busy = None, set(), None
     while time.monotonic() < deadline:
         in_flight = {name: app.runs_in_flight(bot_id) for name, bot_id in bot_ids.items()}
         for name, runs in in_flight.items():
-            for run in runs:
-                if run['status'] in WAITING_STATUSES and run['id'] not in warned:
-                    warned.add(run['id'])
-                    print(f'! {name} is waiting for input (run {run["id"]}): answer it in the Rakazo app.', flush=True)
+            if any(run['status'] in WAITING_STATUSES for run in runs):
+                handle_cards(app, name, bot_ids[name], cards, warned)
         busy = sorted(name for name, runs in in_flight.items() if runs)
         if busy != last_busy:
             print(f'[{time.strftime("%H:%M:%S")}] working: {", ".join(busy) or "nobody"}', flush=True)
@@ -63,6 +75,9 @@ def main() -> None:
     parser.add_argument('scenario')
     parser.add_argument('--timeout', type=float, default=1800, help='seconds to wait for the whole run')
     parser.add_argument('--quiet', type=float, default=150, help='seconds of idleness that count as stalled')
+    parser.add_argument('--approval-cards', choices=['deny', 'wait'], default='deny',
+                        help="Rakazo approval cards (e.g. fetching a site the bot's search didn't return): "
+                             'deny them for unattended runs (logged), or wait for someone to answer in the app')
     args = parser.parse_args()
     load_env()
     scenario = load_scenario(args.scenario)
@@ -74,7 +89,7 @@ def main() -> None:
         run_id = case_file.start_run(scenario['name'], scenario.get('client_documents', []))
         sent = app.send(bot_ids[LEAD], scenario['request'].strip())
         print(f'Run {run_id}: sent the request to {LEAD} (Rakazo run {sent["runId"]}).', flush=True)
-        outcome = wait_for_finish(app, bot_ids, args.timeout, args.quiet)
+        outcome = wait_for_finish(app, bot_ids, args.timeout, args.quiet, args.approval_cards)
         run_dir = case_file.active_run_dir()
         captured = capture_run(app, bot_ids, run_dir)
     status = case_file.status_summary(case_file.read_case())
