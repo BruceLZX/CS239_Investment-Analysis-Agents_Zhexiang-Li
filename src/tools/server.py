@@ -24,7 +24,11 @@ server = MCPServer('Investment research',
 READ = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
 READ_WEB = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=True)
 WRITE = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=False)
-MAX_RESULT = 6000
+# Rakazo passes at most 12,000 characters of a tool result's text to the model and drops the rest:
+# https://github.com/elie222/rakazo/blob/b445fe90522d5e5da1e47879f6e4fa9be504f530/packages/adapters/src/pi-runtime-limits.ts#L22
+# Longer results are cut here instead, so the model sees that they were.
+MAX_RESULT = 12_000
+TRUNCATED = '\n[truncated]'
 MEMO_RATINGS = {'buy', 'add', 'hold', 'reduce', 'sell', 'watchlist', 'hold-off', 'invest', 'wait', 'pass'}
 REVIEW_VERDICTS = {'approve', 'revise', 'reject'}
 
@@ -41,7 +45,7 @@ def tool(annotations: ToolAnnotations):
                 result = fn(**arguments)
                 text = result if isinstance(result, str) else json.dumps(result, indent=1)
                 if len(text) > MAX_RESULT:
-                    text = text[:MAX_RESULT] + '\n[truncated]'
+                    text = text[:MAX_RESULT - len(TRUNCATED)] + TRUNCATED
                 entry['result'] = text
                 return text
             except Exception as exc:
@@ -65,6 +69,11 @@ def _draft(case: dict, version: int) -> dict:
         if draft['version'] == version:
             return draft
     raise ValueError(f'No memo draft version {version}; latest is {drafts[-1]["version"]}.')
+
+
+def _memo_text(draft: dict) -> str:
+    """What get_memo_draft returns for a draft; save_memo_draft keeps it within one tool result."""
+    return f"Memo version {draft['version']} (rating {draft['rating']}, data as of {draft['data_as_of']}):\n\n{draft['markdown']}"
 
 
 # Research (Research Analyst)
@@ -176,22 +185,26 @@ def get_evidence_packets() -> str:
 def save_memo_draft(markdown: str, rating: str, data_as_of: str) -> dict:
     """Save a new version of the investment memo (Markdown with inline [S#] citations).
     rating: for listed companies Buy, Add, Hold, Reduce, Sell, Watchlist or Hold-off; for private companies
-    Invest, Wait or Pass. data_as_of: YYYY-MM-DD."""
+    Invest, Wait or Pass. data_as_of: YYYY-MM-DD. The memo must fit in one get_memo_draft result
+    (12,000 characters with its header line), so teammates can read it whole."""
     if rating.strip().lower() not in MEMO_RATINGS:
         raise ValueError('rating must be one of Buy, Add, Hold, Reduce, Sell, Watchlist, Hold-off (listed) '
                          'or Invest, Wait, Pass (private).')
     with open_case() as case:
-        version = len(case['memo_drafts']) + 1
-        case['memo_drafts'].append({'version': version, 'markdown': markdown, 'rating': rating.strip(),
-                                    'data_as_of': data_as_of, 'saved_at': now()})
-    return {'version': version}
+        draft = {'version': len(case['memo_drafts']) + 1, 'markdown': markdown, 'rating': rating.strip(),
+                 'data_as_of': data_as_of, 'saved_at': now()}
+        if len(_memo_text(draft)) > MAX_RESULT:
+            room = MAX_RESULT - len(_memo_text({**draft, 'markdown': ''}))
+            raise ValueError(f'This memo is {len(markdown):,} characters, but one tool result holds at most {room:,} '
+                             'characters of memo, so a teammate could not read it whole. Shorten it and save it again.')
+        case['memo_drafts'].append(draft)
+    return {'version': draft['version']}
 
 
 @tool(READ)
 def get_memo_draft(version: int = 0) -> str:
-    """Read a memo draft. version 0 means the latest."""
-    draft = _draft(read_case(), version)
-    return f"Memo version {draft['version']} (rating {draft['rating']}, data as of {draft['data_as_of']}):\n\n{draft['markdown']}"
+    """Read a memo draft, whole. version 0 means the latest."""
+    return _memo_text(_draft(read_case(), version))
 
 
 @tool(READ)

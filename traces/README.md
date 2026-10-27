@@ -207,5 +207,9 @@ The structural policies held in all four traces by construction:
   - The MCP server cuts each tool result at 6,000 characters (`MAX_RESULT` in `src/tools/server.py`), but the memos in these runs are 6,000–10,000 characters long.
   - Every `get_memo_draft` result in all four traces ends in `[truncated]`, so the IC Reviewer never saw a memo's last sections (in the shortest memos, only the sources list and disclaimer).
   - In confidential-startup the reviewer noticed: "I received the draft truncated mid-Scenarios". That limits what P24 could check in these runs.
+  - **Fixed after these runs:**
+    - The server now cuts results at 12,000 characters, the most Rakazo passes on to the model.
+    - `save_memo_draft` refuses a memo too long for `get_memo_draft` to return whole.
+    - The Phase 1 traces are left as recorded.
 - **Check versions.** The Apple run used an earlier memo check. It miscounted list numbers, filing names and digits inside URLs as unsourced numbers, and read a ScienceDirect article id inside a URL as a citation. Both were fixed with regression tests before the other three runs. The rule observations re-check every delivered memo with the fixed rules.
 - **Interrupted attempts.** On 2026-10-26 the DeepSeek API became unreachable partway through the first batch, so confidential-startup, manipulated-deck and rushed-call were rerun in full that evening. The interrupted attempts stay under `src/runs/` locally and are not published as traces.

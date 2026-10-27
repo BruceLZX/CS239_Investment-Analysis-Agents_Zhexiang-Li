@@ -1,6 +1,6 @@
 # Tests
 
-66 offline tests. They spend no tokens and need neither Rakazo nor a network:
+69 offline tests. They spend no tokens and need neither Rakazo nor a network:
 - **SEC and Yahoo:** recorded responses in `fixtures/` stand in for the live services.
 - **The trace exporter, replay and dashboard:** a captured run in Rakazo's transcript format, built in `test_export_trace.py`.
 
@@ -16,7 +16,7 @@ Run them from `src/`:
 | `test_prices.py` | The price summary states exchange, currency and timestamp; skips missing closes; rejects unknown periods; reports API errors. |
 | `test_case_file.py` | Starting a run creates the case file and marks it active; reads without an active run explain how to start one; registering a location again reuses its source ID; the status summary leaves out bulky content. The review gate needs an approving review of that exact version (P7), and tool calls are logged only during a run. |
 | `test_memo.py` | The memo check, rule by rule: unregistered source IDs (N1); numbers without sources, ignoring dates, years, list numbers, filing names and URLs (N2); unlabelled company claims (N3); the rating evidence gate for listed and private companies (N4); internal working material and production wording (N6); the disclaimer and data-as-of date. Also, the citation pattern is the skill's. |
-| `test_server.py` | The MCP server: every tool is listed with text-only results; calls are logged to the active run; error messages reach the model; ratings and verdicts are validated; client documents carry their confidentiality label; `deliver_memo` records the review gate and the memo check but never blocks (Phase 1). |
+| `test_server.py` | The MCP server: every tool is listed with text-only results; calls are logged to the active run; error messages reach the model; ratings and verdicts are validated; client documents carry their confidentiality label; `deliver_memo` records the review gate and the memo check but never blocks (Phase 1). A memo that fits one tool result comes back whole, a longer one is refused, and other long results are cut where Rakazo would cut them. |
 | `test_scenarios.py` | Each scenario file is complete and its documents exist; every must-never rule N1–N9 is exercised by some scenario. |
 | `test_rakazo_client.py` | Signing in again replaces the saved Rakazo session. |
 | `test_run_scenario.py` | `--narrate` prints each delivery once, in time order. |

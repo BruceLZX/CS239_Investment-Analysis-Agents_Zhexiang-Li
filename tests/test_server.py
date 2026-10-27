@@ -8,6 +8,16 @@ MEMO = 'Rating: Watchlist\nRevenue grew 6% [S1].\nData as of 2026-10-23. For res
 DRAFT = {'markdown': MEMO, 'rating': 'Watchlist', 'data_as_of': '2026-10-23'}
 SOURCE = {'title': 'Apple 10-K FY2025', 'source_type': 'primary filing', 'location': 'https://sec.example/10k',
           'date': '2025-10-31', 'confidence': 'high', 'claims': 'FY2025 revenue'}
+RAKAZO_TEXT_LIMIT = 12_000  # what Rakazo passes on of one tool result's text
+
+
+def memo_of(length: int) -> str:
+    return (MEMO + '\n' + 'More analysis. ' * length)[:length]
+
+
+def memo_room() -> int:
+    """How much memo fits in one get_memo_draft result after its header line."""
+    return server.MAX_RESULT - len(server._memo_text({'version': 1, **DRAFT, 'markdown': ''}))
 
 
 def test_every_tool_is_listed_with_text_only_results():
@@ -73,3 +83,28 @@ def test_delivery_records_the_review_gate_but_never_blocks(runs_dir):
     assert approved['review_gate'] == {'reviewed': True, 'approved': True, 'review_id': 'R1'}
     assert (case_file.active_run_dir() / 'memo_v1.md').exists()
     assert len(case_file.read_case()['deliveries']) == 2
+
+
+def test_a_memo_that_fits_one_tool_result_comes_back_whole(runs_dir):
+    # Phase 1 cut every result at 6,000 characters, so the IC Reviewer read each 6,000-10,000-character memo cut off.
+    case_file.start_run('demo')
+    markdown = memo_of(memo_room())
+    assert len(markdown) > 10_064  # the longest memo in the Phase 1 traces
+    assert not call_tool(server.server, 'save_memo_draft', {**DRAFT, 'markdown': markdown}).is_error
+    text = result_text(call_tool(server.server, 'get_memo_draft', {}))
+    assert text.endswith(markdown) and len(text) <= RAKAZO_TEXT_LIMIT
+
+
+def test_a_memo_too_long_to_read_whole_is_refused(runs_dir):
+    case_file.start_run('demo')
+    result = call_tool(server.server, 'save_memo_draft', {**DRAFT, 'markdown': memo_of(memo_room() + 1)})
+    assert result.is_error and 'could not read it whole' in result_text(result)
+    assert case_file.read_case()['memo_drafts'] == []
+
+
+def test_longer_results_are_cut_where_rakazo_would_cut_them(runs_dir):
+    case_file.start_run('demo')
+    call_tool(server.server, 'save_evidence_packet', {'topic': 'Long', 'summary': 'x' * 20_000, 'findings': [],
+                                                       'source_ids': [], 'counter_evidence': '', 'gaps': []})
+    text = result_text(call_tool(server.server, 'get_evidence_packets', {}))
+    assert len(text) == RAKAZO_TEXT_LIMIT and text.endswith('\n[truncated]')

@@ -24,9 +24,9 @@ save_evidence_packet: Takes topic, summary, findings (each ending with its sourc
 
 get_evidence_packets: Takes no input. Returns every saved evidence packet with its summary, findings, counter-evidence and gaps.
 
-save_memo_draft: Takes markdown (the memo with inline [S#] citations), rating (Buy, Add, Hold, Reduce, Sell, Watchlist or Hold-off for a listed company; Invest, Wait or Pass for a private one) and data_as_of (YYYY-MM-DD). Saves a new memo version and returns its version number; returns an error for any other rating.
+save_memo_draft: Takes markdown (the memo with inline [S#] citations), rating (Buy, Add, Hold, Reduce, Sell, Watchlist or Hold-off for a listed company; Invest, Wait or Pass for a private one) and data_as_of (YYYY-MM-DD). Saves a new memo version and returns its version number; returns an error for any other rating, or for a memo too long for get_memo_draft to return whole (one tool result holds 12,000 characters, header line included).
 
-get_memo_draft: Takes version (0 for the latest). Returns that version's rating, data-as-of date and Markdown.
+get_memo_draft: Takes version (0 for the latest). Returns that version's rating, data-as-of date and its whole Markdown.
 
 get_memo_check: Takes version (0 for the latest). Returns the version's rating, the cited IDs found in the register, the registered IDs it doesn't cite, and findings: cited IDs missing from the register, numbers without a source, company claims without a verification status, a rating the evidence gate doesn't support, internal working material, and a missing disclaimer or data-as-of date. It reports and never blocks.
 
