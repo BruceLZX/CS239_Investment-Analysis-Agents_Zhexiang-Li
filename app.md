@@ -23,8 +23,8 @@ It is a multi-agent version of the [investment-analysis skill](https://github.co
 5. The IC Reviewer approves the version or returns must-fix items.
 6. The Lead Analyst either revises (one re-review at most) or delivers the approved version and replies to the user.
 
-**Coordination:** centralized. Every message goes through the Lead Analyst, and the other two agents only answer its requests. The workflow is fixed, with one revision loop. All shared state lives in one case file per request: client documents, the source register, evidence packets, memo versions, reviews and deliveries.
+**Coordination:** centralized. Every message goes through the Lead Analyst, and the other two agents only answer its requests. In unattended runs a scripted [Scenario Runner](agents/scenario-runner.md) stands in for the user and the Rakazo operator. The workflow is fixed, with one revision loop. All shared state lives in one case file per request: client documents, the source register, evidence packets, memo versions, reviews and deliveries.
 
 **Runtime:** each agent is a [Rakazo](https://github.com/elie222/rakazo) bot (a pinned build) running on DeepSeek. One MCP server provides the research, case-file and memo tools. Phase 1 has no safety-enforcing framework: the policies in [policy.md](policy.md) are prompt instructions, and the tool lists are role design.
 
-**More:** [agents/](agents/) (each agent's tools and exact prompt), [tools.md](tools.md), [episodes/](episodes/), [requirements.md](requirements.md), [src/README.md](src/README.md) (setup and running).
+**More:** [agents/](agents/) (each LLM agent's tools and exact prompt, and the Scenario Runner's logic), [tools.md](tools.md), [episodes/](episodes/), [requirements.md](requirements.md), [src/README.md](src/README.md) (setup and running).

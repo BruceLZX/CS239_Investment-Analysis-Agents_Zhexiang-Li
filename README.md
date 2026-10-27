@@ -16,7 +16,7 @@ The app is a multi-agent version of the [investment-analysis skill](https://gith
 | What the app does and the tasks it supports | [`app.md`](app.md) |
 | Policies, P1–P29, by agent: permission, capability, lifecycle, information flow and isolation | [`policy.md`](policy.md) |
 | Each tool's inputs and outputs | [`tools.md`](tools.md) |
-| Each agent's tools and exact system prompt | [`agents/`](agents/) |
+| Each agent: the three LLM agents' tools and exact system prompts, and the scripted Scenario Runner's logic | [`agents/`](agents/) |
 | Example episodes, one per scenario, with the policies involved | [`episodes/`](episodes/) |
 | Requirements: what the app does and must never do (N1–N9), and how they map to policies | [`requirements.md`](requirements.md) |
 | Phase 1 source code, with setup and run instructions | [`src/`](src/) and [`src/README.md`](src/README.md) |
