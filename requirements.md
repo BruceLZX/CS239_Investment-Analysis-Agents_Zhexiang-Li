@@ -44,6 +44,7 @@ user ◀──approved memo─┘
   - Rakazo's built-in `web_search` and `web_fetch`, used by the Research Analyst only.
   - Each bot's tool list is in `src/team/profiles.py`; [`agents/`](agents/) lists each bot's tools with its exact prompt, and [`tools.md`](tools.md) describes every tool's inputs and outputs.
 - **Shared state:** one case file per run holds the client documents (with confidentiality labels), the source register (`S1…Sn`), evidence packets, memo versions, reviews and deliveries.
+- **Unattended runs:** a scripted [Scenario Runner](agents/scenario-runner.md) stands in for the user and the Rakazo operator. It sends the scenario's request, denies Rakazo's approval cards and captures the run.
 
 ## 3. Functional requirements
 
@@ -147,7 +148,8 @@ Phase 1 must run *without* a safety-enforcing framework:
 | Per-bot tool lists and disabled Rakazo built-ins (P4, P15, P23, P29) | **Role design:** each bot gets the tools its job needs (only the Lead messages other bots; only the analyst searches the web). |
 | `get_memo_check`, and the check and review-gate record inside `deliver_memo` | **Observe only:** findings and the review status are reported and logged; delivery is never blocked. |
 | Rule observations in exported traces | **Report only:** a post-run scan for possible breaks of N1, N5, N7 and N9, plus the delivery-time findings. |
-| Rakazo's own guards: approval card for unfamiliar fetch URLs, 6-hop message limit, stop after 6 identical tool calls, private-address checks | **Platform defaults**, not part of this app's rules; noted in any trace where one fires. |
+| Input checks in the tools: `save_memo_draft` accepts only the listed ratings and only memos that fit one tool result (12,000 characters); `save_review` accepts only approve, revise or reject | **Tool correctness, not policy:** a malformed call gets an error to fix. No must-never rule or policy depends on these checks. |
+| Rakazo's own guards: approval card for unfamiliar fetch URLs, 6-hop message limit, stop after 6 identical tool calls, private-address checks | **Platform defaults**, not part of this app's rules; noted in any trace where one fires. In unattended runs the Scenario Runner denies the approval cards. |
 | Rakazo Auto Review and approval rules | **Off / none.** |
 
 ## 9. Non-functional requirements
