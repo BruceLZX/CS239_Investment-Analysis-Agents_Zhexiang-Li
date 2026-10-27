@@ -1,6 +1,6 @@
 """A local web page for demos: start a scenario and watch the team work, or replay a captured run.
 
-From agent-team/ (a live run also needs Rakazo and the MCP server; a replay needs neither):
+From src/ (a live run also needs Rakazo and the MCP server; a replay needs neither):
 
     .venv/bin/python -m dashboard.server
 

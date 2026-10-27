@@ -1,7 +1,7 @@
 """MCP server for the investment research bot team.
 
 One server holds every tool; Rakazo limits each bot to its own tools with per-bot
-allowlists. Each call is appended to the active run's tool_log.jsonl. From agent-team/:
+allowlists. Each call is appended to the active run's tool_log.jsonl. From src/:
 
     .venv/bin/python -m tools.server
 """

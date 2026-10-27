@@ -1,11 +1,11 @@
 """Sign in to Rakazo and save the session, so other scripts never handle a password.
 
-From agent-team/:
+From src/:
 
     .venv/bin/python -m team.login                # your own account: prompts for email and password
     .venv/bin/python -m team.login --local-test   # a test account that exists only in this machine's Rakazo
 
-The local test account's generated password is stored in agent-team/.env (gitignored) and never printed.
+The local test account's generated password is stored in src/.env (gitignored) and never printed.
 """
 import argparse
 import getpass
@@ -20,7 +20,7 @@ TEST_EMAIL = 'owner@cs239-agent-team.test'
 
 
 def save_env(values: dict[str, str]) -> None:
-    """Set keys in agent-team/.env, replacing earlier values and keeping the rest."""
+    """Set keys in src/.env, replacing earlier values and keeping the rest."""
     lines = ENV_FILE.read_text().splitlines() if ENV_FILE.exists() else []
     kept = [line for line in lines if line.split('=', 1)[0].strip() not in values]
     ENV_FILE.write_text('\n'.join(kept + [f'{key}={value}' for key, value in values.items()]) + '\n')
@@ -41,7 +41,7 @@ def main() -> None:
                 email, password = TEST_EMAIL, secrets.token_urlsafe(24)
                 app.sign_up('CS239 agent team', email, password)
                 save_env({'RAKAZO_TEST_EMAIL': email, 'RAKAZO_TEST_PASSWORD': password})
-                print(f'Created the local test account {email}; its password is in agent-team/.env.')
+                print(f'Created the local test account {email}; its password is in src/.env.')
         else:
             email = input('Rakazo account email: ').strip()
             password = getpass.getpass('Rakazo password: ')

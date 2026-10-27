@@ -1,92 +1,62 @@
-# Agent team: multi-agent investment research on Rakazo
+# Investment Analysis Agents
 
-This folder turns the investment-analysis skill into a three-bot team running on [Rakazo](https://github.com/elie222/rakazo). It was built for the CS 239 final project. Given a company (a listed ticker, or a private company's pitch deck), the team produces an evidence-backed investment memo, and every run is exported as a trace of each bot's thoughts, actions, messages and observations.
+CS 239 (UCLA, Fall 2026) final project by Zhexiang Li. Three AI agents on [Rakazo](https://github.com/elie222/rakazo) turn a company into an evidence-backed investment memo, the way a small research desk would:
+- a **Lead Analyst** owns the request and the memo;
+- a **Research Analyst** gathers evidence from SEC filings, prices and the web;
+- an **IC Reviewer** challenges every draft before anything ships.
 
-| Bot | Job |
+The app is a multi-agent version of the [investment-analysis skill](https://github.com/BruceLZX/investment-analysis-skill), and its policies come from that skill's evidence and QA standards.
+
+**Phase 1** (this version) runs without a safety-enforcing framework: the policies are prompt instructions, and the traces show where the agents kept them and where they broke them. In **Phase 2** the same scenarios run with the course's policy-assurance framework enforcing the policies.
+
+## Where everything is
+
+| Deliverable | Where |
 |---|---|
-| **Lead Analyst** | Talks to the user, briefs the analyst, writes and revises the memo, delivers only an approved version. |
-| **Research Analyst** | SEC filings, price data and web research; registers every source and saves an evidence packet. |
-| **IC Reviewer** | Reviews each memo version like a skeptical investment committee partner; approves it or returns must-fix items. |
+| What the app does and the tasks it supports | [`app.md`](app.md) |
+| Policies, P1–P29, by agent: permission, capability, lifecycle, information flow and isolation | [`policy.md`](policy.md) |
+| Each tool's inputs and outputs | [`tools.md`](tools.md) |
+| Each agent's tools and exact system prompt | [`agents/`](agents/) |
+| Example episodes, one per scenario, with the policies involved | [`episodes/`](episodes/) |
+| Requirements: what the app does and must never do (N1–N9), and how they map to policies | [`requirements.md`](requirements.md) |
+| Phase 1 source code, with setup and run instructions | [`src/`](src/) and [`src/README.md`](src/README.md) |
+| Test cases | [`tests/`](tests/) and [`tests/README.md`](tests/README.md) |
+| Phase 1 traces, and which policies each scenario triggered | [`traces/phase1/`](traces/phase1/) and [`traces/README.md`](traces/README.md) |
+| Phase 2 source and traces | to come (Phase 2 starts 2026-11-12) |
+| Demo script for the class presentation | [`DEMO.md`](DEMO.md) |
+| Five-minute demo video | YouTube link to be added |
 
-What the app must never do (rules N1–N9, each taken from the skill's own evidence and QA standards) is in [`requirements.md`](requirements.md).
+The course's submission archives are built from this repository; see [Submission archives](#submission-archives).
 
-## Layout
+## Quick start
 
-```
-requirements.md      Phase 1 requirements and the must-never rules
-DEMO.md              the Phase 1 demo script, with fallbacks for when the model can't be reached
-infra/               setup-rakazo.sh: installs a pinned Rakazo build with Docker
-tools/               the MCP server: SEC EDGAR, prices, source register, case file, memo checks
-team/                bot prompts and profiles, Rakazo client, scenario runner, trace export and checker
-dashboard/           a local web page that shows a run live or replays a captured one
-scenarios/           the four research scenarios
-fixtures/            fictional client documents the scenarios attach
-tests/               offline tests (recorded SEC and Yahoo responses; no tokens spent)
-traces/              exported traces (JSON and Markdown) and what each scenario showed
-```
+Everything runs from `src/`; [`src/README.md`](src/README.md) has the full instructions.
 
-## Running it
+A live run needs:
+- Docker;
+- Python 3.13;
+- a DeepSeek API key, entered once into the local Rakazo.
 
-You need macOS or Linux, Docker Desktop (or Docker Engine with Compose), Python 3.13 and a DeepSeek API key. Run the commands from this folder.
+The tests and the dashboard's replay of a recorded run work offline.
 
 ```bash
+cd src
 python3.13 -m venv .venv && .venv/bin/pip install -r requirements.txt
-cp .env.example .env
-bash infra/setup-rakazo.sh start
+.venv/bin/python -m pytest ../tests
 ```
 
-Rakazo then runs at http://127.0.0.1:5174. Its generated secrets live in `../../rakazo-runtime/`, next to the repository rather than inside it.
+## Submission archives
+
+`make_submission.sh` builds the two archives the course's submission guidelines ask for, from the last commit, into `dist/` (gitignored):
+- `{name}-{appName}-{uid}-requirements.tar.gz`: `app.md`, `policy.md`, `tools.md`, `agents/` and `episodes/`, under `{appName}/`;
+- `{name}-{appName}-{uid}-whole.tar.gz`: the whole repository.
 
 ```bash
-.venv/bin/python -m team.login --local-test
-.venv/bin/python -m team.connect_model
+bash make_submission.sh <your UID>
 ```
 
-- **`team.login --local-test`** creates a test account that exists only in the local Rakazo, and keeps its generated password in `.env`. To use your own account instead, run `team.login` without the flag.
-- **`team.connect_model`** asks for your DeepSeek key (input hidden) and sends it straight to Rakazo, which stores it encrypted. It also asks for the contact SEC requires on automated requests (`Your Name you@example.com`).
+The name and app name default to `ZhexiangLi` and `Investment-Analasis-Agents`; pass them as the second and third arguments to change them.
 
-Start the MCP server and leave it running in its own terminal:
+## License
 
-```bash
-.venv/bin/python -m tools.server
-```
-
-Then run a scenario, export its trace and check it:
-
-```bash
-.venv/bin/python -m team.run_scenario public-equity-memo
-.venv/bin/python -m team.export_trace
-.venv/bin/python -m team.check_trace traces/phase1/public-equity-memo.json
-```
-
-- **`run_scenario`** creates or updates the bots, clears their threads, sends the scenario's request, waits for the memo, and copies Rakazo's transcripts into `runs/<run_id>/`. With `--narrate` it also prints the conversation between the bots as it happens; `team.replay <run_id>` prints a captured run's conversation the same way, offline.
-- **`export_trace`** turns the latest run into `traces/phase1/<scenario>.json` and `.md`.
-- **`check_trace`** confirms the trace holds everything the course spec asks for.
-
-To watch a run in the browser instead, start the dashboard and open http://127.0.0.1:8770:
-
-```bash
-.venv/bin/python -m dashboard.server
-```
-
-It starts a scenario and follows the team live: who is working and what they're doing, the messages between the bots, the source register, the memo versions and reviews, and at the end the delivered memo, rule observations and cost. It can also replay any captured run at 10–80× speed; a replay needs neither Rakazo nor a network.
-
-Stop Rakazo with `bash infra/setup-rakazo.sh stop`; its data is kept.
-
-## Tests
-
-```bash
-.venv/bin/python -m pytest
-```
-
-The tests run offline on recorded SEC and Yahoo responses and on a captured run in Rakazo's transcript format, so they spend no tokens.
-
-## Phase 1 and Phase 2
-
-Phase 1 runs **without** a safety-enforcing framework: the rules exist only as instructions in the bots' prompts. The memo check and the review-gate record observe and log, but never block. Exported traces list possible rule breaks under "Rule observations". In Phase 2 the same scenarios are replayed with the course's policy-assurance framework enforcing the rules; `requirements.md` names where each rule can be checked.
-
-## Cost and data
-
-- **Cost:** each Phase 1 scenario run cost $0.25–0.40 in DeepSeek tokens; the exact figure is in its trace.
-- **Data:** every company, person and figure in `fixtures/` is fictional; Apple and Tesla are real listed companies, researched from public data.
-- **Privacy:** traces redact real email addresses, and they leave out Rakazo user ids and system prompts.
+[MIT](LICENSE).

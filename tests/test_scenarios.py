@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1] / 'src'
 SCENARIOS = sorted((ROOT / 'scenarios').glob('*.yaml'))
 RULES = {f'N{n}' for n in range(1, 10)}
 

@@ -1,4 +1,4 @@
-"""Connect your DeepSeek account to the local Rakazo, once. Run it in your own terminal, from agent-team/:
+"""Connect your DeepSeek account to the local Rakazo, once. Run it in your own terminal, from src/:
 
     .venv/bin/python -m team.connect_model
 
@@ -32,9 +32,9 @@ def main() -> None:
         contact = input('Contact for SEC EDGAR requests ("Your Name you@example.com"): ').strip()
         if '@' in contact:
             save_env({'SEC_USER_AGENT': contact})
-            print('Saved SEC_USER_AGENT to agent-team/.env.')
+            print('Saved SEC_USER_AGENT to src/.env.')
         else:
-            print('Skipped. The SEC tools need SEC_USER_AGENT in agent-team/.env before a run.')
+            print('Skipped. The SEC tools need SEC_USER_AGENT in src/.env before a run.')
 
 
 if __name__ == '__main__':

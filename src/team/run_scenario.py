@@ -1,6 +1,6 @@
 """Run one scenario end to end on Rakazo and capture the raw material for its trace.
 
-From agent-team/, with the MCP server running (`.venv/bin/python -m tools.server`):
+From src/, with the MCP server running (`.venv/bin/python -m tools.server`):
 
     .venv/bin/python -m team.run_scenario public-equity-memo
 """

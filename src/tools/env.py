@@ -1,4 +1,4 @@
-"""Load agent-team/.env into the environment without overriding values already set."""
+"""Load src/.env into the environment without overriding values already set."""
 import os
 from pathlib import Path
 

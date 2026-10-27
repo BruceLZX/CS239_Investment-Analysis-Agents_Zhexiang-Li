@@ -1,23 +1,13 @@
 """Memo checks drawn from the skill's evidence and QA rules. In Phase 1 they report and never block.
 
-The source-ID pattern comes straight from the skill's scripts/check_citations.py, so the agent
-team and the skill judge citations the same way. Rule numbers refer to requirements.md.
+The source-ID pattern is the investment-analysis skill's own, so the agent team and the skill judge
+citations the same way. Rule numbers refer to requirements.md.
 """
-import importlib.util
-from pathlib import Path
 import re
 
-REPO = Path(__file__).resolve().parents[2]
-
-
-def _load_skill_citation_rules():
-    spec = importlib.util.spec_from_file_location('skill_check_citations', REPO / 'scripts' / 'check_citations.py')
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-SOURCE_ID_RE = _load_skill_citation_rules().SOURCE_ID_RE
+# SOURCE_ID_RE in the skill's scripts/check_citations.py:
+# https://github.com/BruceLZX/investment-analysis-skill/blob/9f1e8656e396a611c9b7137a83e7326e57ff5c70/scripts/check_citations.py#L14
+SOURCE_ID_RE = re.compile(r'\bS\d+\b')
 NUMBER_RE = re.compile(r'(?<![\w.])\$?\d[\d,]*(?:\.\d+)?\s?(?:%|x|bn|billion|million|mn|[MBK]\b)?')
 ISO_DATE_RE = re.compile(r'\b\d{4}-\d{2}-\d{2}\b')
 YEAR_RE = re.compile(r'^(?:19|20)\d{2}$')

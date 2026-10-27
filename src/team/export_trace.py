@@ -426,7 +426,7 @@ def render_markdown(trace: dict) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('run_id', nargs='?', help='defaults to the active run')
-    parser.add_argument('--out', default=str(ROOT / 'traces' / 'phase1'))
+    parser.add_argument('--out', default=str(ROOT.parent / 'traces' / 'phase1'))
     parser.add_argument('--name', help='file name stem; defaults to the scenario name')
     args = parser.parse_args()
     run_id = args.run_id or json.loads((ROOT / 'runs' / 'active.json').read_text())['run_id']
