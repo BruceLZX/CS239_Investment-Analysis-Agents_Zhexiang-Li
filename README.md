@@ -55,7 +55,7 @@ python3.13 -m venv .venv && .venv/bin/pip install -r requirements.txt
 bash make_submission.sh <your UID>
 ```
 
-The name and app name default to `ZhexiangLi` and `Investment-Analasis-Agents`; pass them as the second and third arguments to change them.
+The name and app name default to `ZhexiangLi` and `Investment-Analysis-Agents`; pass them as the second and third arguments to change them.
 
 ## License
 
