@@ -5,6 +5,7 @@ From agent-team/, with the MCP server running (`.venv/bin/python -m tools.server
     .venv/bin/python -m team.run_scenario public-equity-memo
 """
 import argparse
+from datetime import datetime
 import json
 import os
 from pathlib import Path
@@ -44,11 +45,46 @@ def handle_cards(app: Rakazo, name: str, bot_id: str, mode: str, warned: set) ->
             print(f"! {name} is waiting on \"{card['text']}\": answer it in the Rakazo app.", flush=True)
 
 
-def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet: float, cards: str) -> str:
+def _short(text: str | None, limit: int = 180) -> str:
+    text = ' '.join((text or '').split())
+    return text if len(text) <= limit else text[:limit].rstrip() + '…'
+
+
+def narrate(app: Rakazo, bot_ids: dict[str, str], seen: set) -> None:
+    """Print new conversation in time order: the request, the Lead's replies, every bot-to-bot message.
+    Each delivery is printed once, from the receiving bot's thread."""
+    lines = []
+    for name, bot_id in bot_ids.items():
+        for message in app.messages(bot_id):
+            if message['id'] in seen:
+                continue
+            seen.add(message['id'])
+            for block in message.get('blocks') or []:
+                kind, role = block.get('kind'), message.get('role')
+                if kind == 'bot_message_received':
+                    line = f"{block.get('fromBotName')} → {name} ({block.get('intent') or 'message'}): {_short(block.get('text'))}"
+                elif kind == 'text' and role == 'user':
+                    line = f"user → {name}: {_short(block.get('text'))}"
+                elif kind == 'text' and role == 'bot' and name == LEAD:
+                    line = f"{name} → user: {_short(block.get('text'))}"
+                elif kind == 'ask':
+                    line = f"Rakazo approval card for {name}: {block.get('text')}"
+                else:
+                    continue
+                lines.append((message['createdAt'], line))
+    for created_at, line in sorted(lines):
+        when = datetime.fromisoformat(created_at.replace('Z', '+00:00')).astimezone().strftime('%H:%M:%S')
+        print(f'[{when}] {line}', flush=True)
+
+
+def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet: float, cards: str,
+                    narrated: set | None = None) -> str:
     """Wait until the memo is delivered and every bot is idle, or the team goes quiet."""
     deadline = time.monotonic() + timeout
     idle_since, warned, last_busy = None, set(), None
     while time.monotonic() < deadline:
+        if narrated is not None:
+            narrate(app, bot_ids, narrated)
         in_flight = {name: app.runs_in_flight(bot_id) for name, bot_id in bot_ids.items()}
         for name, runs in in_flight.items():
             if any(run['status'] in WAITING_STATUSES for run in runs):
@@ -78,6 +114,8 @@ def main() -> None:
     parser.add_argument('--approval-cards', choices=['deny', 'wait'], default='deny',
                         help="Rakazo approval cards (e.g. fetching a site the bot's search didn't return): "
                              'deny them for unattended runs (logged), or wait for someone to answer in the app')
+    parser.add_argument('--narrate', action='store_true',
+                        help='print the conversation live: the request, the Lead\'s replies and messages between bots')
     args = parser.parse_args()
     load_env()
     scenario = load_scenario(args.scenario)
@@ -89,7 +127,8 @@ def main() -> None:
         run_id = case_file.start_run(scenario['name'], scenario.get('client_documents', []))
         sent = app.send(bot_ids[LEAD], scenario['request'].strip())
         print(f'Run {run_id}: sent the request to {LEAD} (Rakazo run {sent["runId"]}).', flush=True)
-        outcome = wait_for_finish(app, bot_ids, args.timeout, args.quiet, args.approval_cards)
+        outcome = wait_for_finish(app, bot_ids, args.timeout, args.quiet, args.approval_cards,
+                                  set() if args.narrate else None)
         run_dir = case_file.active_run_dir()
         captured = capture_run(app, bot_ids, run_dir)
     status = case_file.status_summary(case_file.read_case())

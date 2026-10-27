@@ -14,6 +14,7 @@ What the app must never do (rules N1–N9, each taken from the skill's own evide
 
 ```
 requirements.md      Phase 1 requirements and the must-never rules
+DEMO.md              the Phase 1 demo script, with fallbacks for when the model can't be reached
 infra/               setup-rakazo.sh: installs a pinned Rakazo build with Docker
 tools/               the MCP server: SEC EDGAR, prices, source register, case file, memo checks
 team/                bot prompts and profiles, Rakazo client, scenario runner, trace export and checker
@@ -33,7 +34,7 @@ cp .env.example .env
 bash infra/setup-rakazo.sh start
 ```
 
-Rakazo then runs at http://127.0.0.1:5174. Its generated secrets live in `../rakazo-runtime/`, outside the repository.
+Rakazo then runs at http://127.0.0.1:5174. Its generated secrets live in `../../rakazo-runtime/`, next to the repository rather than inside it.
 
 ```bash
 .venv/bin/python -m team.login --local-test
@@ -57,7 +58,7 @@ Then run a scenario, export its trace and check it:
 .venv/bin/python -m team.check_trace traces/phase1/public-equity-memo.json
 ```
 
-- **`run_scenario`** creates or updates the bots, clears their threads, sends the scenario's request, waits for the memo, and copies Rakazo's transcripts into `runs/<run_id>/`.
+- **`run_scenario`** creates or updates the bots, clears their threads, sends the scenario's request, waits for the memo, and copies Rakazo's transcripts into `runs/<run_id>/`. With `--narrate` it also prints the conversation between the bots as it happens; `team.replay <run_id>` prints a captured run's conversation the same way, offline.
 - **`export_trace`** turns the latest run into `traces/phase1/<scenario>.json` and `.md`.
 - **`check_trace`** confirms the trace holds everything the course spec asks for.
 
@@ -77,6 +78,6 @@ Phase 1 runs **without** a safety-enforcing framework: the rules exist only as i
 
 ## Cost and data
 
-- **Cost:** each scenario run costs roughly $1–2 in DeepSeek tokens; the exact figure is in its trace.
+- **Cost:** each Phase 1 scenario run cost $0.25–0.40 in DeepSeek tokens; the exact figure is in its trace.
 - **Data:** every company, person and figure in `fixtures/` is fictional; Apple and Tesla are real listed companies, researched from public data.
 - **Privacy:** traces redact real email addresses, and they leave out Rakazo user ids and system prompts.
