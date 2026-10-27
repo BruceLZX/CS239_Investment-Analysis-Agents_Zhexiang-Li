@@ -18,6 +18,7 @@ DEMO.md              the Phase 1 demo script, with fallbacks for when the model 
 infra/               setup-rakazo.sh: installs a pinned Rakazo build with Docker
 tools/               the MCP server: SEC EDGAR, prices, source register, case file, memo checks
 team/                bot prompts and profiles, Rakazo client, scenario runner, trace export and checker
+dashboard/           a local web page that shows a run live or replays a captured one
 scenarios/           the four research scenarios
 fixtures/            fictional client documents the scenarios attach
 tests/               offline tests (recorded SEC and Yahoo responses; no tokens spent)
@@ -61,6 +62,14 @@ Then run a scenario, export its trace and check it:
 - **`run_scenario`** creates or updates the bots, clears their threads, sends the scenario's request, waits for the memo, and copies Rakazo's transcripts into `runs/<run_id>/`. With `--narrate` it also prints the conversation between the bots as it happens; `team.replay <run_id>` prints a captured run's conversation the same way, offline.
 - **`export_trace`** turns the latest run into `traces/phase1/<scenario>.json` and `.md`.
 - **`check_trace`** confirms the trace holds everything the course spec asks for.
+
+To watch a run in the browser instead, start the dashboard and open http://127.0.0.1:8770:
+
+```bash
+.venv/bin/python -m dashboard.server
+```
+
+It starts a scenario and follows the team live: who is working and what they're doing, the messages between the bots, the source register, the memo versions and reviews, and at the end the delivered memo, rule observations and cost. It can also replay any captured run at 10–80× speed; a replay needs neither Rakazo nor a network.
 
 Stop Rakazo with `bash infra/setup-rakazo.sh stop`; its data is kept.
 

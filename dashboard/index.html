@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Research Team Live</title>
+<style>
+:root {
+  --bg: #f4f6f9; --panel: #ffffff; --ink: #172033; --muted: #5b6577; --line: #e0e5ec; --soft: #eef1f6;
+  --lead: #2f5bd3; --analyst: #0e8a68; --reviewer: #9b3f94; --user: #56607a; --accent: #2f5bd3;
+  --warn: #a86400; --warn-bg: #fff3dd; --ok: #1d8348; --ok-bg: #e3f4ea; --bad: #c0392b; --bad-bg: #fdecea;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f141c; --panel: #171e29; --ink: #e6ebf3; --muted: #9aa5b8; --line: #2a3443; --soft: #202a38;
+    --lead: #7d9cff; --analyst: #4cc7a2; --reviewer: #d58bcf; --user: #9aa5b8; --accent: #7d9cff;
+    --warn: #f0b04a; --warn-bg: #3a2c12; --ok: #5cc98a; --ok-bg: #143223; --bad: #ff7b6e; --bad-bg: #3b1916;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 1440px; margin: 0 auto; padding: 16px 20px 40px; }
+header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; }
+h1 { font-size: 24px; margin: 0; letter-spacing: -0.01em; }
+.sub { margin: 2px 0 0; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; }
+.control-group { display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; }
+.control-group > span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 2px; }
+select, button { font: inherit; font-size: 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 5px 10px; max-width: 280px; }
+button { cursor: pointer; font-weight: 600; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.banner { margin-top: 12px; border-radius: 10px; padding: 10px 14px; background: var(--bad-bg); color: var(--bad); font-weight: 600; }
+.banner pre { margin: 8px 0 0; white-space: pre-wrap; font-weight: 400; font-size: 12px; color: var(--ink); max-height: 160px; overflow: auto; }
+.statusbar { margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+.badge { font-weight: 800; font-size: 12px; letter-spacing: .08em; padding: 3px 10px; border-radius: 999px; background: var(--soft); color: var(--muted); white-space: nowrap; }
+.badge.live { background: var(--bad-bg); color: var(--bad); }
+.badge.live::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; margin-right: 6px; animation: blink 1.2s infinite; vertical-align: 1px; }
+.badge.replay, .badge.starting { background: var(--warn-bg); color: var(--warn); }
+.badge.finished { background: var(--ok-bg); color: var(--ok); }
+.stat { color: var(--muted); white-space: nowrap; }
+.stat b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.stat.bad b { color: var(--bad); }
+.spacer { flex: 1; }
+.progress { flex-basis: 100%; height: 4px; background: var(--soft); border-radius: 4px; overflow: hidden; }
+.progress > div { height: 100%; width: 0; background: var(--warn); transition: width .2s linear; }
+.overview { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.panel h2 { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; display: flex; justify-content: space-between; gap: 8px; }
+.panel h2 .count { color: var(--ink); letter-spacing: 0; text-transform: none; font-size: 13px; }
+.empty { color: var(--muted); font-style: italic; }
+#team { width: 100%; height: auto; display: block; }
+.edge { stroke: var(--line); stroke-width: 3; transition: stroke .4s, stroke-width .4s; }
+.edge.active { stroke: var(--accent); stroke-width: 5; }
+.edge-label { font-size: 14px; font-weight: 700; fill: var(--accent); opacity: 0; transition: opacity .4s; paint-order: stroke; stroke: var(--panel); stroke-width: 5px; }
+.edge-label.show { opacity: 1; }
+.node { --c: var(--user); }
+.node.lead { --c: var(--lead); } .node.analyst { --c: var(--analyst); } .node.reviewer { --c: var(--reviewer); }
+.node rect { fill: var(--panel); stroke: var(--line); stroke-width: 2; transition: stroke .3s; }
+.node .bar { fill: var(--c); stroke: none; }
+.node-name { font-size: 17px; font-weight: 700; fill: var(--ink); }
+.node-role { font-size: 13px; fill: var(--muted); }
+.node-status { font-size: 14px; fill: var(--muted); }
+.node.working rect.box { stroke: var(--c); stroke-width: 3; animation: pulse 1.6s ease-in-out infinite; }
+.node.working .node-status { fill: var(--c); font-weight: 700; }
+.node.waiting rect.box { stroke: var(--warn); stroke-width: 3; }
+.node.waiting .node-status { fill: var(--warn); font-weight: 700; }
+.node.flash rect.box { stroke: var(--warn); stroke-width: 4; }
+.packet { stroke: var(--panel); stroke-width: 2; }
+.request-text { margin: 0; padding: 8px 12px; border-left: 4px solid var(--user); background: var(--soft); border-radius: 0 8px 8px 0; font-size: 14.5px; white-space: pre-wrap; }
+.docs { margin-top: 6px; font-size: 13px; color: var(--muted); }
+.chip { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--soft); color: var(--muted); white-space: nowrap; }
+.chip.ok { background: var(--ok-bg); color: var(--ok); } .chip.warn { background: var(--warn-bg); color: var(--warn); } .chip.bad { background: var(--bad-bg); color: var(--bad); }
+.chip.rating { background: var(--ink); color: var(--panel); }
+.steps { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+.step { display: grid; grid-template-columns: 18px 84px minmax(0, 1fr); align-items: center; gap: 8px; }
+.step .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); background: var(--panel); }
+.step.done .dot { background: var(--ok); border-color: var(--ok); }
+.step.active .dot { border-color: var(--accent); background: var(--accent); animation: blink 1.2s infinite; }
+.step.warn .dot { background: var(--warn); border-color: var(--warn); }
+.step.bad .dot { background: var(--bad); border-color: var(--bad); }
+.step .label { font-weight: 700; }
+.step.todo .label { color: var(--muted); font-weight: 600; }
+.step .detail { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+.side { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.convo-box { height: 600px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
+.msg { --c: var(--line); border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 10px; padding: 8px 12px; background: var(--panel); }
+.msg.from-lead { --c: var(--lead); } .msg.from-analyst { --c: var(--analyst); } .msg.from-reviewer { --c: var(--reviewer); }
+.msg.from-user { --c: var(--user); background: var(--soft); }
+.msg.guard { --c: var(--warn); background: var(--warn-bg); }
+.msg.new { animation: arrive .5s ease-out; }
+.msg-head { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; font-size: 13px; }
+.msg-head .who { font-weight: 700; color: var(--c); }
+.msg.guard .msg-head .who { color: var(--warn); }
+.msg-head .time { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.msg-body { margin-top: 4px; font-size: 14px; overflow-wrap: anywhere; }
+.msg-body.clamped { max-height: 8.2em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+.more { border: 0; background: none; color: var(--accent); padding: 2px 0 0; font-size: 13px; }
+.list { list-style: none; margin: 0; padding: 0; overflow-y: auto; }
+#sources { max-height: 236px; }
+#versions { max-height: 250px; }
+#tools { max-height: 210px; }
+.list li { padding: 5px 2px; border-bottom: 1px solid var(--line); font-size: 13.5px; display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.list li:last-child { border-bottom: 0; }
+.list li.new { animation: glow 1.6s ease-out; }
+.sid { font-weight: 800; color: var(--analyst); min-width: 30px; }
+.grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wrap-text { flex: 1; min-width: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+.time { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bot-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--user); align-self: center; }
+.bot-dot.lead { background: var(--lead); } .bot-dot.analyst { background: var(--analyst); } .bot-dot.reviewer { background: var(--reviewer); }
+code { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); padding: 0 4px; border-radius: 4px; }
+.fixes { margin: 4px 0 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; }
+.bottom { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+.memo { max-height: 680px; overflow-y: auto; font-size: 14.5px; }
+.memo h2, .memo h3, .memo h4 { text-transform: none; letter-spacing: 0; color: var(--ink); display: block; }
+.memo h2 { font-size: 20px; margin: 4px 0 8px; } .memo h3 { font-size: 16.5px; margin: 16px 0 6px; } .memo h4 { font-size: 15px; margin: 12px 0 4px; }
+.memo p { margin: 6px 0; }
+.memo table, .msg-body table { border-collapse: collapse; margin: 8px 0; font-size: 13px; display: block; overflow-x: auto; }
+.memo th, .memo td, .msg-body th, .msg-body td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top; }
+.memo th, .msg-body th { background: var(--soft); }
+.msg-body h4, .msg-body h5, .msg-body h6 { margin: 6px 0 2px; font-size: 14px; }
+.msg-body p { margin: 4px 0; }
+.msg-body ul, .msg-body ol, .memo ul, .memo ol { margin: 4px 0; padding-left: 20px; }
+blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--line); color: var(--muted); }
+.cite { display: inline-block; font-size: 11px; font-weight: 800; color: var(--analyst); background: var(--soft); border-radius: 4px; padding: 0 4px; margin: 0 1px; cursor: help; vertical-align: 1px; }
+.rules table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.rules td { border-bottom: 1px solid var(--line); padding: 6px 4px; vertical-align: top; overflow-wrap: anywhere; }
+.rules td:first-child { white-space: nowrap; width: 1%; padding-right: 10px; }
+.note { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
+.cost-total { font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.cost-row { display: grid; grid-template-columns: 132px minmax(0, 1fr) 64px; gap: 8px; align-items: center; font-size: 13px; margin-top: 6px; }
+.cost-row .track { height: 8px; background: var(--soft); border-radius: 4px; overflow: hidden; }
+.cost-row .fill { height: 100%; background: var(--c, var(--accent)); border-radius: 4px; transition: width .3s; }
+.cost-row .amount { text-align: right; font-variant-numeric: tabular-nums; }
+@keyframes blink { 50% { opacity: .35; } }
+@keyframes pulse { 50% { stroke-opacity: .3; } }
+@keyframes arrive { from { transform: translateY(8px); opacity: 0; } }
+@keyframes glow { from { background: var(--ok-bg); } }
+@media (max-width: 1000px) { .overview, .grid, .bottom { grid-template-columns: minmax(0, 1fr); } .convo-box { height: 480px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Investment research team</h1>
+      <p class="sub">Three DeepSeek agents on Rakazo. Phase 1: the rules are prompt instructions only; nothing enforces them.</p>
+    </div>
+    <div class="controls">
+      <div class="control-group"><span>Live</span><select id="scenario" aria-label="Scenario"></select><button id="start" class="primary">Start live run</button></div>
+      <div class="control-group"><span>Replay</span><select id="replay-run" aria-label="Recorded run"></select>
+        <select id="speed" aria-label="Replay speed"><option value="10">10×</option><option value="20" selected>20×</option><option value="40">40×</option><option value="80">80×</option></select>
+        <button id="replay">Replay</button></div>
+    </div>
+  </header>
+  <div id="banner" class="banner" hidden></div>
+  <section class="statusbar">
+    <span id="mode" class="badge">READY</span>
+    <span id="run-info" class="stat">Start a live run, or replay a recorded one.</span>
+    <span class="stat">Elapsed <b id="elapsed">–</b></span>
+    <span class="stat">Cost <b id="cost-now">–</b></span>
+    <span id="outcome" class="stat"></span>
+    <span class="spacer"></span>
+    <button id="to-live" class="primary" hidden>Back to the live run</button>
+    <button id="pause" hidden>Pause</button>
+    <button id="skip" hidden>Skip to end</button>
+    <div id="progress" class="progress" hidden><div></div></div>
+  </section>
+
+  <section class="overview">
+    <div class="panel"><h2>The team <span class="count" id="who-now"></span></h2><svg id="team" viewBox="0 0 770 262" role="img" aria-label="The three agents and the messages between them"></svg></div>
+    <div class="panel">
+      <h2>The request <span class="count" id="scenario-name"></span></h2>
+      <div id="request"><p class="empty">The user's request appears here.</p></div>
+      <ol class="steps" id="steps"></ol>
+    </div>
+  </section>
+
+  <main class="grid">
+    <section class="panel"><h2>Conversation <span class="count" id="convo-count"></span></h2><div id="conversation" class="convo-box"><p class="empty">Messages between the user and the agents appear here.</p></div></section>
+    <aside class="side">
+      <section class="panel"><h2>Source register <span class="count" id="source-count"></span></h2><ul id="sources" class="list"></ul></section>
+      <section class="panel"><h2>Memo versions and reviews</h2><ul id="versions" class="list"></ul></section>
+      <section class="panel"><h2>Tool calls (MCP) <span class="count" id="tool-count"></span></h2><ul id="tools" class="list"></ul></section>
+    </aside>
+  </main>
+
+  <section class="bottom">
+    <section class="panel"><h2><span id="memo-title">Memo</span> <span id="memo-chip"></span></h2><article id="memo" class="memo"><p class="empty">The memo appears here once the Lead saves a draft.</p></article></section>
+    <section class="panel rules">
+      <h2>Rule observations</h2><div id="observations"></div>
+      <h2 style="margin-top:16px">Cost by agent</h2><div id="costs"></div>
+    </section>
+  </section>
+</div>
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const LEAD = 'Lead Analyst', ANALYST = 'Research Analyst', REVIEWER = 'IC Reviewer';
+const BOTS = [LEAD, ANALYST, REVIEWER];
+const SHORT = {[LEAD]: 'lead', [ANALYST]: 'analyst', [REVIEWER]: 'reviewer', User: 'user'};
+const NODES = {
+  User: {x: 110, y: 130, role: 'asks for the memo'},
+  [LEAD]: {x: 385, y: 130, role: 'plans · writes · delivers'},
+  [ANALYST]: {x: 660, y: 58, role: 'SEC filings · prices · web'},
+  [REVIEWER]: {x: 660, y: 198, role: 'investment-committee review'},
+};
+const EDGES = [['User', LEAD], [LEAD, ANALYST], [LEAD, REVIEWER]];
+const TOOL_VERBS = {
+  get_case_status: 'checking the case file', read_client_document: 'reading the client document',
+  find_sec_company: 'looking up the company at SEC', get_sec_financials: 'pulling SEC financials',
+  list_sec_filings: 'listing SEC filings', get_price_history: 'getting the price history',
+  register_source: 'registering a source', list_sources: 'reading the source register',
+  save_evidence_packet: 'saving the evidence packet', get_evidence_packets: 'reading the evidence',
+  save_memo_draft: 'writing a memo draft', get_memo_draft: 'reading the memo draft',
+  get_memo_check: 'running the memo check', save_review: 'writing the review',
+  get_latest_review: 'reading the review', deliver_memo: 'delivering the memo',
+};
+const S = {mode: 'ready', snap: null, t: 0, end: 0, playing: false, replayTimer: null, livePoll: null,
+           startingFrom: null, view: null, anim: 0};
+
+// ---------- small helpers ----------
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    if (value === null || value === undefined || value === false) continue;
+    if (key === 'html') node.innerHTML = value; else node.setAttribute(key, value === true ? '' : value);
+  }
+  for (const child of children) if (child !== null && child !== undefined) node.append(child);
+  return node;
+}
+function svgEl(tag, attrs = {}) {
+  const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+  return node;
+}
+function esc(text) {
+  return String(text ?? '').replace(/[&<>"']/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+}
+function fmt(ms) {
+  if (!Number.isFinite(ms) || ms < 0) ms = 0;
+  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = String(s % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${r}` : `${m}:${r}`;
+}
+const money = (usd) => '$' + (usd || 0).toFixed(2);
+// Scenario requests are wrapped YAML text: join the wrapped lines, keep paragraph breaks.
+const unwrap = (text) => String(text || '').replace(/([^\n])\n(?!\n)/g, '$1 ');
+const clock = (ms) => new Date(ms).toLocaleString([], {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'});
+async function getJSON(url) {
+  const response = await fetch(url, {cache: 'no-store'});
+  const body = await response.json();
+  if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+  return body;
+}
+function banner(message, detail) {
+  const box = $('banner');
+  box.hidden = !message;
+  box.textContent = message || '';
+  if (detail) box.append(el('pre', {}, detail));
+}
+
+// ---------- Markdown, kept small: the agents write headings, lists, tables, bold text and [S1] citations ----------
+function sourceTitle(id) {
+  const source = S.snap && S.snap.case.sources.find((s) => s.id === id);
+  return source ? `${source.title} (${source.type})` : 'not in the register';
+}
+function inline(text) {
+  return esc(text)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+    .replace(/\[(S\d{1,3}(?:\s*[,;]\s*S\d{1,3})*)\]/g, (match, ids) => ids.split(/\s*[,;]\s*/)
+      .map((id) => `<span class="cite" title="${esc(sourceTitle(id))}">${id}</span>`).join(''));
+}
+function md(text, compact) {
+  const out = [];
+  let para = [], list = null, table = null;
+  const flushPara = () => { if (para.length) out.push(`<p>${para.map(inline).join('<br>')}</p>`); para = []; };
+  const flushList = () => { if (list) out.push(`<${list.tag}>${list.items.map((i) => `<li>${inline(i)}</li>`).join('')}</${list.tag}>`); list = null; };
+  const flushTable = () => {
+    if (table) {
+      const [head, ...rows] = table;
+      out.push(`<table><thead><tr>${head.map((c) => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>` +
+               rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('') + '</tbody></table>');
+    }
+    table = null;
+  };
+  const flush = () => { flushPara(); flushList(); flushTable(); };
+  for (const raw of String(text || '').replace(/\r/g, '').split('\n')) {
+    const line = raw.trimEnd();
+    let m;
+    if (!line.trim()) { flush(); continue; }
+    if (/^\s*\|.*\|\s*$/.test(line)) {
+      flushPara(); flushList();
+      const cells = line.trim().slice(1, -1).split('|').map((c) => c.trim());
+      if (!cells.every((c) => /^:?-{2,}:?$/.test(c))) (table = table || []).push(cells);
+      continue;
+    }
+    flushTable();
+    if ((m = line.match(/^(#{1,6})\s+(.*)$/))) {
+      flush();
+      const level = Math.min(6, m[1].length + (compact ? 3 : 1));
+      out.push(`<h${level}>${inline(m[2])}</h${level}>`);
+    } else if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
+      flush(); out.push('<hr>');
+    } else if ((m = line.match(/^\s*[-*•]\s+(.*)$/)) || (m = line.match(/^\s*\d+[.)]\s+(.*)$/))) {
+      flushPara();
+      const tag = /^\s*\d/.test(line) ? 'ol' : 'ul';
+      if (!list || list.tag !== tag) { flushList(); list = {tag, items: []}; }
+      list.items.push(m[1]);
+    } else if ((m = line.match(/^\s*>\s?(.*)$/))) {
+      flush(); out.push(`<blockquote>${inline(m[1])}</blockquote>`);
+    } else {
+      flushList(); para.push(line);
+    }
+  }
+  flush();
+  return out.join('');
+}
+
+// ---------- the team diagram ----------
+function buildDiagram() {
+  const svg = $('team');
+  const edges = svgEl('g'), packets = svgEl('g', {id: 'packets'}), nodes = svgEl('g');
+  for (const [a, b] of EDGES) {
+    const id = edgeId(a, b);
+    edges.append(svgEl('line', {id, class: 'edge', x1: NODES[a].x, y1: NODES[a].y, x2: NODES[b].x, y2: NODES[b].y}));
+    const label = svgEl('text', {id: id + '-label', class: 'edge-label', 'text-anchor': 'middle',
+                                 x: (NODES[a].x + NODES[b].x) / 2, y: (NODES[a].y + NODES[b].y) / 2 - 10});
+    edges.append(label);
+  }
+  for (const [name, node] of Object.entries(NODES)) {
+    const g = svgEl('g', {id: 'node-' + SHORT[name], class: `node ${SHORT[name]}`, transform: `translate(${node.x - 105} ${node.y - 33})`});
+    g.append(svgEl('rect', {class: 'box', width: 210, height: 66, rx: 12}));
+    g.append(svgEl('rect', {class: 'bar', x: 0, y: 13, width: 5, height: 40, rx: 2}));
+    const title = svgEl('text', {class: 'node-name', x: 105, y: 28, 'text-anchor': 'middle'}); title.textContent = name;
+    const role = svgEl('text', {class: 'node-role', x: 105, y: 49, 'text-anchor': 'middle'}); role.textContent = node.role;
+    const status = svgEl('text', {class: 'node-status', id: 'status-' + SHORT[name], x: 105, y: 88, 'text-anchor': 'middle'});
+    g.append(title, role, status);
+    nodes.append(g);
+  }
+  svg.append(edges, packets, nodes);
+}
+const edgeId = (a, b) => 'edge-' + [SHORT[a], SHORT[b]].sort().join('-');
+function edgeLabel(entry) {
+  if (entry.kind === 'request') return 'request';
+  if (entry.kind === 'reply') return 'reply';
+  if (entry.from === LEAD) return entry.to === ANALYST ? 'brief' : 'review request';
+  if (entry.from === ANALYST) return 'evidence';
+  if (entry.from === REVIEWER) return 'verdict';
+  return entry.intent || 'message';
+}
+function animate(entry) {
+  if (entry.kind === 'guard') {
+    const node = $('node-' + SHORT[entry.from]);
+    if (node) { node.classList.add('flash'); setTimeout(() => node.classList.remove('flash'), 2200); }
+    return;
+  }
+  const a = NODES[entry.from], b = NODES[entry.to];
+  if (!a || !b) return;
+  const id = edgeId(entry.from, entry.to), line = $(id), label = $(id + '-label');
+  line.classList.add('active');
+  label.textContent = edgeLabel(entry);
+  label.classList.add('show');
+  clearTimeout(line._timer);
+  line._timer = setTimeout(() => { line.classList.remove('active'); label.classList.remove('show'); }, 2600);
+  const color = getComputedStyle(document.documentElement).getPropertyValue('--' + (SHORT[entry.from] || 'user'));
+  const dot = svgEl('circle', {r: 8, class: 'packet', fill: color.trim() || '#2f5bd3', cx: a.x, cy: a.y});
+  $('packets').append(dot);
+  const begin = performance.now(), duration = 1200;
+  const step = (now) => {
+    const k = Math.min(1, (now - begin) / duration), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    dot.setAttribute('cx', a.x + (b.x - a.x) * e);
+    dot.setAttribute('cy', a.y + (b.y - a.y) * e);
+    if (k < 1) requestAnimationFrame(step); else dot.remove();
+  };
+  requestAnimationFrame(step);
+}
+
+// ---------- what the page shows at time t ----------
+function botStatus(snap, t, live) {
+  const status = {};
+  for (const bot of BOTS) {
+    if (live) { status[bot] = snap.status[bot] || 'idle'; continue; }
+    status[bot] = snap.turns.some((span) => span.bot === bot && span.start <= t && t < span.end) ? 'working' : 'idle';
+  }
+  return status;
+}
+function activity(snap, bot, t, tools, status) {
+  if (status === 'waiting') return 'waiting on an approval card';
+  if (status !== 'working') return 'idle';
+  const turn = snap.turns.filter((span) => span.bot === bot && span.start <= t).pop();
+  const last = tools.filter((call) => call.bot === bot && (!turn || call.ts >= turn.start - 1000)).pop();
+  return last ? (TOOL_VERBS[last.tool] || last.tool) : 'thinking…';
+}
+function steps(view) {
+  const {convo, sources, packets, drafts, reviews, deliveries, status} = view;
+  const sent = (from, to) => convo.some((e) => e.kind === 'message' && e.from === from && e.to === to);
+  const briefed = sent(LEAD, ANALYST), researched = packets.length > 0 || sent(ANALYST, LEAD);
+  const draft = drafts[drafts.length - 1], review = reviews[reviews.length - 1], delivery = deliveries[deliveries.length - 1];
+  const reviewState = status[REVIEWER] === 'working' ? 'active' : !review ? 'todo' : review.verdict === 'approve' ? 'done' : 'warn';
+  return [
+    {label: 'Request', state: convo.some((e) => e.kind === 'request') ? 'done' : 'todo', detail: ''},
+    {label: 'Brief', state: briefed ? 'done' : convo.length ? 'active' : 'todo', detail: briefed ? 'Lead → Research Analyst' : ''},
+    {label: 'Research', state: researched ? 'done' : briefed ? 'active' : 'todo',
+     detail: sources.length ? `${sources.length} sources` + (packets.length ? ` · evidence ${packets.map((p) => p.id).join(', ')}` : '') : ''},
+    {label: 'Draft', state: draft ? 'done' : researched ? 'active' : 'todo', detail: draft ? `v${draft.version} · ${draft.rating}` : ''},
+    {label: 'Review', state: reviewState, detail: reviews.map((r) => `${r.id} ${r.verdict}`).join(' → ')},
+    {label: 'Delivered', state: delivery ? (delivery.gate.approved ? 'done' : 'bad') : 'todo',
+     detail: delivery ? `v${delivery.version} · ` + (delivery.gate.approved ? `approved by ${delivery.gate.review_id}` : 'no approving review (N5)') : ''},
+  ];
+}
+
+// ---------- rendering ----------
+function resetView(snap) {
+  S.snap = snap;
+  S.view = {convo: [], sources: 0, versions: 0, tools: 0, memo: null, rules: null, request: null};
+  S.anim = 0;
+  S.quiet = true;  // Don't animate what was already there when the run was opened.
+  for (const id of ['conversation', 'sources', 'versions', 'tools']) $(id).textContent = '';
+  banner('');
+}
+function syncList(id, items, count, make, newestFirst) {
+  const box = $(id);
+  if (items.length < count) { box.textContent = ''; count = 0; }
+  for (const item of items.slice(count)) {
+    const node = make(item);
+    if (!S.quiet) node.classList.add('new');
+    if (newestFirst) box.prepend(node); else box.append(node);
+  }
+  return items.length;
+}
+function render(t) {
+  const snap = S.snap;
+  if (!snap) return;
+  const live = S.mode === 'live';
+  const at = (item) => item.ts <= t;
+  const c = snap.case;
+  const view = {
+    convo: snap.conversation.filter(at), tools: snap.tools.filter(at), sources: c.sources.filter(at),
+    packets: c.packets.filter(at), drafts: c.drafts.filter(at), reviews: c.reviews.filter(at),
+    deliveries: c.deliveries.filter(at), usage: snap.usage.filter(at),
+  };
+  view.status = botStatus(snap, t, live);
+  const finished = snap.captured && t >= S.end;
+  renderStatusBar(snap, t, view, finished);
+  renderRequest(snap);
+  renderTeam(snap, t, view, finished);
+  renderSteps(view);
+  renderConversation(snap, view.convo);
+  $('source-count').textContent = view.sources.length ? `${view.sources.length}` + (view.packets.length ? ` · evidence ${view.packets.map((p) => p.id).join(', ')}` : '') : '';
+  S.view.sources = syncList('sources', view.sources, S.view.sources, sourceItem);
+  const versions = [...view.drafts.map((d) => ({...d, type: 'draft'})), ...view.reviews.map((r) => ({...r, type: 'review'})),
+                    ...view.deliveries.map((d) => ({...d, type: 'delivery'}))].sort((x, y) => x.ts - y.ts);
+  S.view.versions = syncList('versions', versions, S.view.versions, versionItem);
+  $('tool-count').textContent = view.tools.length || '';
+  S.view.tools = syncList('tools', view.tools, S.view.tools, (call) => toolItem(snap, call), true);
+  renderMemo(view);
+  renderRules(snap, finished);
+  renderCosts(snap, view, finished);
+  if (!S.quiet) for (const entry of view.convo.slice(S.anim)) animate(entry);
+  S.anim = view.convo.length;
+  S.quiet = false;
+}
+function renderSteps(view) {
+  $('steps').replaceChildren(...steps(view).map((s) => el('li', {class: `step ${s.state}`},
+    el('span', {class: 'dot'}), el('span', {class: 'label'}, s.label), el('span', {class: 'detail', title: s.detail}, s.detail))));
+}
+function renderStatusBar(snap, t, view, finished) {
+  const mode = finished ? 'finished' : S.mode;
+  const badge = $('mode');
+  badge.className = 'badge ' + mode;
+  badge.textContent = {live: 'LIVE', replay: `REPLAY ${$('speed').value}×`, finished: 'FINISHED', starting: 'STARTING', ready: 'READY'}[mode];
+  $('run-info').textContent = `${snap.scenario} · run ${snap.run_id} · started ${clock(snap.started)}` + (S.mode === 'replay' || (finished && S.replayed) ? ' · recorded run' : '');
+  const now = S.mode === 'live' ? Date.now() : Math.min(t, S.end);
+  $('elapsed').textContent = fmt(now - snap.started);
+  const spent = finished && snap.cost ? snap.cost.total.cost_usd : view.usage.reduce((sum, p) => sum + p.cost, 0);
+  $('cost-now').textContent = view.usage.length || finished ? money(spent) : '–';
+  const delivery = view.deliveries[view.deliveries.length - 1];
+  const draft = delivery && snap.case.drafts.find((d) => String(d.version) === String(delivery.version));
+  const outcome = $('outcome');
+  outcome.className = 'stat' + (finished && snap.outcome !== 'delivered' ? ' bad' : '');
+  outcome.innerHTML = delivery ? `Outcome <b>delivered v${esc(delivery.version)} · ${esc(draft ? draft.rating : '')}</b>`
+    : finished ? `Outcome <b>${esc(snap.outcome || 'no memo delivered')}</b>` : '';
+  const replaying = S.mode === 'replay';
+  $('pause').hidden = $('skip').hidden = $('progress').hidden = !replaying;
+  $('pause').textContent = S.playing ? 'Pause' : 'Resume';
+  if (replaying) $('progress').firstElementChild.style.width = `${Math.min(100, 100 * (t - snap.started) / (S.end - snap.started))}%`;
+}
+function renderRequest(snap) {
+  if (S.view.request === snap.run_id) return;
+  S.view.request = snap.run_id;
+  $('scenario-name').textContent = snap.scenario;
+  const docs = snap.case.documents.map((d) => el('span', {}, el('span', {class: 'chip ' + (d.confidentiality === 'public' ? '' : 'warn')}, d.confidentiality), ' ', d.name));
+  $('request').replaceChildren(el('p', {class: 'request-text'}, unwrap(snap.request) || '(no request text)'),
+    docs.length ? el('div', {class: 'docs'}, 'Attached: ', ...docs) : '');
+}
+function renderTeam(snap, t, view, finished) {
+  const working = [];
+  for (const bot of BOTS) {
+    const status = view.status[bot];
+    const node = $('node-' + SHORT[bot]);
+    node.classList.toggle('working', status === 'working');
+    node.classList.toggle('waiting', status === 'waiting');
+    $('status-' + SHORT[bot]).textContent = finished ? 'done' : activity(snap, bot, t, view.tools, status);
+    if (status !== 'idle') working.push(bot);
+  }
+  const delivered = view.deliveries.length > 0;
+  $('status-user').textContent = delivered ? 'memo delivered' : view.convo.length ? 'waiting for the memo' : '';
+  $('who-now').textContent = finished ? '' : working.length ? `working: ${working.join(', ')}` : (S.mode === 'live' ? 'nobody working' : '');
+}
+function intentTag(entry) {
+  return entry.kind === 'message' ? edgeLabel(entry) : entry.kind;
+}
+function renderConversation(snap, convo) {
+  const box = $('conversation');
+  const keys = convo.map((e) => e.id + e.kind), old = S.view.convo;
+  const isPrefix = old.length <= keys.length && old.every((k, i) => k === keys[i]);
+  if (!isPrefix) { box.textContent = ''; S.view.convo = []; }
+  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+  if (!convo.length) box.replaceChildren(el('p', {class: 'empty'}, 'Messages between the user and the agents appear here.'));
+  else if (!S.view.convo.length) box.textContent = '';
+  for (const entry of convo.slice(S.view.convo.length)) box.append(messageNode(snap, entry));
+  if (keys.length !== S.view.convo.length && (nearBottom || !S.view.convo.length)) box.scrollTop = box.scrollHeight;
+  S.view.convo = keys;
+  $('convo-count').textContent = convo.length || '';
+}
+function messageNode(snap, entry) {
+  const node = el('div', {class: `msg ${entry.kind} from-${SHORT[entry.from] || 'other'}` + (S.quiet ? '' : ' new')});
+  const when = el('span', {class: 'time'}, '+' + fmt(entry.ts - snap.started));
+  if (entry.kind === 'guard') {
+    node.append(el('div', {class: 'msg-head'}, el('span', {class: 'who'}, `Rakazo stopped the ${entry.from}`),
+                   el('span', {class: 'chip warn'}, 'platform guard'), when),
+                el('div', {class: 'msg-body'}, `${entry.text}. ${entry.detail || ''} Unattended runs deny these approval cards.`));
+    return node;
+  }
+  const body = el('div', {class: 'msg-body', html: md(entry.kind === 'request' ? unwrap(entry.text) : entry.text, true)});
+  node.append(el('div', {class: 'msg-head'}, el('span', {class: 'who'}, `${entry.from} → ${entry.to}`),
+                 el('span', {class: 'chip'}, intentTag(entry)), when), body);
+  if (entry.text.length > 360) {
+    body.classList.add('clamped');
+    const more = el('button', {class: 'more'}, 'Show all');
+    more.addEventListener('click', () => { more.textContent = body.classList.toggle('clamped') ? 'Show all' : 'Show less'; });
+    node.append(more);
+  }
+  return node;
+}
+function sourceItem(source) {
+  let where = '';
+  try { where = new URL(source.location).hostname.replace(/^www\./, ''); } catch { where = ''; }
+  return el('li', {title: source.location || ''}, el('span', {class: 'sid'}, source.id),
+            el('span', {class: 'grow'}, source.title, where ? el('span', {class: 'muted small'}, ' · ' + where) : ''),
+            el('span', {class: 'chip'}, source.type || ''));
+}
+function versionItem(item) {
+  const when = el('span', {class: 'time'}, '+' + fmt(item.ts - S.snap.started));
+  if (item.type === 'draft') {
+    return el('li', {}, el('span', {class: 'chip'}, `v${item.version}`), el('span', {class: 'wrap-text'}, 'Draft saved ', el('span', {class: 'chip rating'}, item.rating)), when);
+  }
+  if (item.type === 'review') {
+    const tone = item.verdict === 'approve' ? 'ok' : item.verdict === 'revise' ? 'warn' : 'bad';
+    const fixes = (item.must_fix || []).slice(0, 2).map((fix) => el('li', {}, String(fix).length > 140 ? String(fix).slice(0, 140) + '…' : String(fix)));
+    return el('li', {}, el('span', {class: 'chip'}, item.id),
+              el('div', {class: 'wrap-text'}, `IC review of v${item.version} `, el('span', {class: 'chip ' + tone}, item.verdict),
+                 item.must_fix && item.must_fix.length ? el('span', {class: 'muted small'}, ` · ${item.must_fix.length} must-fix`) : '',
+                 fixes.length ? el('ul', {class: 'fixes'}, ...fixes) : ''), when);
+  }
+  const gate = item.gate.approved ? el('span', {class: 'chip ok'}, `approved by ${item.gate.review_id}`)
+    : el('span', {class: 'chip bad'}, item.gate.reviewed ? 'review did not approve (N5)' : 'never reviewed (N5)');
+  const findings = (item.findings || []).map((f) => el('li', {}, el('b', {}, f.rule + ' '), f.detail || ''));
+  return el('li', {}, el('span', {class: 'chip'}, `v${item.version}`),
+            el('div', {class: 'wrap-text'}, el('b', {}, 'Delivered '), gate,
+               findings.length ? el('div', {class: 'small muted'}, 'Memo check at delivery:', el('ul', {class: 'fixes'}, ...findings)) : ''), when);
+}
+function toolItem(snap, call) {
+  return el('li', {}, el('span', {class: 'time'}, '+' + fmt(call.ts - snap.started)),
+            el('span', {class: 'bot-dot ' + (SHORT[call.bot] || ''), title: call.bot || 'shared tool'}),
+            el('code', {}, call.tool), el('span', {class: 'grow muted', title: call.summary}, call.summary));
+}
+function renderMemo(view) {
+  const delivery = view.deliveries[view.deliveries.length - 1];
+  const draft = delivery ? S.snap.case.drafts.find((d) => String(d.version) === String(delivery.version)) : view.drafts[view.drafts.length - 1];
+  const key = draft ? `${S.snap.run_id}:${draft.version}:${Boolean(delivery)}` : `${S.snap.run_id}:none`;
+  if (S.view.memo === key) return;
+  S.view.memo = key;
+  if (!draft) {
+    $('memo-title').textContent = 'Memo';
+    $('memo-chip').replaceChildren();
+    $('memo').replaceChildren(el('p', {class: 'empty'}, 'The memo appears here once the Lead saves a draft.'));
+    return;
+  }
+  $('memo-title').textContent = delivery ? `Delivered memo · v${draft.version}` : `Latest draft · v${draft.version}`;
+  $('memo-chip').replaceChildren(el('span', {class: 'chip ' + (delivery ? 'ok' : 'warn')}, delivery ? 'delivered' : 'not delivered yet'));
+  $('memo').innerHTML = md(draft.markdown, false);
+}
+function renderRules(snap, finished) {
+  const key = `${snap.run_id}:${finished}`;
+  if (S.view.rules === key) return;
+  S.view.rules = key;
+  const box = $('observations');
+  if (!finished || !snap.observations) {
+    box.replaceChildren(el('p', {class: 'empty'}, 'Shown when the run finishes: the exporter scans the captured run for possible rule breaks and re-checks the delivered memo.'));
+    return;
+  }
+  const rows = snap.observations.map((o) => el('tr', {}, el('td', {}, el('span', {class: 'chip ' + (o.rule === 'platform guard' ? 'warn' : 'bad')}, o.rule)), el('td', {}, o.detail)));
+  box.replaceChildren(rows.length ? el('table', {}, el('tbody', {}, ...rows)) : el('p', {}, 'No possible rule breaks found.'),
+                      el('p', {class: 'note'}, 'Phase 1 only reports these; nothing was blocked. The platform guard is Rakazo\'s own rule, not one of this app\'s.'));
+}
+function renderCosts(snap, view, finished) {
+  const byBot = {};
+  let total = 0, calls = 0;
+  if (finished && snap.cost) {
+    for (const [bot, usage] of Object.entries(snap.cost.by_agent)) byBot[bot] = usage.cost_usd;
+    total = snap.cost.total.cost_usd; calls = snap.cost.total.model_calls;
+  } else {
+    for (const point of view.usage) { byBot[point.bot] = (byBot[point.bot] || 0) + point.cost; total += point.cost; }
+    calls = view.usage.length;
+  }
+  const top = Math.max(0.0001, ...Object.values(byBot));
+  $('costs').replaceChildren(el('div', {class: 'cost-total'}, money(total)),
+    el('div', {class: 'muted small'}, `${calls} DeepSeek calls` + (finished ? '' : ' so far')),
+    ...BOTS.map((bot) => el('div', {class: 'cost-row', style: `--c: var(--${SHORT[bot]})`}, el('span', {}, bot),
+      el('div', {class: 'track'}, el('div', {class: 'fill', style: `width: ${100 * (byBot[bot] || 0) / top}%`})),
+      el('span', {class: 'amount'}, money(byBot[bot] || 0)))));
+}
+function renderIdle(message) {
+  const badge = $('mode');
+  badge.className = 'badge ' + S.mode;
+  badge.textContent = S.mode === 'starting' ? 'STARTING' : 'READY';
+  $('run-info').textContent = message;
+}
+
+// ---------- modes: live, replay ----------
+// Every switch (start, replay, follow a live run) bumps S.gen; a request still in flight from an earlier mode
+// sees the changed number when it returns and drops its result instead of drawing over the new view.
+function switchMode() {
+  clearInterval(S.replayTimer); S.replayTimer = null;
+  clearTimeout(S.livePoll); S.livePoll = null;
+  S.gen = (S.gen || 0) + 1;
+  return S.gen;
+}
+function endOf(snap) {
+  const c = snap.case;
+  const times = [snap.started, ...snap.conversation.map((e) => e.ts), ...snap.tools.map((e) => e.ts), ...snap.usage.map((e) => e.ts),
+                 ...[c.sources, c.packets, c.drafts, c.reviews, c.deliveries].flat().map((e) => e.ts)];
+  return Math.max(...times) + 1000;
+}
+function followLive(runId) {
+  const gen = switchMode();
+  S.mode = 'live'; S.liveRun = runId; S.replayed = false;
+  $('to-live').hidden = true;
+  liveTick(gen);
+}
+async function liveTick(gen) {
+  try {
+    const snap = await getJSON('/api/runs/' + encodeURIComponent(S.liveRun));
+    if (gen !== S.gen) return;
+    if (!S.snap || S.snap.run_id !== snap.run_id) resetView(snap); else S.snap = snap;
+    S.end = endOf(snap);
+    banner(snap.live_error || '');
+    if (snap.captured) { S.mode = 'finished'; render(Infinity); return; }
+    render(Infinity);
+  } catch (error) {
+    if (gen !== S.gen) return;
+    banner(`Can't load the live run: ${error.message}`);
+  }
+  S.livePoll = setTimeout(() => liveTick(gen), 2500);
+}
+async function startLive() {
+  const scenario = $('scenario').value;
+  const gen = switchMode();
+  S.mode = 'starting';
+  $('start').disabled = true;
+  try {
+    S.startingFrom = (await getJSON('/api/state')).active_run;
+    const response = await fetch('/api/start', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({scenario})});
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+  } catch (error) {
+    if (gen === S.gen) { S.mode = 'ready'; renderIdle('The run did not start.'); }
+    banner(`Couldn't start the run: ${error.message}`);
+    return;
+  }
+  if (gen !== S.gen) return;
+  banner('');
+  renderIdle(`Starting ${scenario}: setting up the bots and clearing their threads…`);
+  waitForRun(gen);
+}
+async function waitForRun(gen) {
+  try {
+    const state = await getJSON('/api/state');
+    if (gen !== S.gen) return;
+    updateSelectors(state);
+    if (state.active_run && state.active_run !== S.startingFrom) { followLive(state.active_run); return; }
+    if (state.runner && !state.runner.alive) {
+      S.mode = 'ready';
+      renderIdle('The run stopped before it began.');
+      banner(`The run stopped before it began (exit code ${state.runner.exit_code}). Its output:`, state.runner.log_tail);
+      return;
+    }
+  } catch (error) {
+    if (gen !== S.gen) return;
+  }
+  setTimeout(() => waitForRun(gen), 1500);
+}
+async function startReplay() {
+  const runId = $('replay-run').value;
+  if (!runId) return;
+  const gen = switchMode();
+  try {
+    const snap = await getJSON('/api/runs/' + encodeURIComponent(runId));
+    if (gen !== S.gen) return;
+    resetView(snap);
+    S.mode = 'replay'; S.replayed = true; S.playing = true;
+    S.end = endOf(snap); S.t = snap.started;
+    S.replayTimer = setInterval(replayTick, 200);
+    render(S.t);
+  } catch (error) {
+    banner(`Can't load the recorded run: ${error.message}`);
+  }
+}
+function stopTimers() {
+  clearInterval(S.replayTimer); S.replayTimer = null;
+  clearTimeout(S.livePoll); S.livePoll = null;
+}
+function replayTick() {
+  if (!S.playing || S.mode !== 'replay') return;
+  S.t = Math.min(S.end, S.t + 200 * Number($('speed').value));
+  render(S.t);
+  if (S.t >= S.end) { stopTimers(); S.mode = 'finished'; render(Infinity); }
+}
+
+// ---------- the server's list of runs and scenarios ----------
+function updateSelectors(state) {
+  const scenario = $('scenario');
+  if (!scenario.options.length) {
+    for (const s of state.scenarios) scenario.append(new Option(s.name, s.name));
+    if (state.scenarios.some((s) => s.name === 'rushed-call')) scenario.value = 'rushed-call';
+    S.summaries = Object.fromEntries(state.scenarios.map((s) => [s.name, s.summary]));
+    scenario.title = S.summaries[scenario.value] || '';
+  }
+  const replay = $('replay-run');
+  const captured = state.runs.filter((r) => r.captured);
+  const signature = captured.map((r) => r.run_id).join();
+  if (replay.dataset.signature !== signature) {
+    const keep = replay.value;
+    replay.replaceChildren(...captured.map((r) => new Option(`${r.scenario} · ${clock(r.started)}${r.outcome ? ' · ' + r.outcome : ''}`, r.run_id)));
+    if (captured.some((r) => r.run_id === keep)) replay.value = keep;
+    replay.dataset.signature = signature;
+  }
+  $('replay').disabled = !captured.length;
+  $('start').disabled = S.mode === 'starting' || S.mode === 'live' || Boolean(state.runner && state.runner.alive);
+}
+async function pollState() {
+  try {
+    const state = await getJSON('/api/state');
+    updateSelectors(state);
+    const active = state.runs.find((r) => r.run_id === state.active_run);
+    S.liveAvailable = active && !active.captured && Date.now() - active.started < 45 * 60 * 1000 ? active.run_id : null;
+    const elsewhere = S.liveAvailable && (S.mode !== 'live' || S.liveRun !== S.liveAvailable);
+    // Follow a run started elsewhere (for example from the terminal) unless a replay is on screen.
+    if (elsewhere && (S.mode === 'ready' || (S.mode === 'finished' && !S.replayed))) followLive(S.liveAvailable);
+    else $('to-live').hidden = !elsewhere || S.mode === 'starting';
+  } catch (error) { /* the server may be restarting */ }
+  setTimeout(pollState, 4000);
+}
+
+$('start').addEventListener('click', startLive);
+$('to-live').addEventListener('click', () => { if (S.liveAvailable) followLive(S.liveAvailable); });
+$('replay').addEventListener('click', startReplay);
+$('scenario').addEventListener('change', () => { $('scenario').title = (S.summaries || {})[$('scenario').value] || ''; });
+$('pause').addEventListener('click', () => { S.playing = !S.playing; render(S.t); });
+$('skip').addEventListener('click', () => {
+  if (S.mode !== 'replay') return;
+  stopTimers();
+  S.quiet = true; S.t = S.end; S.mode = 'finished';
+  render(Infinity);
+});
+$('speed').addEventListener('change', () => { if (S.mode === 'replay') render(S.t); });
+setInterval(() => { if (S.mode === 'live' && S.snap) $('elapsed').textContent = fmt(Date.now() - S.snap.started); }, 1000);
+buildDiagram();
+renderSteps({convo: [], sources: [], packets: [], drafts: [], reviews: [], deliveries: [], status: {}});
+$('observations').replaceChildren(el('p', {class: 'empty'}, 'Shown when a run finishes: the exporter scans it for possible rule breaks.'));
+renderIdle('Start a live run, or replay a recorded one.');
+pollState();
+</script>
+</body>
+</html>
