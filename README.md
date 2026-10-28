@@ -23,7 +23,7 @@ The app is a multi-agent version of the [investment-analysis skill](https://gith
 | Test cases | [`tests/`](tests/) and [`tests/README.md`](tests/README.md) |
 | Phase 1 traces, and which policies each scenario triggered | [`traces/phase1/`](traces/phase1/) and [`traces/README.md`](traces/README.md) |
 | Phase 2 source and traces | to come (Phase 2 starts 2026-11-12) |
-| Five-minute demo video | YouTube link to be added |
+| Five-minute demo video | [youtu.be/5v6sdI-pl0E](https://youtu.be/5v6sdI-pl0E) |
 
 ## Quick start
 
