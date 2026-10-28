@@ -2,6 +2,7 @@ import json
 
 import httpx
 
+from team.profiles import RETIRED, team_profiles
 from team.rakazo_client import Rakazo
 
 
@@ -15,3 +16,29 @@ def test_signing_in_again_replaces_the_saved_session(tmp_path):
     app.http = httpx.Client(base_url=app.url, transport=httpx.MockTransport(sign_in), cookies=app.http.cookies)
     app.login('owner@cs239-agent-team.test', 'test-password')
     assert json.loads(session.read_text()) == {'better-auth.session_token': 'new'}
+
+
+def test_setting_up_the_team_archives_retired_bots_and_gives_each_bot_its_own_endpoint(tmp_path, monkeypatch):
+    monkeypatch.delenv('MCP_ENDPOINT', raising=False)
+    calls = []
+
+    def rpc(route, data=None):
+        calls.append((route, data))
+        if route == 'bots/list':
+            return [{'id': 'bot-old', 'name': 'Research Analyst'}, {'id': 'bot-lead', 'name': 'Lead Analyst'}]
+        if route == 'mcp/servers/create':
+            return {'id': 'server-' + data['slug'], **data}
+        if route == 'bots/create':
+            return {'id': 'bot-' + data['name'].split()[0].lower()}
+        return {'activeRuns': []} if route == 'threads/get' else []
+
+    app = Rakazo('http://127.0.0.1:5174', session_file=tmp_path / '.session.json')
+    app.rpc = rpc
+    ids = app.configure_team(team_profiles(), RETIRED)
+    assert ('bots/archive', {'botId': 'bot-old'}) in calls
+    assert list(ids) == ['Lead Analyst', 'Fundamentals Analyst', 'Market Analyst', 'IC Reviewer']
+    assert [data['endpoint'] for route, data in calls if route == 'mcp/servers/create'] == [
+        f'http://host.docker.internal:8766/mcp?agent={key}' for key in ('lead', 'fundamentals', 'market', 'reviewer')]
+    assigned = {data['botId']: data['assignments'][0] for route, data in calls if route == 'mcp/assignments/replace'}
+    assert assigned['bot-market']['serverId'] == 'server-research-market'
+    assert 'get_sec_financials' not in assigned['bot-market']['allowedTools']

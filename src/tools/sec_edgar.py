@@ -1,4 +1,4 @@
-"""SEC EDGAR lookups that give the Research Analyst primary-source financials.
+"""SEC EDGAR lookups that give the Fundamentals Analyst primary-source financials.
 
 Uses SEC's public JSON APIs. Their fair-access policy requires a User-Agent naming a contact,
 read from SEC_USER_AGENT ("Your Name you@example.com"). Responses are cached for a day.

@@ -8,16 +8,16 @@
 
 **Tools:** none of the tools in [tools.md](../tools.md). It calls Rakazo's API through `src/team/rakazo_client.py` (sign-in session, bot settings, threads, run status, approval cards, usage) and reads the case file through `src/tools/case_file.py`.
 
-**Policies:** P18 (it denies the fetches Rakazo holds for approval) and P28 (it clears every bot's thread before a scenario) in [policy.md](../policy.md).
+**Policies:** P19 (it denies the fetches Rakazo holds for approval) and P30 (it clears every bot's thread before a scenario) in [policy.md](../policy.md).
 
 ## Implementation and decision logic
 
 Every step below is fixed in code. The runner never reads or judges what the bots write.
 
 1. **Load the scenario** from `src/scenarios/<name>.yaml`: the request, the attached client documents and their confidentiality labels.
-2. **Configure the team.** Create or update the three bots from `src/team/profiles.py`:
+2. **Configure the team.** Archive the bots that `src/team/profiles.py` lists as retired (the Research Analyst of the earlier three-bot team), then create or update the four bots from the same file:
    - instructions, model and thinking level;
-   - each bot's MCP tool allowlist;
+   - each bot's own entry for the MCP server, whose `?agent=` key tells the server who is calling, and its tool allowlist;
    - the Rakazo built-in tools it switches off.
 
    Then wait until no bot has a run in progress.
@@ -27,8 +27,9 @@ Every step below is fixed in code. The runner never reads or judges what the bot
 6. **Every 5 seconds**, read each bot's runs in progress and decide:
    - **A run waits on an approval card,** for example a `web_fetch` of a URL that the bot's own search did not return. With `--approval-cards deny` (the default) the runner denies the card and logs it to `runs/<run_id>/approval_cards.jsonl`. With `--approval-cards wait` it leaves the card for a person to answer in Rakazo and prints a notice once.
    - **Delivered:** the case file records a delivery and no bot has worked for 15 seconds.
+   - **Failed review:** the re-review did not approve, so nothing may be delivered (P9), and no bot has worked for 15 seconds.
    - **Stalled:** no bot has worked for `--quiet` seconds (default 150) and nothing was delivered.
    - **Timed out:** `--timeout` seconds (default 1800) have passed.
 7. **Capture the run:**
    - copy Rakazo's per-run transcripts, every bot's messages and the usage records into `runs/<run_id>/rakazo/`;
-   - write `outcome.json` (delivered, stalled or timed out) last, which marks the capture complete for the trace exporter and the dashboard.
+   - write `outcome.json` (delivered, failed review, stalled or timed out) last, which marks the capture complete for the trace exporter and the dashboard.

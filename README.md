@@ -1,9 +1,9 @@
 # Investment Analysis Agents
 
-CS 239 (UCLA, Fall 2026) final project by Zhexiang Li. Three AI agents on [Rakazo](https://github.com/elie222/rakazo) turn a company into an evidence-backed investment memo, the way a small research desk would:
+CS 239 (UCLA, Fall 2026) final project by Zhexiang Li. Four AI agents on [Rakazo](https://github.com/elie222/rakazo) turn a company into an evidence-backed investment memo, the way a small research desk would:
 - a **Lead Analyst** owns the request and the memo;
-- a **Research Analyst** gathers evidence from SEC filings, prices and the web;
-- an **IC Reviewer** challenges every draft before anything ships.
+- a **Fundamentals Analyst** and a **Market Analyst** research in parallel: the numbers from SEC filings, prices and the web, and the business and its market from the web;
+- an **IC Reviewer** challenges every draft before anything ships, and sends gaps that need new evidence back to the analyst who owns them.
 
 The app is a multi-agent version of the [investment-analysis skill](https://github.com/BruceLZX/investment-analysis-skill), and its policies come from that skill's evidence and QA standards.
 
@@ -14,9 +14,9 @@ The app is a multi-agent version of the [investment-analysis skill](https://gith
 | Deliverable | Where |
 |---|---|
 | What the app does and the tasks it supports | [`app.md`](app.md) |
-| Policies, P1–P29, by agent: permission, capability, lifecycle, information flow and isolation | [`policy.md`](policy.md) (the guidelines' name; [`policies.md`](policies.md) is the same file under the course page's name) |
+| Policies, P1–P31, by agent: permission, capability, lifecycle, information flow and isolation | [`policy.md`](policy.md) (the guidelines' name; [`policies.md`](policies.md) is the same file under the course page's name) |
 | Each tool's inputs and outputs | [`tools.md`](tools.md) |
-| Each agent: the three LLM agents' tools and exact system prompts, and the scripted Scenario Runner's logic | [`agents/`](agents/) |
+| Each agent: the four LLM agents' tools and exact system prompts, and the scripted Scenario Runner's logic | [`agents/`](agents/) |
 | Example episodes, one per scenario, with the policies involved | [`episodes/`](episodes/) |
 | Requirements: what the app does and must never do (N1–N9), and how they map to policies | [`requirements.md`](requirements.md) |
 | Phase 1 source code, with setup and run instructions | [`src/`](src/) and [`src/README.md`](src/README.md) |

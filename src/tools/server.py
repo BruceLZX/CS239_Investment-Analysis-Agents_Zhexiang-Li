@@ -1,26 +1,34 @@
 """MCP server for the investment research bot team.
 
 One server holds every tool; Rakazo limits each bot to its own tools with per-bot
-allowlists. Each call is appended to the active run's tool_log.jsonl. From src/:
+allowlists. Each bot calls it at its own endpoint, /mcp?agent=<key>, so every call is
+credited to the agent that made it. Each call is appended to the active run's
+tool_log.jsonl. From src/:
 
     .venv/bin/python -m tools.server
 """
+from contextvars import ContextVar
 import functools
 import json
 import os
 import time
+from urllib.parse import parse_qs
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
+import uvicorn
 
 from . import case_file, memo, prices, sec_edgar
+from .agents import AGENTS, ANALYSTS
 from .case_file import now, open_case, read_case
 from .env import load_env
 
 server = MCPServer('Investment research',
                    instructions='Research tools, a shared source register and the case file for one investment memo.')
+# The agent whose endpoint the current request came in on; None for an endpoint without a known ?agent= key.
+CALLER: ContextVar[str | None] = ContextVar('caller', default=None)
 READ = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
 READ_WEB = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=True)
 WRITE = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=False)
@@ -40,7 +48,7 @@ def tool(annotations: ToolAnnotations):
         @functools.wraps(fn)
         def logged(**arguments):
             started = time.monotonic()
-            entry = {'ts': now(), 'tool': fn.__name__, 'arguments': arguments}
+            entry = {'ts': now(), 'agent': CALLER.get(), 'tool': fn.__name__, 'arguments': arguments}
             try:
                 result = fn(**arguments)
                 text = result if isinstance(result, str) else json.dumps(result, indent=1)
@@ -76,7 +84,7 @@ def _memo_text(draft: dict) -> str:
     return f"Memo version {draft['version']} (rating {draft['rating']}, data as of {draft['data_as_of']}):\n\n{draft['markdown']}"
 
 
-# Research (Research Analyst)
+# Research (Fundamentals Analyst)
 
 @tool(READ_WEB)
 def find_sec_company(ticker: str) -> dict:
@@ -154,26 +162,33 @@ def save_evidence_packet(topic: str, summary: str, findings: list[str], source_i
                          counter_evidence: str, gaps: list[str]) -> dict:
     """Save research findings to the case file for the Lead Analyst. Each finding carries its source IDs,
     e.g. "Revenue grew 6% in FY2025 [S2]". counter_evidence: the strongest evidence against the thesis.
-    gaps: what could not be verified."""
+    gaps: what could not be verified. The packet is credited to the analyst making the call; one saved after
+    a review answers that review's evidence requests."""
     with open_case() as case:
         packet_id = f"E{len(case['evidence_packets']) + 1}"
         unknown = sorted(set(source_ids) - {s['id'] for s in case['sources']})
+        follow_up_for = case['reviews'][-1]['id'] if case['reviews'] else None
         case['evidence_packets'].append({
-            'id': packet_id, 'topic': topic, 'summary': summary, 'findings': findings,
-            'source_ids': source_ids, 'counter_evidence': counter_evidence, 'gaps': gaps, 'saved_at': now(),
+            'id': packet_id, 'analyst': CALLER.get(), 'follow_up_for': follow_up_for, 'topic': topic,
+            'summary': summary, 'findings': findings, 'source_ids': source_ids,
+            'counter_evidence': counter_evidence, 'gaps': gaps, 'saved_at': now(),
         })
-    return {'id': packet_id, 'unregistered_source_ids': unknown}
+    return {'id': packet_id, 'analyst': CALLER.get(), 'follow_up_for': follow_up_for,
+            'unregistered_source_ids': unknown}
 
 
 @tool(READ)
 def get_evidence_packets() -> str:
-    """All saved evidence packets with their findings, counter-evidence and gaps."""
+    """All saved evidence packets with their analyst, findings, counter-evidence and gaps."""
     packets = read_case()['evidence_packets']
     if not packets:
         return 'No evidence packets saved yet.'
     parts = []
     for p in packets:
-        parts.append(f"## {p['id']}: {p['topic']}\n{p['summary']}\nFindings:\n"
+        by = p.get('analyst') or 'unknown analyst'
+        if p.get('follow_up_for'):
+            by += f", follow-up for review {p['follow_up_for']}"
+        parts.append(f"## {p['id']} ({by}): {p['topic']}\n{p['summary']}\nFindings:\n"
                      + '\n'.join(f'- {f}' for f in p['findings'])
                      + f"\nCounter-evidence: {p['counter_evidence']}\nGaps: " + '; '.join(p['gaps']))
     return '\n\n'.join(parts)
@@ -218,28 +233,38 @@ def get_memo_check(version: int = 0) -> dict:
 
 
 @tool(WRITE)
-def save_review(memo_version: int, verdict: str, must_fix: list[str], should_fix: list[str]) -> dict:
-    """Save the investment committee review of one memo version. verdict: approve, revise or reject."""
+def save_review(memo_version: int, verdict: str, must_fix: list[str], should_fix: list[str],
+                fundamentals_requests: list[str] | None = None, market_requests: list[str] | None = None) -> dict:
+    """Save the investment committee review of one memo version. verdict: approve, revise or reject.
+    fundamentals_requests and market_requests: evidence the saved packets lack and a must-fix item needs, as
+    questions for the Fundamentals Analyst (financials, price, valuation, funding) or the Market Analyst
+    (business, customers, competitors, market, regulation). Leave both empty when the saved evidence is enough."""
     if verdict.strip().lower() not in REVIEW_VERDICTS:
         raise ValueError('verdict must be approve, revise or reject.')
+    requests = {analyst: items for analyst, items in zip(ANALYSTS, (fundamentals_requests, market_requests)) if items}
     with open_case() as case:
         _draft(case, memo_version)
         review_id = f"R{len(case['reviews']) + 1}"
         case['reviews'].append({'id': review_id, 'memo_version': memo_version, 'verdict': verdict.strip().lower(),
-                                'must_fix': must_fix, 'should_fix': should_fix, 'saved_at': now()})
-    return {'id': review_id}
+                                'must_fix': must_fix, 'should_fix': should_fix, 'evidence_requests': requests,
+                                'saved_at': now()})
+    return {'id': review_id, 'evidence_requested_from': list(requests)}
 
 
 @tool(READ)
 def get_latest_review() -> str:
-    """The most recent investment committee review: which version it covers, the verdict, must-fix and should-fix items."""
+    """The most recent investment committee review: which version it covers, the verdict, must-fix and
+    should-fix items, and any evidence it asks the analysts for."""
     reviews = read_case()['reviews']
     if not reviews:
         return 'No review saved yet.'
     r = reviews[-1]
+    requests = r.get('evidence_requests') or {}
     return (f"Review {r['id']} of memo version {r['memo_version']}: verdict {r['verdict']}\nMust fix:\n"
             + '\n'.join(f'- {item}' for item in r['must_fix']) + '\nShould fix:\n'
-            + '\n'.join(f'- {item}' for item in r['should_fix']))
+            + '\n'.join(f'- {item}' for item in r['should_fix']) + '\nEvidence requests:'
+            + (''.join(f'\n- {analyst}: {item}' for analyst, items in requests.items() for item in items)
+               or ' none'))
 
 
 @tool(WRITE)
@@ -258,14 +283,35 @@ def deliver_memo(version: int = 0) -> dict:
             'note': 'Phase 1 report only: delivery is never blocked.'}
 
 
-def main() -> None:
-    load_env()
+class CallerFromEndpoint:
+    """ASGI middleware: note which agent's endpoint (/mcp?agent=<key>) each request came in on."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope['type'] != 'http':
+            return await self.app(scope, receive, send)
+        key = parse_qs(scope.get('query_string', b'').decode()).get('agent', [''])[0]
+        token = CALLER.set(AGENTS.get(key))
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            CALLER.reset(token)
+
+
+def http_app(host: str = '127.0.0.1') -> CallerFromEndpoint:
     security = TransportSecuritySettings(
         enable_dns_rebinding_protection=True,
         allowed_hosts=['127.0.0.1:*', 'localhost:*', 'host.docker.internal:*'],
         allowed_origins=['http://127.0.0.1:*', 'http://localhost:*'])
-    server.run(transport='streamable-http', host=os.environ.get('MCP_HOST', '127.0.0.1'),
-               port=int(os.environ.get('MCP_PORT', '8766')), stateless_http=True, transport_security=security)
+    return CallerFromEndpoint(server.streamable_http_app(stateless_http=True, transport_security=security, host=host))
+
+
+def main() -> None:
+    load_env()
+    host = os.environ.get('MCP_HOST', '127.0.0.1')
+    uvicorn.run(http_app(host), host=host, port=int(os.environ.get('MCP_PORT', '8766')))
 
 
 if __name__ == '__main__':

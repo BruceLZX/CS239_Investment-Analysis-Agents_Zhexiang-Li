@@ -33,12 +33,12 @@ def log_tools(run_dir, *calls):
 def test_a_captured_run_shows_each_delivery_once_with_its_rule_observations(runs):
     snap = server.snapshot(runs / 'r1')
     assert [(e['kind'], e['from'], e['to']) for e in snap['conversation']] == [
-        ('request', 'User', 'Lead Analyst'), ('message', 'Lead Analyst', 'Research Analyst'),
-        ('reply', 'Lead Analyst', 'User'), ('message', 'Research Analyst', 'Lead Analyst'),
+        ('request', 'User', 'Lead Analyst'), ('message', 'Lead Analyst', 'Market Analyst'),
+        ('reply', 'Lead Analyst', 'User'), ('message', 'Market Analyst', 'Lead Analyst'),
         ('reply', 'Lead Analyst', 'User')]
     assert snap['conversation'][0]['text'] == REQUEST
     assert [(span['bot'], span['end'] - span['start']) for span in snap['turns']] == [
-        ('Lead Analyst', 24000), ('Research Analyst', 158000), ('Lead Analyst', 160000)]
+        ('Lead Analyst', 24000), ('Market Analyst', 158000), ('Lead Analyst', 160000)]
     assert snap['captured'] and snap['outcome'] == 'delivered'
     assert {o['rule'] for o in snap['observations']} >= {'N1', 'N5', 'N7', 'N9'}
     assert snap['cost']['total']['model_calls'] > 0
@@ -68,9 +68,17 @@ def test_each_tool_call_is_credited_to_the_bot_that_could_make_it(runs):
               ('03:10', 'get_evidence_packets', {}))                    # Lead or Reviewer; the Lead got the result at 03:00
     tools = server.snapshot(runs / 'r1')['tools']
     assert [(call['tool'], call['bot']) for call in tools] == [
-        ('get_case_status', 'Lead Analyst'), ('list_sources', 'Research Analyst'),
-        ('register_source', 'Research Analyst'), ('get_evidence_packets', 'Lead Analyst')]
+        ('get_case_status', 'Lead Analyst'), ('list_sources', 'Market Analyst'),
+        ('register_source', 'Market Analyst'), ('get_evidence_packets', 'Lead Analyst')]
     assert tools[2]['summary'] == 'Strawberry robots enter the field (independent media)'
+
+
+def test_a_call_the_server_credited_to_its_caller_keeps_that_caller(runs):
+    # The analysts work at the same time, so only the server's record says which one registered a source.
+    log_tools(runs / 'r1', ('00:40', 'register_source', {'title': 'Q3 deliveries', 'source_type': 'independent media'}))
+    log = runs / 'r1' / 'tool_log.jsonl'
+    log.write_text(log.read_text().replace('"tool"', '"agent": "Fundamentals Analyst", "tool"'))
+    assert [call['bot'] for call in server.snapshot(runs / 'r1')['tools']] == ['Fundamentals Analyst']
 
 
 class FakeRakazo:
@@ -113,7 +121,7 @@ def test_a_live_run_reads_the_conversation_status_and_cost_from_rakazo(runs):
                {'createdAt': '2026-10-26T11:00:06Z', 'botId': 'bot-other', 'costUsd': 5}])  # not on this team
     snap = server.snapshot(live_run(runs), rakazo)
     assert not snap['captured'] and snap['live_error'] is None
-    assert snap['status'] == {'Lead Analyst': 'working', 'Research Analyst': 'waiting', 'IC Reviewer': 'idle'}
+    assert snap['status'] == {'Lead Analyst': 'working', 'Market Analyst': 'waiting', 'IC Reviewer': 'idle'}
     assert [(e['kind'], e['text']) for e in snap['conversation']] == [('request', 'Buy or Sell on TSLA?')]
     assert snap['usage'] == [{'ts': ms('2026-10-26T11:00:05+00:00'), 'bot': 'Lead Analyst', 'cost': 0.02}]
     assert snap['request'].startswith('Our investment committee meets in an hour.')

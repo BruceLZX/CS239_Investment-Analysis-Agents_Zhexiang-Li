@@ -11,6 +11,8 @@ from pathlib import Path
 import secrets
 import threading
 
+from .agents import ANALYSTS
+
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / 'runs'  # Read at call time, so tests can point it at a temporary folder.
 _lock = threading.RLock()
@@ -94,23 +96,34 @@ def review_gate(case: dict, version: int) -> dict:
             'review_id': latest['id'] if latest else None}
 
 
+def _packet_ids(case: dict, analyst: str, follow_up_for: str | None) -> list[str]:
+    return [p['id'] for p in case['evidence_packets']
+            if p.get('analyst') == analyst and p.get('follow_up_for') == follow_up_for]
+
+
 def status_summary(case: dict) -> dict:
-    """What has arrived so far, without the bulky content."""
+    """What has arrived so far, without the bulky content: which analysts have saved evidence, and for the
+    latest review, which analysts it asks for more evidence and whether their follow-up packets are in."""
     latest_draft = case['memo_drafts'][-1] if case['memo_drafts'] else None
     latest_review = case['reviews'][-1] if case['reviews'] else None
+    requested = (latest_review or {}).get('evidence_requests') or {}
     return {
         'run_id': case['run_id'],
         'client_documents': [{'name': d['name'], 'confidentiality': d['confidentiality']}
                              for d in case['client_documents']],
         'sources_registered': len(case['sources']),
-        'evidence_packets': [{'id': p['id'], 'topic': p['topic'], 'source_ids': p['source_ids'],
-                              'saved_at': p['saved_at']} for p in case['evidence_packets']],
+        'evidence_packets': [{'id': p['id'], 'analyst': p.get('analyst'), 'follow_up_for': p.get('follow_up_for'),
+                              'topic': p['topic'], 'source_ids': p['source_ids'], 'saved_at': p['saved_at']}
+                             for p in case['evidence_packets']],
+        'first_round_packets': {analyst: _packet_ids(case, analyst, None) for analyst in ANALYSTS},
         'latest_memo_draft': latest_draft and {'version': latest_draft['version'],
                                                'rating': latest_draft['rating'],
                                                'saved_at': latest_draft['saved_at']},
-        'latest_review': latest_review and {'id': latest_review['id'],
-                                            'memo_version': latest_review['memo_version'],
-                                            'verdict': latest_review['verdict'],
-                                            'must_fix_count': len(latest_review['must_fix'])},
+        'latest_review': latest_review and {
+            'id': latest_review['id'], 'memo_version': latest_review['memo_version'],
+            'verdict': latest_review['verdict'], 'must_fix_count': len(latest_review['must_fix']),
+            'evidence_requested_from': list(requested),
+            'follow_up_packets': {analyst: _packet_ids(case, analyst, latest_review['id']) for analyst in requested}},
+        'reviews_so_far': len(case['reviews']),
         'delivered_versions': [d['memo_version'] for d in case['deliveries']],
     }

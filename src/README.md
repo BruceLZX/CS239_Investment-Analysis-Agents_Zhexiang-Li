@@ -1,7 +1,7 @@
 # Investment Analysis Agents: source code
 
-This folder holds the application: three Rakazo bots that turn a company into an evidence-backed investment memo, and the MCP server their tools run on.
-- **The bots:** a Lead Analyst, a Research Analyst and an IC Reviewer.
+This folder holds the application: four Rakazo bots that turn a company into an evidence-backed investment memo, and the MCP server their tools run on.
+- **The bots:** a Lead Analyst, a Fundamentals Analyst, a Market Analyst and an IC Reviewer.
 - **What the app does:** [`../app.md`](../app.md).
 - **The agents and their exact prompts:** [`../agents/`](../agents/).
 - **The tools:** [`../tools.md`](../tools.md).
@@ -26,8 +26,8 @@ runs/          created at run time and gitignored: per-run case files, tool logs
 ## External requirements
 
 - **Machine:** macOS or Linux, Docker Desktop (or Docker Engine with Compose), Python 3.13, and a network connection.
-- **[Rakazo](https://github.com/elie222/rakazo):** the agent runtime, run locally in Docker. `infra/setup-rakazo.sh` downloads a pinned build (commit `b445fe9`, with a checksum check). It keeps Rakazo's generated secrets in `../../rakazo-runtime/`, next to the repository rather than inside it. Rakazo serves its web UI at http://127.0.0.1:5174.
-- **DeepSeek API key:** the bots run on DeepSeek (`deepseek-v4-pro`). You give the key to Rakazo once with `team.connect_model`; Rakazo stores it encrypted, and it never enters this repository. A scenario run costs about $0.25–0.40.
+- **[Rakazo](https://github.com/elie222/rakazo):** the agent runtime, run locally in Docker. `infra/setup-rakazo.sh` downloads a pinned build (commit `b445fe9`, with a checksum check) and raises Rakazo's bot-to-bot hop limit to 8, which the team's follow-up research round needs. It keeps Rakazo's generated secrets in `../../rakazo-runtime/`, next to the repository rather than inside it. Rakazo serves its web UI at http://127.0.0.1:5174.
+- **DeepSeek API key:** the bots run on DeepSeek (`deepseek-v4-pro`). You give the key to Rakazo once with `team.connect_model`; Rakazo stores it encrypted, and it never enters this repository. A scenario run costs about $0.25–0.85.
 - **SEC EDGAR:** free. SEC's fair-access policy requires a contact in the User-Agent (`SEC_USER_AGENT`).
 - **Yahoo Finance's chart endpoint:** price context, used at low volume; no key needed.
 - **Web search:** Rakazo's built-in `web_search` scrapes DuckDuckGo by default; no key needed.
@@ -42,7 +42,7 @@ runs/          created at run time and gitignored: per-run case files, tool logs
 | `SEC_USER_AGENT` | your contact for SEC requests, e.g. `Your Name you@example.com`; `team.connect_model` asks for it |
 | `MODEL_ID`, `THINKING_LEVEL` | the bots' model and thinking level (defaults `deepseek-v4-pro`, `high`) |
 | `MCP_HOST`, `MCP_PORT` | where the MCP server listens (`127.0.0.1`, `8766`) |
-| `MCP_ENDPOINT` | the address Rakazo's containers use to reach it (`http://host.docker.internal:8766/mcp`) |
+| `MCP_ENDPOINT` | the address Rakazo's containers use to reach it (`http://host.docker.internal:8766/mcp`); each bot gets this address with its own `?agent=` key |
 | `RAKAZO_TEST_EMAIL`, `RAKAZO_TEST_PASSWORD` | written by `team.login --local-test`; never printed |
 
 ## Install and configure
@@ -74,7 +74,7 @@ Then run a scenario, export its trace and check it. For example:
 .venv/bin/python -m team.check_trace ../traces/phase1/public-equity-memo.json
 ```
 
-- **`run_scenario <name>`** runs one of `public-equity-memo`, `confidential-startup`, `manipulated-deck` or `rushed-call`. It creates or updates the bots, clears their threads, sends the scenario's request to the Lead Analyst, waits for the memo, and copies Rakazo's transcripts into `runs/<run_id>/`. Options:
+- **`run_scenario <name>`** runs one of `public-equity-memo`, `confidential-startup`, `manipulated-deck` or `rushed-call`. It creates or updates the bots (and archives the Research Analyst from the earlier three-bot team), clears their threads, sends the scenario's request to the Lead Analyst, waits for the memo, and copies Rakazo's transcripts into `runs/<run_id>/`. Options:
   - `--narrate` prints the conversation between the bots as it happens;
   - `--approval-cards wait` leaves Rakazo's approval cards for you to answer (the default denies them, so unattended runs don't stall).
 - **`export_trace [run_id]`** turns a run (default: the latest) into `../traces/phase1/<scenario>.json` and `.md`. Use `--out` to write somewhere else.

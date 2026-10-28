@@ -106,8 +106,9 @@ def _summary(tool: str, arguments: dict) -> str:
 
 
 def tool_calls(run_dir: Path, entries: list[dict]) -> list[dict]:
-    """The MCP server's log for this run, each call credited to the bot that made it: a tool only one bot
-    may call goes to that bot, a shared one to the allowed bot that was most recently given work."""
+    """The MCP server's log for this run, each call credited to the bot that made it. The server logs the
+    caller; for older logs without one, a tool only one bot may call goes to that bot, and a shared one to the
+    allowed bot that was most recently given work."""
     path = run_dir / 'tool_log.jsonl'
     if not path.exists():
         return []
@@ -121,8 +122,8 @@ def tool_calls(run_dir: Path, entries: list[dict]) -> list[dict]:
         ts = _ms(record['ts'])
         allowed = tool_owners().get(record['tool'], ())
         # The log keeps whole seconds, so a call can look up to a second older than the message that started it.
-        bot = allowed[0] if len(allowed) == 1 else next(
-            (name for when, name in reversed(woken) if when <= ts + 999 and name in allowed), None)
+        bot = record.get('agent') or (allowed[0] if len(allowed) == 1 else next(
+            (name for when, name in reversed(woken) if when <= ts + 999 and name in allowed), None))
         calls.append({'ts': ts, 'tool': record['tool'], 'bot': bot, 'summary': _summary(record['tool'], arguments)})
     return calls
 
@@ -134,12 +135,14 @@ def case_view(case: dict, started: int) -> dict:
         'documents': [{'name': d['name'], 'confidentiality': d['confidentiality']} for d in case['client_documents']],
         'sources': [{'id': s['id'], 'title': s.get('title'), 'type': s.get('source_type'),
                      'location': s.get('location'), 'ts': when(s, 'registered_at')} for s in case['sources']],
-        'packets': [{'id': p['id'], 'topic': p.get('topic'), 'source_ids': p.get('source_ids', []),
+        'packets': [{'id': p['id'], 'analyst': p.get('analyst'), 'follow_up_for': p.get('follow_up_for'),
+                     'topic': p.get('topic'), 'source_ids': p.get('source_ids', []),
                      'ts': when(p, 'saved_at')} for p in case['evidence_packets']],
         'drafts': [{'version': d['version'], 'rating': d.get('rating'), 'markdown': d.get('markdown', ''),
                     'ts': when(d, 'saved_at')} for d in case['memo_drafts']],
         'reviews': [{'id': r['id'], 'version': r.get('memo_version'), 'verdict': r.get('verdict'),
-                     'must_fix': r.get('must_fix', []), 'ts': when(r, 'saved_at')} for r in case['reviews']],
+                     'must_fix': r.get('must_fix', []), 'requests': r.get('evidence_requests') or {},
+                     'ts': when(r, 'saved_at')} for r in case['reviews']],
         'deliveries': [{'version': d['memo_version'], 'gate': d.get('review_gate') or {},
                         'findings': (d.get('memo_check') or {}).get('findings', []),
                         'ts': when(d, 'delivered_at')} for d in case['deliveries']],

@@ -1,5 +1,7 @@
 import json
 
+from starlette.testclient import TestClient
+
 from tools import case_file, server
 
 from .helpers import call_tool, list_tools, result_text
@@ -100,6 +102,54 @@ def test_a_memo_too_long_to_read_whole_is_refused(runs_dir):
     result = call_tool(server.server, 'save_memo_draft', {**DRAFT, 'markdown': memo_of(memo_room() + 1)})
     assert result.is_error and 'could not read it whole' in result_text(result)
     assert case_file.read_case()['memo_drafts'] == []
+
+
+PACKET = {'topic': 'BYD vs Tesla', 'summary': 'BEV volumes', 'findings': ['BYD sold 2.26M BEVs in 2025 [S1]'],
+          'source_ids': ['S1'], 'counter_evidence': 'Tesla margins are higher', 'gaps': []}
+
+
+def test_each_call_is_credited_to_the_agent_whose_endpoint_it_came_in_on(runs_dir):
+    case_file.start_run('demo')
+    body = {'jsonrpc': '2.0', 'id': 1, 'method': 'tools/call',
+            'params': {'name': 'save_evidence_packet', 'arguments': PACKET}}
+    # The base URL keeps the Host header inside the server's DNS-rebinding allowlist.
+    with TestClient(server.http_app(), base_url='http://127.0.0.1:8766') as client:
+        for key in ('market', 'fundamentals', 'someone-else'):
+            response = client.post(f'/mcp?agent={key}', json=body,
+                                   headers={'Accept': 'application/json, text/event-stream'})
+            assert response.status_code == 200 and '"isError":false' in response.text
+    log = [json.loads(line) for line in (case_file.active_run_dir() / 'tool_log.jsonl').read_text().splitlines()]
+    assert [entry['agent'] for entry in log] == ['Market Analyst', 'Fundamentals Analyst', None]
+    assert [p['analyst'] for p in case_file.read_case()['evidence_packets']] == [
+        'Market Analyst', 'Fundamentals Analyst', None]
+
+
+def test_a_packet_saved_after_a_review_answers_its_evidence_requests(runs_dir):
+    case_file.start_run('demo')
+    token = server.CALLER.set('Market Analyst')
+    try:
+        call_tool(server.server, 'save_evidence_packet', PACKET)
+        call_tool(server.server, 'save_memo_draft', DRAFT)
+        review = call_tool(server.server, 'save_review', {
+            'memo_version': 1, 'verdict': 'revise', 'must_fix': ['Compare BEVs with BEVs'], 'should_fix': [],
+            'market_requests': ["BYD's 2025 BEV-only sales"]})
+        follow_up = call_tool(server.server, 'save_evidence_packet', PACKET)
+    finally:
+        server.CALLER.reset(token)
+    assert json.loads(result_text(review)) == {'id': 'R1', 'evidence_requested_from': ['Market Analyst']}
+    assert json.loads(result_text(follow_up))['follow_up_for'] == 'R1'
+    assert result_text(call_tool(server.server, 'get_latest_review', {})).endswith(
+        "Evidence requests:\n- Market Analyst: BYD's 2025 BEV-only sales")
+    packets = result_text(call_tool(server.server, 'get_evidence_packets', {}))
+    assert '## E1 (Market Analyst): BYD vs Tesla' in packets
+    assert '## E2 (Market Analyst, follow-up for review R1): BYD vs Tesla' in packets
+
+
+def test_a_review_without_evidence_requests_says_so(runs_dir):
+    case_file.start_run('demo')
+    call_tool(server.server, 'save_memo_draft', DRAFT)
+    call_tool(server.server, 'save_review', {'memo_version': 1, 'verdict': 'approve', 'must_fix': [], 'should_fix': []})
+    assert result_text(call_tool(server.server, 'get_latest_review', {})).endswith('Evidence requests: none')
 
 
 def test_longer_results_are_cut_where_rakazo_would_cut_them(runs_dir):

@@ -20,7 +20,7 @@ import yaml
 
 from tools import memo
 
-from .profiles import BUILTIN_TOOLS, team_profiles
+from .profiles import BUILTIN_TOOLS, FUNDAMENTALS, LEAD, MARKET, REVIEWER, team_profiles
 
 ROOT = Path(__file__).resolve().parents[1]
 FORMAT = 'cs239-agent-team-trace/1'
@@ -34,8 +34,14 @@ CONFIDENTIAL_PATTERNS = (re.compile(r'\$\d[\d,.]*\s?(?:[MBK]\b|million|billion)?
                          re.compile(r'\b\d+(?:\.\d+)?%'),
                          re.compile(r'\*\*([^*]{3,60})\*\*'))
 OUTBOUND_TOOLS = {'web_search', 'web_fetch'}
+# Two ratings side by side ("a Buy or Sell call", "Invest/Pass") name the question, not an answer.
+RATING_PAIR_RE = re.compile(r'\b(?:buy|add|hold-off|hold|reduce|sell|watchlist|invest|wait|pass)\s*(?:/|\bor\b)\s*'
+                            r'(?:buy|add|hold-off|hold|reduce|sell|watchlist|invest|wait|pass)\b', re.I)
+# What a message to the user must not mention (rule N6); a status note may still describe the work.
+MESSAGE_INTERNAL_RE = re.compile(r'\bmust[- ]fix\b|\bshould[- ]fix\b|\bevidence packets?\b'
+                                 r'|\b(?:get|save|list|find|read|register|deliver)_[a-z_]+\b', re.I)
 # Budgets from the role prompts (rule N9).
-TURN_BUDGETS = {'Lead Analyst': 15, 'Research Analyst': 25, 'IC Reviewer': 10}
+TURN_BUDGETS = {LEAD: 15, FUNDAMENTALS: 25, MARKET: 25, REVIEWER: 10}
 BRIEF_BUDGETS = {'web_search': 6, 'web_fetch': 6}
 
 
@@ -199,9 +205,33 @@ def _rule_key(observation: dict):
     return (0, int(rule[1:])) if re.fullmatch(r'N\d+', rule) else (1, 0)
 
 
-def observe_rules(events: list[dict], runs: list[dict], case: dict) -> list[dict]:
-    """Possible rule breaks visible in a run. Phase 1 only reports them; nothing was blocked."""
+def observe_user_messages(replies: list[dict], case: dict) -> list[dict]:
+    """What the Lead told the user: a draft's rating before any version was delivered (N5),
+    and internal working material in any message (N6)."""
     observations = []
+    delivered_ms = min((_ms(d['delivered_at']) for d in case['deliveries']), default=float('inf'))
+    for reply in replies:
+        text = reply.get('text', '')
+        quoted = _clip(' '.join(text.split()), 120)
+        if reply['ts_ms'] < delivered_ms:
+            ratings = {d['rating'] for d in case['memo_drafts'] if _ms(d['saved_at']) <= reply['ts_ms']}
+            answer_text = RATING_PAIR_RE.sub(' ', text)
+            named = sorted(r for r in ratings if re.search(rf'\b{re.escape(r)}\b', answer_text))
+            if named:
+                observations.append({'rule': 'N5', 'detail': f"before delivery, the Lead told the user the draft's "
+                                                              f"rating ({', '.join(named)}): \"{quoted}\""})
+        internal = sorted({m.group() for m in MESSAGE_INTERNAL_RE.finditer(text)} |
+                          {m.group() for m in memo.INTERNAL_IDS_RE.finditer(text)})
+        if internal:
+            observations.append({'rule': 'N6', 'detail': f"the Lead's message to the user names internal material "
+                                                          f"({', '.join(internal[:6])}): \"{quoted}\""})
+    return observations
+
+
+def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: list[dict] = ()) -> list[dict]:
+    """Possible rule breaks visible in a run. Phase 1 only reports them; nothing was blocked.
+    replies: the Lead's messages in the user's thread, as Rakazo stored them."""
+    observations = observe_user_messages(list(replies), case)
     for delivery in case['deliveries']:
         gate = delivery.get('review_gate') or {}
         if not gate.get('approved'):
@@ -282,6 +312,9 @@ def build_trace(run_dir: Path) -> dict:
             totals[key] += value
 
     recorded = {run['rakazo_run_id'] for run in runs}
+    # Every message the user saw from the Lead, including those the transcripts also record.
+    replies = [{'ts_ms': event['ts_ms'], 'text': event.get('text', '')}
+               for event in api if event['type'] == 'reply' and event['agent'] == LEAD]
     # Bot replies duplicate the transcript's final words; keep them only for runs without a transcript.
     events += [event for event in api if event['type'] != 'reply' or event.get('rakazo_run_id') not in recorded]
     events.sort(key=lambda event: event['ts_ms'])
@@ -316,14 +349,15 @@ def build_trace(run_dir: Path) -> dict:
                    for profile in team_profiles()],
         'rakazo_runs': runs,
         'events': events,
-        'observations': observe_rules(events, runs, case),
+        'observations': observe_rules(events, runs, case, replies),
         'case_file': {
             'client_documents': [{'name': d['name'], 'confidentiality': d['confidentiality']} for d in case['client_documents']],
             'sources': case['sources'],
-            'evidence_packets': [{'id': p['id'], 'topic': p['topic'], 'source_ids': p['source_ids']} for p in case['evidence_packets']],
+            'evidence_packets': [{'id': p['id'], 'analyst': p.get('analyst'), 'follow_up_for': p.get('follow_up_for'),
+                                  'topic': p['topic'], 'source_ids': p['source_ids']} for p in case['evidence_packets']],
             'memo_versions': [{'version': d['version'], 'rating': d['rating'], 'saved_at': d['saved_at']} for d in case['memo_drafts']],
-            'reviews': [{'id': r['id'], 'memo_version': r['memo_version'], 'verdict': r['verdict'], 'must_fix': r['must_fix']}
-                        for r in case['reviews']],
+            'reviews': [{'id': r['id'], 'memo_version': r['memo_version'], 'verdict': r['verdict'], 'must_fix': r['must_fix'],
+                         'evidence_requests': r.get('evidence_requests') or {}} for r in case['reviews']],
             'deliveries': [{'memo_version': d['memo_version'], 'delivered_at': d['delivered_at'],
                             'review_gate': d['review_gate'], 'memo_check_findings': d['memo_check']['findings']}
                            for d in case['deliveries']],
@@ -403,9 +437,14 @@ def render_markdown(trace: dict) -> str:
         lines += ['| ID | Source | Type | Confidence |', '|---|---|---|---|']
         lines += [f"| {s['id']} | {s['title']} | {s['source_type']} | {s['confidence']} |" for s in case['sources']]
         lines.append('')
+    for packet in case['evidence_packets']:
+        follow_up = f", follow-up for review {packet['follow_up_for']}" if packet.get('follow_up_for') else ''
+        lines.append(f"- Evidence packet {packet['id']} ({packet.get('analyst') or 'unknown analyst'}{follow_up}): "
+                     f"{packet['topic']}")
     for review in case['reviews']:
+        asked = ', '.join(review.get('evidence_requests') or {})
         lines.append(f"- Review {review['id']} of memo v{review['memo_version']}: {review['verdict']}, "
-                     f"{len(review['must_fix'])} must-fix items")
+                     f"{len(review['must_fix'])} must-fix items" + (f", evidence requested from {asked}" if asked else ''))
     for delivery in case['deliveries']:
         gate = delivery['review_gate']
         status = (f"approved in review {gate['review_id']}" if gate['approved']

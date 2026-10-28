@@ -1,3 +1,4 @@
+from team import run_scenario
 from team.run_scenario import narrate
 
 
@@ -16,7 +17,7 @@ def message(id_, role, created_at, block):
 THREADS = {
     'lead': [
         message('m1', 'user', '2026-10-27T02:05:01Z', {'kind': 'text', 'text': 'Buy or Sell on TSLA?'}),
-        message('m2', 'bot', '2026-10-27T02:05:09Z', {'kind': 'bot_message_sent', 'toBotName': 'Research Analyst',
+        message('m2', 'bot', '2026-10-27T02:05:09Z', {'kind': 'bot_message_sent', 'toBotName': 'Market Analyst',
                                                        'text': 'Research Tesla.', 'intent': 'request'}),
         message('m3', 'bot', '2026-10-27T02:05:10Z', {'kind': 'text', 'text': "I can't skip the review."}),
     ],
@@ -25,7 +26,7 @@ THREADS = {
                                                         'text': 'Research   Tesla.\n', 'intent': 'request'}),
     ],
 }
-BOTS = {'Lead Analyst': 'lead', 'Research Analyst': 'analyst'}
+BOTS = {'Lead Analyst': 'lead', 'Market Analyst': 'analyst'}
 
 
 def test_narration_prints_each_delivery_once_in_time_order(capsys):
@@ -33,7 +34,14 @@ def test_narration_prints_each_delivery_once_in_time_order(capsys):
     narrate(FakeRakazo(THREADS), BOTS, seen)
     lines = [line.split('] ', 1)[1] for line in capsys.readouterr().out.splitlines()]
     assert lines == ['user → Lead Analyst: Buy or Sell on TSLA?',
-                     'Lead Analyst → Research Analyst (request): Research Tesla.',
+                     'Lead Analyst → Market Analyst (request): Research Tesla.',
                      "Lead Analyst → user: I can't skip the review."]
     narrate(FakeRakazo(THREADS), BOTS, seen)
     assert capsys.readouterr().out == ''
+
+
+def test_a_re_review_that_does_not_approve_ends_the_run_without_a_memo():
+    revise, approve = {'verdict': 'revise'}, {'verdict': 'approve'}
+    assert run_scenario.review_failed({'reviews': [revise, revise]})
+    assert not run_scenario.review_failed({'reviews': [revise]})            # the first review: a revision is coming
+    assert not run_scenario.review_failed({'reviews': [revise, approve]})

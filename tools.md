@@ -1,4 +1,4 @@
-message_bot: Rakazo built-in. Takes confirm_name (the recipient bot's name: "Research Analyst" or "IC Reviewer"), intent ("request") and message (the text to send). Returns a receipt with ok, the recipient's bot id and name; the recipient's final reply arrives later as a new message to the sender.
+message_bot: Rakazo built-in. Takes confirm_name (the recipient bot's name: "Fundamentals Analyst", "Market Analyst" or "IC Reviewer"), intent ("request") and message (the text to send). Returns a receipt with ok, the recipient's bot id and name; the recipient's final reply arrives later as a new message to the sender.
 
 web_search: Rakazo built-in (DuckDuckGo by default). Takes query and maxResults. Returns a list of results, each with title, url and snippet.
 
@@ -18,11 +18,11 @@ register_source: Takes title, source_type (primary filing, company website, mark
 
 list_sources: Takes no input. Returns the case's source register as a table of ID, title, type, location, date and confidence.
 
-get_case_status: Takes no input. Returns what has arrived in the case: the run ID, the attached client documents with their confidentiality labels, the number of registered sources, the evidence packets, the latest memo draft and review, and the delivered versions.
+get_case_status: Takes no input. Returns what has arrived in the case: the run ID, the attached client documents with their confidentiality labels, the number of registered sources, the evidence packets with the analyst that saved each, each analyst's first-round packets, the latest memo draft, the latest review with the analysts it asks for evidence and their follow-up packets so far, the number of reviews, and the delivered versions.
 
-save_evidence_packet: Takes topic, summary, findings (each ending with its source IDs), source_ids, counter_evidence and gaps. Saves the packet to the case file and returns its ID (E1, E2, ...) and any cited source IDs that are not in the register.
+save_evidence_packet: Takes topic, summary, findings (each ending with its source IDs), source_ids, counter_evidence and gaps. Saves the packet to the case file, credited to the analyst whose endpoint made the call; a packet saved after a review is marked as the follow-up for that review. Returns the packet's ID (E1, E2, ...), the analyst, the review it follows up (if any) and any cited source IDs that are not in the register.
 
-get_evidence_packets: Takes no input. Returns every saved evidence packet with its summary, findings, counter-evidence and gaps.
+get_evidence_packets: Takes no input. Returns every saved evidence packet with its analyst, the review it follows up (if any), summary, findings, counter-evidence and gaps.
 
 save_memo_draft: Takes markdown (the memo with inline [S#] citations), rating (Buy, Add, Hold, Reduce, Sell, Watchlist or Hold-off for a listed company; Invest, Wait or Pass for a private one) and data_as_of (YYYY-MM-DD). Saves a new memo version and returns its version number; returns an error for any other rating, or for a memo too long for get_memo_draft to return whole (one tool result holds 12,000 characters, header line included).
 
@@ -30,8 +30,8 @@ get_memo_draft: Takes version (0 for the latest). Returns that version's rating,
 
 get_memo_check: Takes version (0 for the latest). Returns the version's rating, the cited IDs found in the register, the registered IDs it doesn't cite, and findings: cited IDs missing from the register, numbers without a source, company claims without a verification status, a rating the evidence gate doesn't support, internal working material, and a missing disclaimer or data-as-of date. It reports and never blocks.
 
-save_review: Takes memo_version, verdict (approve, revise or reject), must_fix and should_fix (lists of items). Saves the review to the case file and returns its ID (R1, R2, ...); returns an error if that memo version doesn't exist.
+save_review: Takes memo_version, verdict (approve, revise or reject), must_fix and should_fix (lists of items), and optionally fundamentals_requests and market_requests (questions for the analyst who should find evidence the packets lack). Saves the review to the case file and returns its ID (R1, R2, ...) and the analysts it asks for evidence; returns an error if that memo version doesn't exist.
 
-get_latest_review: Takes no input. Returns the most recent review: the memo version it covers, its verdict and its must-fix and should-fix items.
+get_latest_review: Takes no input. Returns the most recent review: the memo version it covers, its verdict, its must-fix and should-fix items, and its evidence requests by analyst ("none" when there are none).
 
 deliver_memo: Takes version (0 for the latest). Records the delivery, writes the memo to memo_v<N>.md in the run folder, and returns the delivered version, the review gate (whether that version was reviewed and approved, and by which review) and the memo check. In Phase 1 it never blocks a delivery.

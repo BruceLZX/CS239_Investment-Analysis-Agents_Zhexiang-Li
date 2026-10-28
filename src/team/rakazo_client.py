@@ -40,6 +40,7 @@ class BotProfile:
     description: str  # Short: Rakazo shows it to every other bot in its teammate directory.
     instructions: str
     model: ModelChoice
+    mcp: MCPConnection | None = None  # The bot's own entry for the MCP server, carrying its identity.
     mcp_tools: tuple[str, ...] = ()
     disabled_builtin_tools: tuple[str, ...] = ()
 
@@ -108,10 +109,12 @@ class Rakazo:
                               'change it in Rakazo or use another slug.')
         return server
 
-    def configure_team(self, profiles: list[BotProfile], mcp: MCPConnection) -> dict[str, str]:
-        """Create missing bots and bring every bot's prompt, model and tools up to date."""
-        server = self.ensure_mcp_server(mcp)
+    def configure_team(self, profiles: list[BotProfile], retired: tuple[str, ...] = ()) -> dict[str, str]:
+        """Archive retired bots, create missing ones and bring every bot's prompt, model and tools up to date."""
         existing = self.bots()
+        for name in retired:
+            if name in existing:
+                self.rpc('bots/archive', {'botId': existing.pop(name)['id']})
         ids = {}
         for profile in profiles:
             bot = existing.get(profile.name)
@@ -126,8 +129,8 @@ class Rakazo:
                 'modelProvider': profile.model.provider, 'modelId': profile.model.model_id,
                 'thinkingLevel': profile.model.thinking_level, 'notifyOnFinish': False,
                 'disabledBuiltinTools': list(profile.disabled_builtin_tools)})
-            assignments = [{'serverId': server['id'], 'allowAllTools': False,
-                            'allowedTools': list(profile.mcp_tools)}] if profile.mcp_tools else []
+            assignments = [{'serverId': self.ensure_mcp_server(profile.mcp)['id'], 'allowAllTools': False,
+                            'allowedTools': list(profile.mcp_tools)}] if profile.mcp and profile.mcp_tools else []
             self.rpc('mcp/assignments/replace', {'botId': bot['id'], 'assignments': assignments})
             ids[profile.name] = bot['id']
         return ids

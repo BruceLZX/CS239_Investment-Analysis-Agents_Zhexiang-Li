@@ -7,14 +7,14 @@
 <style>
 :root {
   --bg: #f4f6f9; --panel: #ffffff; --ink: #172033; --muted: #5b6577; --line: #e0e5ec; --soft: #eef1f6;
-  --lead: #2f5bd3; --analyst: #0e8a68; --reviewer: #9b3f94; --user: #56607a; --accent: #2f5bd3;
-  --warn: #a86400; --warn-bg: #fff3dd; --ok: #1d8348; --ok-bg: #e3f4ea; --bad: #c0392b; --bad-bg: #fdecea;
+  --lead: #2f5bd3; --fundamentals: #0e8a68; --market: #c4521a; --reviewer: #9b3f94; --user: #56607a; --accent: #2f5bd3;
+  --source: #0e8a68; --warn: #a86400; --warn-bg: #fff3dd; --ok: #1d8348; --ok-bg: #e3f4ea; --bad: #c0392b; --bad-bg: #fdecea;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0f141c; --panel: #171e29; --ink: #e6ebf3; --muted: #9aa5b8; --line: #2a3443; --soft: #202a38;
-    --lead: #7d9cff; --analyst: #4cc7a2; --reviewer: #d58bcf; --user: #9aa5b8; --accent: #7d9cff;
-    --warn: #f0b04a; --warn-bg: #3a2c12; --ok: #5cc98a; --ok-bg: #143223; --bad: #ff7b6e; --bad-bg: #3b1916;
+    --lead: #7d9cff; --fundamentals: #4cc7a2; --market: #ff9a62; --reviewer: #d58bcf; --user: #9aa5b8; --accent: #7d9cff;
+    --source: #4cc7a2; --warn: #f0b04a; --warn-bg: #3a2c12; --ok: #5cc98a; --ok-bg: #143223; --bad: #ff7b6e; --bad-bg: #3b1916;
   }
 }
 * { box-sizing: border-box; }
@@ -55,7 +55,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .edge-label { font-size: 14px; font-weight: 700; fill: var(--accent); opacity: 0; transition: opacity .4s; paint-order: stroke; stroke: var(--panel); stroke-width: 5px; }
 .edge-label.show { opacity: 1; }
 .node { --c: var(--user); }
-.node.lead { --c: var(--lead); } .node.analyst { --c: var(--analyst); } .node.reviewer { --c: var(--reviewer); }
+.node.lead { --c: var(--lead); } .node.fundamentals { --c: var(--fundamentals); } .node.market { --c: var(--market); }
+.node.reviewer { --c: var(--reviewer); }
 .node rect { fill: var(--panel); stroke: var(--line); stroke-width: 2; transition: stroke .3s; }
 .node .bar { fill: var(--c); stroke: none; }
 .node-name { font-size: 17px; font-weight: 700; fill: var(--ink); }
@@ -86,7 +87,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .side { display: grid; gap: 14px; align-content: start; min-width: 0; }
 .convo-box { height: 600px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
 .msg { --c: var(--line); border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 10px; padding: 8px 12px; background: var(--panel); }
-.msg.from-lead { --c: var(--lead); } .msg.from-analyst { --c: var(--analyst); } .msg.from-reviewer { --c: var(--reviewer); }
+.msg.from-lead { --c: var(--lead); } .msg.from-fundamentals { --c: var(--fundamentals); }
+.msg.from-market { --c: var(--market); } .msg.from-reviewer { --c: var(--reviewer); }
 .msg.from-user { --c: var(--user); background: var(--soft); }
 .msg.guard { --c: var(--warn); background: var(--warn-bg); }
 .msg.new { animation: arrive .5s ease-out; }
@@ -104,14 +106,15 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .list li { padding: 5px 2px; border-bottom: 1px solid var(--line); font-size: 13.5px; display: flex; gap: 8px; align-items: baseline; min-width: 0; }
 .list li:last-child { border-bottom: 0; }
 .list li.new { animation: glow 1.6s ease-out; }
-.sid { font-weight: 800; color: var(--analyst); min-width: 30px; }
+.sid { font-weight: 800; color: var(--source); min-width: 30px; }
 .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wrap-text { flex: 1; min-width: 0; }
 .muted { color: var(--muted); }
 .small { font-size: 12.5px; }
 .time { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bot-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--user); align-self: center; }
-.bot-dot.lead { background: var(--lead); } .bot-dot.analyst { background: var(--analyst); } .bot-dot.reviewer { background: var(--reviewer); }
+.bot-dot.lead { background: var(--lead); } .bot-dot.fundamentals { background: var(--fundamentals); }
+.bot-dot.market { background: var(--market); } .bot-dot.reviewer { background: var(--reviewer); }
 code { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); padding: 0 4px; border-radius: 4px; }
 .fixes { margin: 4px 0 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; }
 .bottom { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
@@ -126,7 +129,7 @@ code { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; background: 
 .msg-body p { margin: 4px 0; }
 .msg-body ul, .msg-body ol, .memo ul, .memo ol { margin: 4px 0; padding-left: 20px; }
 blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--line); color: var(--muted); }
-.cite { display: inline-block; font-size: 11px; font-weight: 800; color: var(--analyst); background: var(--soft); border-radius: 4px; padding: 0 4px; margin: 0 1px; cursor: help; vertical-align: 1px; }
+.cite { display: inline-block; font-size: 11px; font-weight: 800; color: var(--source); background: var(--soft); border-radius: 4px; padding: 0 4px; margin: 0 1px; cursor: help; vertical-align: 1px; }
 .rules table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .rules td { border-bottom: 1px solid var(--line); padding: 6px 4px; vertical-align: top; overflow-wrap: anywhere; }
 .rules td:first-child { white-space: nowrap; width: 1%; padding-right: 10px; }
@@ -148,7 +151,7 @@ blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--lin
   <header class="top">
     <div>
       <h1>Investment research team</h1>
-      <p class="sub">Three DeepSeek agents on Rakazo. Phase 1: the rules are prompt instructions only; nothing enforces them.</p>
+      <p class="sub">Four DeepSeek agents on Rakazo. Phase 1: the rules are prompt instructions only; nothing enforces them.</p>
     </div>
     <div class="controls">
       <div class="control-group"><span>Live</span><select id="scenario" aria-label="Scenario"></select><button id="start" class="primary">Start live run</button></div>
@@ -172,7 +175,7 @@ blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--lin
   </section>
 
   <section class="overview">
-    <div class="panel"><h2>The team <span class="count" id="who-now"></span></h2><svg id="team" viewBox="0 0 770 262" role="img" aria-label="The three agents and the messages between them"></svg></div>
+    <div class="panel"><h2>The team <span class="count" id="who-now"></span></h2><svg id="team" viewBox="0 0 770 334" role="img" aria-label="The four agents and the messages between them"></svg></div>
     <div class="panel">
       <h2>The request <span class="count" id="scenario-name"></span></h2>
       <div id="request"><p class="empty">The user's request appears here.</p></div>
@@ -200,16 +203,18 @@ blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--lin
 <script>
 'use strict';
 const $ = (id) => document.getElementById(id);
-const LEAD = 'Lead Analyst', ANALYST = 'Research Analyst', REVIEWER = 'IC Reviewer';
-const BOTS = [LEAD, ANALYST, REVIEWER];
-const SHORT = {[LEAD]: 'lead', [ANALYST]: 'analyst', [REVIEWER]: 'reviewer', User: 'user'};
+const LEAD = 'Lead Analyst', FUNDAMENTALS = 'Fundamentals Analyst', MARKET = 'Market Analyst', REVIEWER = 'IC Reviewer';
+const ANALYSTS = [FUNDAMENTALS, MARKET];
+const BOTS = [LEAD, ...ANALYSTS, REVIEWER];
+const SHORT = {[LEAD]: 'lead', [FUNDAMENTALS]: 'fundamentals', [MARKET]: 'market', [REVIEWER]: 'reviewer', User: 'user'};
 const NODES = {
-  User: {x: 110, y: 130, role: 'asks for the memo'},
-  [LEAD]: {x: 385, y: 130, role: 'plans · writes · delivers'},
-  [ANALYST]: {x: 660, y: 58, role: 'SEC filings · prices · web'},
-  [REVIEWER]: {x: 660, y: 198, role: 'investment-committee review'},
+  User: {x: 110, y: 150, role: 'asks for the memo'},
+  [LEAD]: {x: 385, y: 150, role: 'plans · writes · delivers'},
+  [FUNDAMENTALS]: {x: 660, y: 40, role: 'filings · prices · valuation'},
+  [MARKET]: {x: 660, y: 150, role: 'business · competitors · market'},
+  [REVIEWER]: {x: 660, y: 260, role: 'investment-committee review'},
 };
-const EDGES = [['User', LEAD], [LEAD, ANALYST], [LEAD, REVIEWER]];
+const EDGES = [['User', LEAD], [LEAD, FUNDAMENTALS], [LEAD, MARKET], [LEAD, REVIEWER]];
 const TOOL_VERBS = {
   get_case_status: 'checking the case file', read_client_document: 'reading the client document',
   find_sec_company: 'looking up the company at SEC', get_sec_financials: 'pulling SEC financials',
@@ -349,8 +354,11 @@ const edgeId = (a, b) => 'edge-' + [SHORT[a], SHORT[b]].sort().join('-');
 function edgeLabel(entry) {
   if (entry.kind === 'request') return 'request';
   if (entry.kind === 'reply') return 'reply';
-  if (entry.from === LEAD) return entry.to === ANALYST ? 'brief' : 'review request';
-  if (entry.from === ANALYST) return 'evidence';
+  if (entry.from === LEAD && ANALYSTS.includes(entry.to)) {
+    return S.snap.conversation.some((e) => e.from === REVIEWER && e.ts < entry.ts) ? 'follow-up' : 'brief';
+  }
+  if (entry.from === LEAD) return 'review request';
+  if (ANALYSTS.includes(entry.from)) return 'evidence';
   if (entry.from === REVIEWER) return 'verdict';
   return entry.intent || 'message';
 }
@@ -400,16 +408,26 @@ function activity(snap, bot, t, tools, status) {
 function steps(view) {
   const {convo, sources, packets, drafts, reviews, deliveries, status} = view;
   const sent = (from, to) => convo.some((e) => e.kind === 'message' && e.from === from && e.to === to);
-  const briefed = sent(LEAD, ANALYST), researched = packets.length > 0 || sent(ANALYST, LEAD);
+  const briefed = ANALYSTS.filter((analyst) => sent(LEAD, analyst));
+  const firstRound = packets.filter((p) => !p.follow_up_for);
+  const researched = ANALYSTS.every((analyst) => firstRound.some((p) => p.analyst === analyst) || sent(analyst, LEAD));
   const draft = drafts[drafts.length - 1], review = reviews[reviews.length - 1], delivery = deliveries[deliveries.length - 1];
   const reviewState = status[REVIEWER] === 'working' ? 'active' : !review ? 'todo' : review.verdict === 'approve' ? 'done' : 'warn';
+  // A review that asked for evidence, then the follow-up packets that answered it.
+  const reviewDetail = reviews.map((r) => {
+    const answered = packets.filter((p) => p.follow_up_for === r.id).map((p) => p.id);
+    const followUp = answered.length ? ` → follow-up ${answered.join(', ')}`
+      : Object.keys(r.requests || {}).length ? ' → follow-up requested' : '';
+    return `${r.id} ${r.verdict}${followUp}`;
+  });
   return [
     {label: 'Request', state: convo.some((e) => e.kind === 'request') ? 'done' : 'todo', detail: ''},
-    {label: 'Brief', state: briefed ? 'done' : convo.length ? 'active' : 'todo', detail: briefed ? 'Lead → Research Analyst' : ''},
-    {label: 'Research', state: researched ? 'done' : briefed ? 'active' : 'todo',
-     detail: sources.length ? `${sources.length} sources` + (packets.length ? ` · evidence ${packets.map((p) => p.id).join(', ')}` : '') : ''},
+    {label: 'Brief', state: briefed.length === ANALYSTS.length ? 'done' : convo.length ? 'active' : 'todo',
+     detail: briefed.length ? 'Lead → ' + briefed.map((analyst) => analyst.split(' ')[0]).join(', ') : ''},
+    {label: 'Research', state: researched ? 'done' : briefed.length ? 'active' : 'todo',
+     detail: sources.length ? `${sources.length} sources` + (firstRound.length ? ` · evidence ${firstRound.map((p) => p.id).join(', ')}` : '') : ''},
     {label: 'Draft', state: draft ? 'done' : researched ? 'active' : 'todo', detail: draft ? `v${draft.version} · ${draft.rating}` : ''},
-    {label: 'Review', state: reviewState, detail: reviews.map((r) => `${r.id} ${r.verdict}`).join(' → ')},
+    {label: 'Review', state: reviewState, detail: reviewDetail.join(' → ')},
     {label: 'Delivered', state: delivery ? (delivery.gate.approved ? 'done' : 'bad') : 'todo',
      detail: delivery ? `v${delivery.version} · ` + (delivery.gate.approved ? `approved by ${delivery.gate.review_id}` : 'no approving review (N5)') : ''},
   ];
@@ -564,9 +582,11 @@ function versionItem(item) {
   if (item.type === 'review') {
     const tone = item.verdict === 'approve' ? 'ok' : item.verdict === 'revise' ? 'warn' : 'bad';
     const fixes = (item.must_fix || []).slice(0, 2).map((fix) => el('li', {}, String(fix).length > 140 ? String(fix).slice(0, 140) + '…' : String(fix)));
+    const asked = Object.keys(item.requests || {});
     return el('li', {}, el('span', {class: 'chip'}, item.id),
               el('div', {class: 'wrap-text'}, `IC review of v${item.version} `, el('span', {class: 'chip ' + tone}, item.verdict),
                  item.must_fix && item.must_fix.length ? el('span', {class: 'muted small'}, ` · ${item.must_fix.length} must-fix`) : '',
+                 asked.length ? el('div', {class: 'muted small'}, 'Asks for evidence from ' + asked.join(' and ')) : '',
                  fixes.length ? el('ul', {class: 'fixes'}, ...fixes) : ''), when);
   }
   const gate = item.gate.approved ? el('span', {class: 'chip ok'}, `approved by ${item.gate.review_id}`)

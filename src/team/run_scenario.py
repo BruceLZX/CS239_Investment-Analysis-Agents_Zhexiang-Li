@@ -17,7 +17,7 @@ from tools import case_file
 from tools.env import load_env
 
 from .capture import capture_run
-from .profiles import LEAD, mcp_connection, team_profiles
+from .profiles import LEAD, RETIRED, team_profiles
 from .rakazo_client import WAITING_STATUSES, Rakazo
 
 SCENARIOS = Path(__file__).resolve().parents[1] / 'scenarios'
@@ -77,9 +77,14 @@ def narrate(app: Rakazo, bot_ids: dict[str, str], seen: set) -> None:
         print(f'[{when}] {line}', flush=True)
 
 
+def review_failed(case: dict) -> bool:
+    """The re-review did not approve. The Lead must then deliver nothing (P9), so the run is over."""
+    return len(case['reviews']) >= 2 and case['reviews'][-1]['verdict'] != 'approve'
+
+
 def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet: float, cards: str,
                     narrated: set | None = None) -> str:
-    """Wait until the memo is delivered and every bot is idle, or the team goes quiet."""
+    """Wait until the memo is delivered, or fails its re-review, and every bot is idle; or the team goes quiet."""
     deadline = time.monotonic() + timeout
     idle_since, warned, last_busy = None, set(), None
     while time.monotonic() < deadline:
@@ -98,8 +103,11 @@ def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet:
         else:
             idle_since = idle_since or time.monotonic()
             idle = time.monotonic() - idle_since
-            if case_file.read_case()['deliveries'] and idle >= 15:
+            case = case_file.read_case()
+            if case['deliveries'] and idle >= 15:
                 return 'delivered'
+            if review_failed(case) and idle >= 15:
+                return 'failed review'
             if idle >= quiet:
                 return 'stalled'
         time.sleep(5)
@@ -120,7 +128,7 @@ def main() -> None:
     load_env()
     scenario = load_scenario(args.scenario)
     with Rakazo(os.environ.get('RAKAZO_URL', 'http://127.0.0.1:5174')) as app:
-        bot_ids = app.configure_team(team_profiles(), mcp_connection())
+        bot_ids = app.configure_team(team_profiles(), RETIRED)
         for bot_id in bot_ids.values():
             app.wait_idle(bot_id)
             app.clear(bot_id)  # Each run replays earlier messages, so every scenario starts clean.
