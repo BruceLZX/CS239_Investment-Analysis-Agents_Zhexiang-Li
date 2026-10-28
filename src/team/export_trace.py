@@ -329,7 +329,10 @@ def build_trace(run_dir: Path) -> dict:
     runs.sort(key=lambda run: run['started_at'] or '')
 
     scenario_file = ROOT / 'scenarios' / f"{case['scenario']}.yaml"
-    scenario = yaml.safe_load(scenario_file.read_text()) if scenario_file.exists() else {'name': case['scenario']}
+    scenario = yaml.safe_load(scenario_file.read_text()) if scenario_file.exists() else {
+        'name': case['scenario'], 'summary': 'A request the user typed in.'}
+    if case.get('request'):  # Newer case files keep the request itself, which a typed-in request needs.
+        scenario['request'] = case['request']
     outcome_file = run_dir / 'outcome.json'
     outcome = json.loads(outcome_file.read_text()).get('outcome') if outcome_file.exists() else None
     delivered = case['deliveries'][-1] if case['deliveries'] else None
@@ -421,6 +424,9 @@ def render_markdown(trace: dict) -> str:
         lines += [f"### User → {event['agent']} ({event['ts']})", '', _quote(event['text']), '']
     for number, rakazo_run in enumerate(trace['rakazo_runs'], 1):
         lines += [f"### {number}. {rakazo_run['agent']}, woken by {rakazo_run['trigger']} ({rakazo_run['started_at']})", '']
+        for event in user_messages[1:]:
+            if event.get('rakazo_run_id') == rakazo_run['rakazo_run_id']:
+                lines += ['**Follow-up from the user**', '', _quote(event['text']), '']
         received = [e for e in trace['events'] if e['type'] == 'peer_message_received'
                     and e.get('rakazo_run_id') == rakazo_run['rakazo_run_id']]
         for event in received:

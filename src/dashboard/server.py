@@ -1,4 +1,5 @@
-"""A local web page for demos: start a scenario and watch the team work, or replay a captured run.
+"""A local web page for demos: start a scenario or type a request of your own and watch the team work,
+ask follow-up questions once it has finished, or replay a captured run.
 
 From src/ (a live run also needs Rakazo and the MCP server; a replay needs neither):
 
@@ -28,7 +29,7 @@ import yaml
 from team.export_trace import api_events, build_trace
 from team.profiles import LEAD, team_profiles
 from team.rakazo_client import WAITING_STATUSES, Rakazo, RakazoError
-from team.run_scenario import SCENARIOS
+from team.run_scenario import CUSTOM, SCENARIOS
 from tools import case_file
 from tools.env import load_env
 
@@ -63,13 +64,16 @@ def tool_owners() -> dict[str, tuple[str, ...]]:
 
 
 def conversation(messages: dict[str, list[dict]]) -> list[dict]:
-    """One entry per delivery: the user's request, each message between bots, the Lead's replies and
-    Rakazo's approval cards. A message is shown once, from the thread of the bot that received it."""
+    """One entry per delivery: the user's request and any follow-up questions, each message between bots,
+    the Lead's replies and Rakazo's approval cards. A message is shown once, from the thread of the bot that
+    received it."""
     entries = []
     for event in sorted(api_events(messages), key=lambda e: e['ts_ms']):
         base = {'ts': int(event['ts_ms']), 'id': event['message_id'], 'text': event.get('text', '')}
         if event['type'] == 'user_message':
-            entries.append({**base, 'kind': 'request', 'from': 'User', 'to': event['agent']})
+            asked = any(entry['kind'] == 'request' for entry in entries)
+            entries.append({**base, 'kind': 'request', 'from': 'User', 'to': event['agent'],
+                            'intent': 'follow-up' if asked else 'request'})
         elif event['type'] == 'peer_message_received':
             entries.append({**base, 'kind': 'message', 'from': event['from'], 'to': event['agent'],
                             'intent': event.get('intent') or 'message'})
@@ -188,7 +192,8 @@ def snapshot(run_dir: Path, rakazo: Rakazo | None = None) -> dict:
         scenario = {}
     entries = conversation(messages)
     view = {
-        'run_id': case['run_id'], 'scenario': case['scenario'], 'request': (scenario.get('request') or '').strip(),
+        'run_id': case['run_id'], 'scenario': case['scenario'],
+        'request': (case.get('request') or scenario.get('request') or '').strip(),
         'started': started, 'captured': bool(captured),
         'outcome': (_read_json(run_dir / 'outcome.json') or {}).get('outcome'),
         'status': status, 'live_error': live_error,
@@ -247,29 +252,84 @@ def run(request):
         return JSONResponse(snapshot(run_dir, rakazo))
 
 
-async def start(request):
+MAX_MESSAGE = 4000  # Characters in a request or follow-up typed on the page.
+
+
+async def _json_body(request) -> dict | None:
     # A JSON body makes browsers ask before sending it from another site, so no other page can start a paid run.
     if not request.headers.get('content-type', '').startswith('application/json'):
-        return JSONResponse({'error': 'Send JSON.'}, status_code=415)
-    scenario = (await request.json()).get('scenario')
-    if scenario not in {path.stem for path in SCENARIOS.glob('*.yaml')}:
-        return JSONResponse({'error': f'No scenario {scenario!r}.'}, status_code=400)
+        return None
+    try:
+        body = await request.json()
+    except ValueError:
+        return None
+    return body if isinstance(body, dict) else None
+
+
+def _busy() -> JSONResponse | None:
     if _runner and _runner['process'].poll() is None:
         return JSONResponse({'error': f"The {_runner['scenario']} run started from this page is still going."},
                             status_code=409)
+    return None
+
+
+def _message(body: dict, key: str) -> str | None:
+    text = str(body.get(key) or '').strip()
+    return text if 0 < len(text) <= MAX_MESSAGE else None
+
+
+def _launch(arguments: list[str], label: str) -> None:
+    """Start team.run_scenario in the background; the page follows the run through /api/state."""
     log = case_file.RUNS / 'dashboard-runner.log'
     log.parent.mkdir(parents=True, exist_ok=True)
     with log.open('w') as output:
-        process = subprocess.Popen([sys.executable, '-m', 'team.run_scenario', scenario], cwd=ROOT,
+        process = subprocess.Popen([sys.executable, '-m', 'team.run_scenario', *arguments], cwd=ROOT,
                                    stdout=output, stderr=subprocess.STDOUT,
                                    env={**os.environ, 'PYTHONUNBUFFERED': '1'})
-    _runner.update(process=process, scenario=scenario, log=log)
-    return JSONResponse({'started': scenario})
+    _runner.update(process=process, scenario=label, log=log)
+
+
+async def start(request):
+    """Start a scenario ({"scenario": name}), or a request typed on the page ({"request": text})."""
+    body = await _json_body(request)
+    if body is None:
+        return JSONResponse({'error': 'Send a JSON object.'}, status_code=415)
+    if 'request' in body:
+        text = _message(body, 'request')
+        if text is None:
+            return JSONResponse({'error': f'Write a request of 1 to {MAX_MESSAGE:,} characters.'}, status_code=400)
+        arguments, label = ['--request', text], CUSTOM
+    else:
+        scenario = body.get('scenario')
+        if scenario not in {path.stem for path in SCENARIOS.glob('*.yaml')}:
+            return JSONResponse({'error': f'No scenario {scenario!r}.'}, status_code=400)
+        arguments, label = [scenario], scenario
+    if busy := _busy():
+        return busy
+    _launch(arguments, label)
+    return JSONResponse({'started': label})
+
+
+async def follow_up(request):
+    """Ask the Lead Analyst a follow-up question ({"text": question}) about the latest run, once it has finished."""
+    body = await _json_body(request)
+    if body is None:
+        return JSONResponse({'error': 'Send a JSON object.'}, status_code=415)
+    text = _message(body, 'text')
+    if text is None:
+        return JSONResponse({'error': f'Write a question of 1 to {MAX_MESSAGE:,} characters.'}, status_code=400)
+    if busy := _busy():
+        return busy
+    run_id = _active_run_id()
+    if not run_id or not _finished(case_file.RUNS / run_id):
+        return JSONResponse({'error': 'Ask a follow-up once the latest run has finished.'}, status_code=409)
+    _launch(['--follow-up', text], 'follow-up')
+    return JSONResponse({'started': 'follow-up', 'run_id': run_id})
 
 
 app = Starlette(
     routes=[Route('/', page), Route('/api/state', state), Route('/api/runs/{run_id}', run),
-            Route('/api/start', start, methods=['POST'])],
+            Route('/api/start', start, methods=['POST']), Route('/api/follow-up', follow_up, methods=['POST'])],
     # Only this machine's own addresses, so a web page can't reach the server through DNS rebinding.
     middleware=[Middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1', 'localhost'])])
 

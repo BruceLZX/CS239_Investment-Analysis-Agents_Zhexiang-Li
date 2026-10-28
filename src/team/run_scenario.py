@@ -3,6 +3,11 @@
 From src/, with the MCP server running (`.venv/bin/python -m tools.server`):
 
     .venv/bin/python -m team.run_scenario public-equity-memo
+    .venv/bin/python -m team.run_scenario --request "Prepare an investment memo on Nvidia (NVDA)."
+    .venv/bin/python -m team.run_scenario --follow-up "What would change the rating?"
+
+A request of your own runs like a scenario with no attached documents. A follow-up goes to the
+Lead Analyst in the latest run once it has finished, and the run is captured again afterwards.
 """
 import argparse
 from datetime import datetime
@@ -21,6 +26,12 @@ from .profiles import LEAD, RETIRED, team_profiles
 from .rakazo_client import WAITING_STATUSES, Rakazo
 
 SCENARIOS = Path(__file__).resolve().parents[1] / 'scenarios'
+CUSTOM = 'custom'  # The scenario name of a request of the user's own.
+
+
+def custom_scenario(request: str) -> dict:
+    """A request of the user's own: it runs like a scenario with no attached documents."""
+    return {'name': CUSTOM, 'request': request, 'client_documents': []}
 
 
 def load_scenario(name: str) -> dict:
@@ -114,9 +125,59 @@ def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet:
     return 'timed out'
 
 
+def finish(app: Rakazo, bot_ids: dict[str, str], outcome: dict) -> None:
+    """Copy the run out of Rakazo, then write outcome.json, which marks the capture complete."""
+    run_dir = case_file.active_run_dir()
+    captured = capture_run(app, bot_ids, run_dir)
+    status = case_file.status_summary(case_file.read_case())
+    (run_dir / 'outcome.json').write_text(json.dumps({**outcome, 'captured': captured, 'status': status}, indent=1))
+    print(f'Outcome: {outcome["outcome"]}. Captured {captured["transcript_files"]} transcript files and '
+          f'{sum(captured["messages"].values())} messages into {run_dir}.')
+    print(json.dumps(status, indent=1))
+
+
+def run_case(app: Rakazo, scenario: dict, args) -> None:
+    bot_ids = app.configure_team(team_profiles(), RETIRED)
+    for bot_id in bot_ids.values():
+        app.wait_idle(bot_id)
+        app.clear(bot_id)  # Each run replays earlier messages, so every scenario starts clean.
+    request = scenario['request'].strip()
+    run_id = case_file.start_run(scenario['name'], scenario.get('client_documents', []), request)
+    sent = app.send(bot_ids[LEAD], request)
+    print(f'Run {run_id}: sent the request to {LEAD} (Rakazo run {sent["runId"]}).', flush=True)
+    outcome = wait_for_finish(app, bot_ids, args.timeout, args.quiet, args.approval_cards,
+                              set() if args.narrate else None)
+    finish(app, bot_ids, {'outcome': outcome})
+
+
+def follow_up(app: Rakazo, question: str, args) -> None:
+    """Ask the Lead Analyst a follow-up question about the latest run once it has finished, then capture
+    the run again so the question and the answer join its record."""
+    run_dir = case_file.active_run_dir()
+    outcome_file = run_dir / 'outcome.json'
+    if not outcome_file.exists():
+        raise SystemExit('The latest run has not finished yet; ask a follow-up once it has.')
+    previous = json.loads(outcome_file.read_text())
+    team = {profile.name for profile in team_profiles()}
+    bot_ids = {name: bot['id'] for name, bot in app.bots().items() if name in team}
+    seen = {m['id'] for bot_id in bot_ids.values() for m in app.messages(bot_id)} if args.narrate else None
+    outcome_file.unlink()  # Until it is written again, the run counts as live and the dashboard follows it.
+    try:
+        sent = app.send(bot_ids[LEAD], question.strip())
+        print(f'Run {run_dir.name}: sent a follow-up to {LEAD} (Rakazo run {sent["runId"]}).', flush=True)
+        wait_for_finish(app, bot_ids, args.timeout, 15, args.approval_cards, seen)
+    except BaseException:
+        outcome_file.write_text(json.dumps(previous, indent=1))  # Leave the run as it was.
+        raise
+    finish(app, bot_ids, {'outcome': previous['outcome'], 'follow_ups': previous.get('follow_ups', 0) + 1})
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument('scenario')
+    parser.add_argument('scenario', nargs='?', help='one of the scenarios in src/scenarios/')
+    parser.add_argument('--request', help='run a request of your own instead of a scenario (no attached documents)')
+    parser.add_argument('--follow-up', metavar='QUESTION',
+                        help='ask the Lead Analyst a follow-up question about the latest run, once it has finished')
     parser.add_argument('--timeout', type=float, default=1800, help='seconds to wait for the whole run')
     parser.add_argument('--quiet', type=float, default=150, help='seconds of idleness that count as stalled')
     parser.add_argument('--approval-cards', choices=['deny', 'wait'], default='deny',
@@ -125,25 +186,15 @@ def main() -> None:
     parser.add_argument('--narrate', action='store_true',
                         help='print the conversation live: the request, the Lead\'s replies and messages between bots')
     args = parser.parse_args()
+    if sum(bool(choice) for choice in (args.scenario, args.request, args.follow_up)) != 1:
+        parser.error('give exactly one of: a scenario name, --request or --follow-up')
     load_env()
-    scenario = load_scenario(args.scenario)
+    scenario = None if args.follow_up else custom_scenario(args.request) if args.request else load_scenario(args.scenario)
     with Rakazo(os.environ.get('RAKAZO_URL', 'http://127.0.0.1:5174')) as app:
-        bot_ids = app.configure_team(team_profiles(), RETIRED)
-        for bot_id in bot_ids.values():
-            app.wait_idle(bot_id)
-            app.clear(bot_id)  # Each run replays earlier messages, so every scenario starts clean.
-        run_id = case_file.start_run(scenario['name'], scenario.get('client_documents', []))
-        sent = app.send(bot_ids[LEAD], scenario['request'].strip())
-        print(f'Run {run_id}: sent the request to {LEAD} (Rakazo run {sent["runId"]}).', flush=True)
-        outcome = wait_for_finish(app, bot_ids, args.timeout, args.quiet, args.approval_cards,
-                                  set() if args.narrate else None)
-        run_dir = case_file.active_run_dir()
-        captured = capture_run(app, bot_ids, run_dir)
-    status = case_file.status_summary(case_file.read_case())
-    (run_dir / 'outcome.json').write_text(json.dumps({'outcome': outcome, 'captured': captured, 'status': status}, indent=1))
-    print(f'Outcome: {outcome}. Captured {captured["transcript_files"]} transcript files and '
-          f'{sum(captured["messages"].values())} messages into {run_dir}.')
-    print(json.dumps(status, indent=1))
+        if args.follow_up:
+            follow_up(app, args.follow_up, args)
+        else:
+            run_case(app, scenario, args)
 
 
 if __name__ == '__main__':

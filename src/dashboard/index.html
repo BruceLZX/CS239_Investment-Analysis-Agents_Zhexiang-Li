@@ -30,6 +30,11 @@ select, button { font: inherit; font-size: 14px; border-radius: 8px; border: 1px
 button { cursor: pointer; font-weight: 600; }
 button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 button:disabled { opacity: .5; cursor: not-allowed; }
+.chat { margin-top: 10px; display: grid; gap: 8px; }
+.chat textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 56px; font: inherit; font-size: 14px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.chat textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.chat-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chat-actions .muted { flex: 1; min-width: 160px; }
 .banner { margin-top: 12px; border-radius: 10px; padding: 10px 14px; background: var(--bad-bg); color: var(--bad); font-weight: 600; }
 .banner pre { margin: 8px 0 0; white-space: pre-wrap; font-weight: 400; font-size: 12px; color: var(--ink); max-height: 160px; overflow: auto; }
 .statusbar { margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
@@ -184,7 +189,16 @@ blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--lin
   </section>
 
   <main class="grid">
-    <section class="panel"><h2>Conversation <span class="count" id="convo-count"></span></h2><div id="conversation" class="convo-box"><p class="empty">Messages between the user and the agents appear here.</p></div></section>
+    <section class="panel"><h2>Conversation <span class="count" id="convo-count"></span></h2><div id="conversation" class="convo-box"><p class="empty">Messages between the user and the agents appear here.</p></div>
+      <form id="chat" class="chat" autocomplete="off">
+        <textarea id="chat-text" rows="2" maxlength="4000" aria-label="Message to the Lead Analyst" placeholder="Message the Lead Analyst, for example: Prepare an investment memo on Nvidia (NVDA)."></textarea>
+        <div class="chat-actions">
+          <span id="chat-hint" class="muted small">New request starts a run with your message. Ask a follow-up questions the Lead about the latest run once it has finished.</span>
+          <button type="button" id="ask" disabled>Ask a follow-up</button>
+          <button type="submit" id="send" class="primary">New request</button>
+        </div>
+      </form>
+    </section>
     <aside class="side">
       <section class="panel"><h2>Source register <span class="count" id="source-count"></span></h2><ul id="sources" class="list"></ul></section>
       <section class="panel"><h2>Memo versions and reviews</h2><ul id="versions" class="list"></ul></section>
@@ -352,7 +366,7 @@ function buildDiagram() {
 }
 const edgeId = (a, b) => 'edge-' + [SHORT[a], SHORT[b]].sort().join('-');
 function edgeLabel(entry) {
-  if (entry.kind === 'request') return 'request';
+  if (entry.kind === 'request') return entry.intent === 'follow-up' ? 'follow-up' : 'request';
   if (entry.kind === 'reply') return 'reply';
   if (entry.from === LEAD && ANALYSTS.includes(entry.to)) {
     return S.snap.conversation.some((e) => e.from === REVIEWER && e.ts < entry.ts) ? 'follow-up' : 'brief';
@@ -532,7 +546,7 @@ function renderTeam(snap, t, view, finished) {
   $('who-now').textContent = finished ? '' : working.length ? `working: ${working.join(', ')}` : (S.mode === 'live' ? 'nobody working' : '');
 }
 function intentTag(entry) {
-  return entry.kind === 'message' ? edgeLabel(entry) : entry.kind;
+  return entry.kind === 'message' ? edgeLabel(entry) : entry.intent || entry.kind;
 }
 function renderConversation(snap, convo) {
   const box = $('conversation');
@@ -691,24 +705,79 @@ async function liveTick(gen) {
   S.livePoll = setTimeout(() => liveTick(gen), 2500);
 }
 async function startLive() {
-  const scenario = $('scenario').value;
+  await launch({scenario: $('scenario').value}, $('scenario').value);
+}
+async function sendRequest(event) {
+  event.preventDefault();
+  const text = $('chat-text').value.trim();
+  if (!text || $('send').disabled) return;
+  if (await launch({request: text}, 'your request')) $('chat-text').value = '';
+}
+function lockControls() {
+  $('start').disabled = $('send').disabled = $('ask').disabled = true;
+}
+// Start a run from the page: a scenario, or a request typed in the box. True once the server has started it.
+async function launch(body, label) {
   const gen = switchMode();
   S.mode = 'starting';
-  $('start').disabled = true;
+  lockControls();
   try {
     S.startingFrom = (await getJSON('/api/state')).active_run;
-    const response = await fetch('/api/start', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({scenario})});
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+    const response = await fetch('/api/start', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
   } catch (error) {
     if (gen === S.gen) { S.mode = 'ready'; renderIdle('The run did not start.'); }
     banner(`Couldn't start the run: ${error.message}`);
+    return false;
+  }
+  if (gen !== S.gen) return true;
+  banner('');
+  renderIdle(`Starting ${label}: setting up the bots and clearing their threads…`);
+  waitForRun(gen);
+  return true;
+}
+async function askFollowUp() {
+  const text = $('chat-text').value.trim();
+  if (!text || $('ask').disabled) return;
+  const gen = switchMode();
+  S.mode = 'starting';
+  lockControls();
+  let runId;
+  try {
+    const response = await fetch('/api/follow-up', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text})});
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+    runId = result.run_id;
+  } catch (error) {
+    if (gen === S.gen) { S.mode = 'ready'; renderIdle('The follow-up was not sent.'); }
+    banner(`Couldn't send the follow-up: ${error.message}`);
     return;
   }
+  $('chat-text').value = '';
   if (gen !== S.gen) return;
   banner('');
-  renderIdle(`Starting ${scenario}: setting up the bots and clearing their threads…`);
-  waitForRun(gen);
+  renderIdle('Sending your follow-up to the Lead Analyst…');
+  waitForFollowUp(gen, runId);
+}
+// The runner marks the run live again before it sends the question; follow the run from then on.
+async function waitForFollowUp(gen, runId) {
+  try {
+    const state = await getJSON('/api/state');
+    if (gen !== S.gen) return;
+    updateSelectors(state);
+    const run = state.runs.find((r) => r.run_id === runId);
+    if (run && !run.captured) { followLive(runId); return; }
+    if (state.runner && !state.runner.alive) {
+      S.mode = 'ready';
+      renderIdle('The follow-up was not sent.');
+      banner(`The follow-up stopped (exit code ${state.runner.exit_code}). Its output:`, state.runner.log_tail);
+      return;
+    }
+  } catch (error) {
+    if (gen !== S.gen) return;
+  }
+  setTimeout(() => waitForFollowUp(gen, runId), 1500);
 }
 async function waitForRun(gen) {
   try {
@@ -773,14 +842,22 @@ function updateSelectors(state) {
     replay.dataset.signature = signature;
   }
   $('replay').disabled = !captured.length;
-  $('start').disabled = S.mode === 'starting' || S.mode === 'live' || Boolean(state.runner && state.runner.alive);
+  const running = S.mode === 'starting' || S.mode === 'live' || Boolean(state.runner && state.runner.alive);
+  const latest = state.runs.find((r) => r.run_id === state.active_run);
+  $('start').disabled = $('send').disabled = running;
+  $('ask').disabled = running || !(latest && latest.captured);
+  $('chat-hint').textContent = running ? 'The team is working. Send your next message once it has finished.'
+    : latest && latest.captured ? `New request starts a run with your message. A follow-up goes to the latest run: ${latest.scenario} · ${clock(latest.started)}.`
+    : 'New request starts a run with your message.';
 }
 async function pollState() {
   try {
     const state = await getJSON('/api/state');
     updateSelectors(state);
     const active = state.runs.find((r) => r.run_id === state.active_run);
-    S.liveAvailable = active && !active.captured && Date.now() - active.started < 45 * 60 * 1000 ? active.run_id : null;
+    // A recent run, or an older one with a follow-up in progress.
+    const current = active && (Date.now() - active.started < 45 * 60 * 1000 || Boolean(state.runner && state.runner.alive));
+    S.liveAvailable = current && !active.captured ? active.run_id : null;
     const elsewhere = S.liveAvailable && (S.mode !== 'live' || S.liveRun !== S.liveAvailable);
     // Follow a run started elsewhere (for example from the terminal) unless a replay is on screen.
     if (elsewhere && (S.mode === 'ready' || (S.mode === 'finished' && !S.replayed))) followLive(S.liveAvailable);
@@ -790,6 +867,8 @@ async function pollState() {
 }
 
 $('start').addEventListener('click', startLive);
+$('chat').addEventListener('submit', sendRequest);
+$('ask').addEventListener('click', askFollowUp);
 $('to-live').addEventListener('click', () => { if (S.liveAvailable) followLive(S.liveAvailable); });
 $('replay').addEventListener('click', startReplay);
 $('scenario').addEventListener('change', () => { $('scenario').title = (S.summaries || {})[$('scenario').value] || ''; });

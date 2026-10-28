@@ -164,3 +164,59 @@ def test_a_run_starts_once_and_only_from_a_json_request(runs, client, monkeypatc
     assert client.post('/api/start', json={'scenario': 'public-equity-memo'}).status_code == 409
     assert len(started) == 1 and started[0][-2:] == ['team.run_scenario', 'rushed-call']
     assert client.get('/api/state').json()['runner']['alive'] is True
+
+
+class StartedProcess:
+    """Stands in for subprocess.Popen: records the command and keeps running."""
+    commands = []
+
+    def __init__(self, command, **options):
+        self.commands.append(command)
+
+    def poll(self):
+        return None
+
+
+@pytest.fixture
+def launched(monkeypatch):
+    StartedProcess.commands = []
+    monkeypatch.setattr(server.subprocess, 'Popen', StartedProcess)
+    return StartedProcess.commands
+
+
+def test_a_request_typed_on_the_page_starts_a_run_of_its_own(runs, client, launched):
+    for body in ('{', '["Memo on NVDA"]'):  # malformed, or not an object
+        assert client.post('/api/start', content=body, headers={'content-type': 'application/json'}).status_code == 415
+    assert client.post('/api/start', json={'request': '   '}).status_code == 400
+    assert client.post('/api/start', json={'request': 'x' * 4001}).status_code == 400
+    assert client.post('/api/start', json={'request': ' Prepare a memo on Nvidia (NVDA). '}).json() == {'started': 'custom'}
+    assert [command[-3:] for command in launched] == [['team.run_scenario', '--request', 'Prepare a memo on Nvidia (NVDA).']]
+
+
+def test_a_follow_up_goes_to_the_latest_run_once_it_has_finished(runs, client, launched):
+    (runs / 'active.json').write_text(json.dumps({'run_id': 'r1', 'scenario': 'confidential-startup'}))
+    assert client.post('/api/follow-up', content='{"text": "Why Wait?"}',
+                       headers={'content-type': 'text/plain'}).status_code == 415
+    assert client.post('/api/follow-up', json={'text': ''}).status_code == 400
+    assert client.post('/api/follow-up', json={'text': 'Why Wait?'}).json() == {'started': 'follow-up', 'run_id': 'r1'}
+    assert launched[0][-2:] == ['--follow-up', 'Why Wait?']
+    assert client.post('/api/follow-up', json={'text': 'And the risks?'}).status_code == 409  # the first is still going
+
+
+def test_a_follow_up_waits_for_the_run_to_finish(runs, client, launched):
+    live_run(runs)
+    (runs / 'active.json').write_text(json.dumps({'run_id': 'r2', 'scenario': 'rushed-call'}))
+    assert client.post('/api/follow-up', json={'text': 'Why?'}).status_code == 409
+    assert launched == []
+
+
+def test_a_second_message_from_the_user_is_a_follow_up():
+    user = lambda id_, run, when, text: {'id': id_, 'role': 'user', 'runId': run, 'createdAt': when,
+                                         'blocks': [{'kind': 'text', 'text': text}]}
+    entries = server.conversation({'Lead Analyst': [
+        user('m1', 'run-1', '2026-10-26T11:00:01Z', 'A memo on Nvidia, please.'),
+        {'id': 'm2', 'role': 'bot', 'runId': 'run-1', 'createdAt': '2026-10-26T11:20:00Z',
+         'blocks': [{'kind': 'text', 'text': 'Delivered: Hold.'}]},
+        user('m3', 'run-2', '2026-10-26T11:30:00Z', 'Why Hold?')]})
+    assert [(entry['kind'], entry.get('intent')) for entry in entries] == [
+        ('request', 'request'), ('reply', None), ('request', 'follow-up')]

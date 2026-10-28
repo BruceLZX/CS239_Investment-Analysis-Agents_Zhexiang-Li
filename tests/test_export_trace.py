@@ -263,3 +263,23 @@ def test_messages_to_the_user_carry_no_early_rating_and_no_internal_material():
         ('N6', "the Lead's message to the user names internal material (evidence packets)"),
         ('N5', "before delivery, the Lead told the user the draft's rating (Sell)"),
         ('N6', "the Lead's message to the user names internal material (R2, must-fix)")]
+
+
+def test_a_follow_up_question_appears_in_the_timeline(run_dir):
+    t = lambda clock: f'2026-10-26T10:{clock}+00:00'
+    captured = json.loads((run_dir / 'rakazo' / 'messages.json').read_text())
+    captured['messages']['Lead Analyst'] += [
+        message('m6', 'user', 'run-L3', t('07:00'), {'kind': 'text', 'text': 'Why Wait and not Pass?'}),
+        message('m7', 'bot', 'run-L3', t('07:30'), {'kind': 'text', 'text': 'Because the market is real.'})]
+    (run_dir / 'rakazo' / 'messages.json').write_text(json.dumps(captured))
+    (run_dir / 'rakazo' / 'pi-sessions' / 'dXNlcg' / 'lead' / '5_l3.jsonl').write_text(transcript('run-L3', 'bot-lead', t('07:00'), [
+        (t('07:01'), {'role': 'user', 'content': 'Why Wait and not Pass?', 'timestamp': 0}),
+        (t('07:10'), assistant({'type': 'thinking', 'thinking': 'Answer from the case file.'},
+                               call('c6', 'mcp__investment-research__get_case_status', {}))),
+        (t('07:11'), tool_result('c6', 'mcp__investment-research__get_case_status', '{"delivered_versions": [1]}')),
+        (t('07:29'), assistant({'type': 'text', 'text': 'Because the market is real.'}))]))
+    markdown = render_markdown(build_trace(run_dir))
+    section = markdown.split("Lead Analyst, woken by the user's request (2026-10-26T10:07:00")[1]
+    assert section.split(')', 1)[1].lstrip().startswith('**Follow-up from the user**')
+    assert 'Why Wait and not Pass?' in section
+    assert markdown.count('**Follow-up from the user**') == 1  # the first request keeps its own heading

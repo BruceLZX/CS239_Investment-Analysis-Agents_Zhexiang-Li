@@ -6,10 +6,10 @@ DECK = {'name': 'Deck', 'file': 'fixtures/deck.md', 'confidentiality': 'client-c
 
 
 def test_start_run_creates_the_case_and_marks_it_active(runs_dir):
-    run_id = case_file.start_run('demo', [DECK])
+    run_id = case_file.start_run('demo', [DECK], 'Is the deck credible?')
     assert case_file.active_run_dir() == runs_dir / run_id
     case = case_file.read_case()
-    assert case['scenario'] == 'demo'
+    assert (case['scenario'], case['request']) == ('demo', 'Is the deck credible?')
     assert case['client_documents'] == [DECK]
 
 

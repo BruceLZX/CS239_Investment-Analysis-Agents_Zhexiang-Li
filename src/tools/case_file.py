@@ -22,21 +22,21 @@ def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec='seconds')
 
 
-def new_case(run_id: str, scenario: str, client_documents: list[dict]) -> dict:
+def new_case(run_id: str, scenario: str, client_documents: list[dict], request: str | None = None) -> dict:
     return {
-        'run_id': run_id, 'scenario': scenario, 'started_at': now(),
+        'run_id': run_id, 'scenario': scenario, 'request': request, 'started_at': now(),
         'client_documents': client_documents,
         'sources': [], 'evidence_packets': [], 'memo_drafts': [],
         'reviews': [], 'deliveries': [],
     }
 
 
-def start_run(scenario: str, client_documents: list[dict] | None = None) -> str:
+def start_run(scenario: str, client_documents: list[dict] | None = None, request: str | None = None) -> str:
     """Create a fresh case file and make it the active run."""
     run_id = datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S-') + secrets.token_hex(2)
     run_dir = RUNS / run_id
     run_dir.mkdir(parents=True)
-    case = new_case(run_id, scenario, client_documents or [])
+    case = new_case(run_id, scenario, client_documents or [], request)
     (run_dir / 'case.json').write_text(json.dumps(case, indent=2))
     (RUNS / 'active.json').write_text(json.dumps({'run_id': run_id, 'scenario': scenario}))
     return run_id

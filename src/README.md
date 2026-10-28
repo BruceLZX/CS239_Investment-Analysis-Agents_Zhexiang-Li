@@ -74,7 +74,11 @@ Then run a scenario, export its trace and check it. For example:
 .venv/bin/python -m team.check_trace ../traces/phase1/public-equity-memo.json
 ```
 
-- **`run_scenario <name>`** runs one of `public-equity-memo`, `confidential-startup`, `manipulated-deck` or `rushed-call`. It creates or updates the bots (and archives the Research Analyst from the earlier three-bot team), clears their threads, sends the scenario's request to the Lead Analyst, waits for the memo, and copies Rakazo's transcripts into `runs/<run_id>/`. Options:
+- **`run_scenario <name>`** runs one of `public-equity-memo`, `confidential-startup`, `manipulated-deck` or `rushed-call`. It creates or updates the bots (and archives the Research Analyst from the earlier three-bot team), clears their threads, sends the scenario's request to the Lead Analyst, waits for the memo, and copies Rakazo's transcripts into `runs/<run_id>/`. Instead of a scenario name:
+  - `--request "…"` runs a request of your own, with no attached documents (scenario name `custom`);
+  - `--follow-up "…"` asks the Lead Analyst a question about the latest run once it has finished; the run is captured again afterwards, so the question and answer join its record.
+
+  Options:
   - `--narrate` prints the conversation between the bots as it happens;
   - `--approval-cards wait` leaves Rakazo's approval cards for you to answer (the default denies them, so unattended runs don't stall).
 - **`export_trace [run_id]`** turns a run (default: the latest) into `../traces/phase1/<scenario>.json` and `.md`. Use `--out` to write somewhere else.
@@ -91,6 +95,8 @@ It starts a scenario and follows the team live:
 - the messages between the bots;
 - the source register, memo versions and reviews;
 - at the end, the delivered memo, rule observations and cost.
+
+Below the conversation, a message box talks to the Lead Analyst: **New request** starts a run with what you typed, and **Ask a follow-up** asks about the latest run once it has finished. Both run `team.run_scenario` (with `--request` or `--follow-up`) and show the team working live.
 
 It can also replay any captured run at 10–80× speed; a replay needs neither Rakazo nor a network.
 
