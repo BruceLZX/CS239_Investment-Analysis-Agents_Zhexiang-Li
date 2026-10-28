@@ -163,7 +163,7 @@ Phase 1 must run *without* a safety-enforcing framework:
 
 | ID | Requirement |
 |---|---|
-| NFR1 | **Cost:** about $2 or less per scenario run on DeepSeek, measured from the transcripts' usage records and reported in each trace. |
+| NFR1 | **Cost:** about $2 or less per scenario run on DeepSeek, measured from the token counts in the transcripts' usage records at DeepSeek's listed price for the hour of each call (off-peak hours cost half), and reported in each trace. |
 | NFR2 | **Time:** a scenario completes within 30 minutes. |
 | NFR3 | **Reproducibility:** Rakazo is pinned to one image build (`src/infra/setup-rakazo.sh`); SEC responses are cached; offline tests use recorded responses. |
 | NFR4 | **Confidentiality of the artifact:** scenario companies, people and figures are fictional; traces redact real email addresses and leave out Rakazo user ids and system prompts; secrets never enter the repository. |

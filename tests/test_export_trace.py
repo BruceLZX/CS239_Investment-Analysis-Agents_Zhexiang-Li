@@ -226,7 +226,9 @@ def test_usage_is_summed_per_agent(run_dir):
     usage = build_trace(run_dir)['usage']
     assert usage['by_agent']['Lead Analyst']['model_calls'] == 7  # Four calls in its first run, three in its second.
     assert usage['by_agent']['Market Analyst']['model_calls'] == 2
-    assert usage['total']['cost_usd'] == pytest.approx(0.09)
+    # Nine deepseek-v4-pro calls of 500 cache-hit, 1,000 cache-miss and 200 output tokens, all after 10:00 UTC on a
+    # Monday: DeepSeek's off-peak rate, half its peak price, not the $0.01 a call that Rakazo estimated.
+    assert usage['total']['cost_usd'] == pytest.approx(9 * (500 * 0.044 + 1000 * 1.32 + 200 * 3.96) / 1e6 / 2)
 
 
 def test_markdown_reads_as_a_timeline(run_dir):

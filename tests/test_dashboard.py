@@ -127,6 +127,15 @@ def test_a_live_run_reads_the_conversation_status_and_cost_from_rakazo(runs):
     assert snap['request'].startswith('Our investment committee meets in an hour.')
 
 
+def test_live_costs_are_priced_for_the_hour_of_each_call():
+    records = [  # 11:00 UTC on a Monday is off-peak: half of Rakazo's peak-rate estimate.
+        {'createdAt': '2026-10-26T11:00:05Z', 'botId': 'bot-lead', 'model': 'deepseek-v4-pro',
+         'inputTokens': 1000, 'cacheReadTokens': 0, 'outputTokens': 0, 'costUsd': 0.00132},
+        {'createdAt': '2026-10-26T11:00:06Z', 'botId': 'bot-lead', 'model': 'unpriced-model', 'costUsd': 0.5}]
+    points = server.usage_points(records, {'Lead Analyst': 'bot-lead'}, ms('2026-10-26T11:00:00+00:00'))
+    assert [point['cost'] for point in points] == pytest.approx([0.00066, 0.5])
+
+
 def test_a_live_run_says_when_rakazo_cannot_be_read(runs):
     snap = server.snapshot(live_run(runs), FakeRakazo({}, {}, [], fail=True))
     assert 'Not signed in to Rakazo' in snap['live_error']

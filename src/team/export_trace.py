@@ -5,6 +5,8 @@ Everything comes from runs/<run_id>/, written by team.run_scenario:
 - rakazo/messages.json: each bot's thread from the API (the user's request and inter-bot messages)
 - rakazo/usage.json, case.json, outcome.json and the delivered memo_v*.md
 
+Each model call is priced at DeepSeek's rate for the hour it was made (team.model_costs).
+
     .venv/bin/python -m team.export_trace [run_id] [--out traces/phase1] [--name NAME]
 
 Rakazo's system prompt and user id are left out, and real email addresses are redacted;
@@ -20,6 +22,7 @@ import yaml
 
 from tools import memo
 
+from .model_costs import call_cost
 from .profiles import BUILTIN_TOOLS, FUNDAMENTALS, LEAD, MARKET, REVIEWER, team_profiles
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -136,7 +139,11 @@ def transcript_events(run: dict, agent: str) -> tuple[list[dict], dict]:
             usage['input_tokens'] += spent.get('input', 0)
             usage['output_tokens'] += spent.get('output', 0)
             usage['cache_read_tokens'] += spent.get('cacheRead', 0)
-            usage['cost_usd'] += (spent.get('cost') or {}).get('total', 0) or 0
+            cost = call_cost(message.get('model') or run.get('model'), spent.get('cacheRead', 0),
+                             spent.get('input', 0), spent.get('output', 0), ts)
+            if cost is None:  # A model with no DeepSeek price: keep Rakazo's estimate.
+                cost = (spent.get('cost') or {}).get('total', 0) or 0
+            usage['cost_usd'] += cost
             if message.get('content') or spent.get('output'):  # An aborted turn records an empty message.
                 usage['model_calls'] += 1
         elif role == 'toolResult':

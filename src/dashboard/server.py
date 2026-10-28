@@ -27,6 +27,7 @@ import uvicorn
 import yaml
 
 from team.export_trace import api_events, build_trace
+from team.model_costs import call_cost
 from team.profiles import LEAD, team_profiles
 from team.rakazo_client import WAITING_STATUSES, Rakazo, RakazoError
 from team.run_scenario import CUSTOM, SCENARIOS
@@ -153,10 +154,17 @@ def case_view(case: dict, started: int) -> dict:
     }
 
 
+def record_cost(record: dict) -> float:
+    """One usage record's cost at DeepSeek's rate for its hour, or Rakazo's estimate for an unpriced model."""
+    cost = call_cost(record.get('model'), record.get('cacheReadTokens') or 0, record.get('inputTokens') or 0,
+                     record.get('outputTokens') or 0, _ms(record['createdAt']))
+    return float(record.get('costUsd') or 0) if cost is None else cost
+
+
 def usage_points(records: list[dict], bot_ids: dict[str, str], started: int) -> list[dict]:
     """Model-call costs of this run's bots since the run started, oldest first."""
     names = {bot_id: name for name, bot_id in bot_ids.items()}
-    points = [{'ts': _ms(r['createdAt']), 'bot': names[r['botId']], 'cost': float(r.get('costUsd') or 0)}
+    points = [{'ts': _ms(r['createdAt']), 'bot': names[r['botId']], 'cost': record_cost(r)}
               for r in records if r.get('botId') in names and _ms(r['createdAt']) >= started]
     return sorted(points, key=lambda point: point['ts'])
 
