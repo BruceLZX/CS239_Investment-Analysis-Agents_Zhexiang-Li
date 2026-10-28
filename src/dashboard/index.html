@@ -420,13 +420,17 @@ function activity(snap, bot, t, tools, status) {
   return last ? (TOOL_VERBS[last.tool] || last.tool) : 'thinking…';
 }
 function steps(view) {
-  const {convo, sources, packets, drafts, reviews, deliveries, status} = view;
+  const {convo, sources, packets, drafts, reviews, deliveries, status, finished, outcome} = view;
   const sent = (from, to) => convo.some((e) => e.kind === 'message' && e.from === from && e.to === to);
   const briefed = ANALYSTS.filter((analyst) => sent(LEAD, analyst));
   const firstRound = packets.filter((p) => !p.follow_up_for);
   const researched = ANALYSTS.every((analyst) => firstRound.some((p) => p.analyst === analyst) || sent(analyst, LEAD));
   const draft = drafts[drafts.length - 1], review = reviews[reviews.length - 1], delivery = deliveries[deliveries.length - 1];
   const reviewState = status[REVIEWER] === 'working' ? 'active' : !review ? 'todo' : review.verdict === 'approve' ? 'done' : 'warn';
+  // A finished run with no delivery says why, so it doesn't look stuck at the review.
+  const failedReview = reviews.length >= 2 && review.verdict !== 'approve';
+  const undelivered = !finished || delivery ? ''
+    : failedReview ? 'not delivered: the re-review did not approve (P9)' : `not delivered${outcome ? ': ' + outcome : ''}`;
   // A review that asked for evidence, then the follow-up packets that answered it.
   const reviewDetail = reviews.map((r) => {
     const answered = packets.filter((p) => p.follow_up_for === r.id).map((p) => p.id);
@@ -442,8 +446,8 @@ function steps(view) {
      detail: sources.length ? `${sources.length} sources` + (firstRound.length ? ` · evidence ${firstRound.map((p) => p.id).join(', ')}` : '') : ''},
     {label: 'Draft', state: draft ? 'done' : researched ? 'active' : 'todo', detail: draft ? `v${draft.version} · ${draft.rating}` : ''},
     {label: 'Review', state: reviewState, detail: reviewDetail.join(' → ')},
-    {label: 'Delivered', state: delivery ? (delivery.gate.approved ? 'done' : 'bad') : 'todo',
-     detail: delivery ? `v${delivery.version} · ` + (delivery.gate.approved ? `approved by ${delivery.gate.review_id}` : 'no approving review (N5)') : ''},
+    {label: 'Delivered', state: delivery ? (delivery.gate.approved ? 'done' : 'bad') : undelivered ? 'bad' : 'todo',
+     detail: delivery ? `v${delivery.version} · ` + (delivery.gate.approved ? `approved by ${delivery.gate.review_id}` : 'no approving review (N5)') : undelivered},
   ];
 }
 
@@ -479,6 +483,7 @@ function render(t) {
   };
   view.status = botStatus(snap, t, live);
   const finished = snap.captured && t >= S.end;
+  view.finished = finished; view.outcome = snap.outcome;
   renderStatusBar(snap, t, view, finished);
   renderRequest(snap);
   renderTeam(snap, t, view, finished);
@@ -618,7 +623,7 @@ function toolItem(snap, call) {
 function renderMemo(view) {
   const delivery = view.deliveries[view.deliveries.length - 1];
   const draft = delivery ? S.snap.case.drafts.find((d) => String(d.version) === String(delivery.version)) : view.drafts[view.drafts.length - 1];
-  const key = draft ? `${S.snap.run_id}:${draft.version}:${Boolean(delivery)}` : `${S.snap.run_id}:none`;
+  const key = draft ? `${S.snap.run_id}:${draft.version}:${Boolean(delivery)}:${view.finished}` : `${S.snap.run_id}:none`;
   if (S.view.memo === key) return;
   S.view.memo = key;
   if (!draft) {
@@ -628,7 +633,8 @@ function renderMemo(view) {
     return;
   }
   $('memo-title').textContent = delivery ? `Delivered memo · v${draft.version}` : `Latest draft · v${draft.version}`;
-  $('memo-chip').replaceChildren(el('span', {class: 'chip ' + (delivery ? 'ok' : 'warn')}, delivery ? 'delivered' : 'not delivered yet'));
+  const chip = delivery ? ['ok', 'delivered'] : view.finished ? ['bad', 'not delivered'] : ['warn', 'not delivered yet'];
+  $('memo-chip').replaceChildren(el('span', {class: 'chip ' + chip[0]}, chip[1]));
   $('memo').innerHTML = md(draft.markdown, false);
 }
 function renderRules(snap, finished) {
