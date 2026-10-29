@@ -99,7 +99,7 @@ It starts a scenario and follows the team live:
 
 Below the conversation, a message box talks to the Lead Analyst: **New request** starts a run with what you typed, and **Ask a follow-up** asks about the latest run once it has finished. Both run `team.run_scenario` (with `--request` or `--follow-up`) and show the team working live.
 
-It can also replay any captured run at 10–80× speed; a replay needs neither Rakazo nor a network.
+It can also replay any captured run at 10–80× speed; a replay needs neither Rakazo nor a network. A replay also draws the run's trace as a timeline, one lane per agent: its thoughts, tool calls, tool results and messages in time order, each of which opens to its full text.
 
 Stop Rakazo with `bash infra/setup-rakazo.sh stop`; its data is kept.
 
