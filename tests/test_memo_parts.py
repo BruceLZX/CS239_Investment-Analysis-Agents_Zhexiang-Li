@@ -179,6 +179,13 @@ def test_empty_and_vague_phrases_are_flagged():
     assert any(p.startswith('3 vague phrasings') for p in problems)
 
 
+def test_valuation_language_is_an_investor_implication():
+    # How the delivered Tesla business part drew its implication; the check missed it before.
+    tesla = 'The mix is moving away from cars: that supports the multiple only if autonomy monetises.'
+    assert 'investor implication' not in memo._missing_terms(tesla, memo.ANALYSIS_TERMS)
+    assert 'investor implication' in memo._missing_terms('Tesla sells cars to shareholders.', memo.ANALYSIS_TERMS)
+
+
 def test_team_names_and_writing_about_the_writing_are_internal_material():
     findings = memo.check_part('risks', 'As briefed by the Lead Analyst, this part should list risks.', SOURCES)['findings']
     assert [f['rule'] for f in findings] == ['N6']

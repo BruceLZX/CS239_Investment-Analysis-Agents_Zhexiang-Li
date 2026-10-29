@@ -77,8 +77,11 @@ ANALYSIS_TERMS = {
                        'indicates', 'therefore', 'explains', 'shows that', 'the reason', 'thus', 'which leaves'),
     'comparison': ('peer', 'compared', 'versus', ' vs', 'benchmark', 'median', 'historical', 'relative to', 'than'),
     'counter-evidence': ('however', 'counter', 'downside', 'bear', 'weaken', 'contradict', 'offset', 'against'),
-    'investor implication': ('investor', 'implication', 'for the rating', 'position', 'decision', 'thesis',
-                             'watchlist', 'entry', 'upside', 'risk/reward'),
+    # The skill's group also counts valuation and recommendation words; bare buy, sell or hold would match
+    # "sells" and "shareholders", so only phrases are listed.
+    'investor implication': ('investor', 'investment case', 'implication', 'for the rating', 'the rating', 'position',
+                             'decision', 'thesis', 'watchlist', 'entry', 'upside', 'risk/reward', 'valuation',
+                             'the multiple', 'multiples', 'recommend'),
 }
 CONFIDENCE_RE = re.compile(r'\b(?:high|medium|low)[- ]confidence\b|\bconfidence\b[^.\n|]{0,20}\b(?:high|medium|low)\b', re.I)
 # What each part must cover: the skill's executive-summary and public-equity groups (scripts/check_report.py)
