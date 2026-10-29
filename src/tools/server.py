@@ -477,7 +477,8 @@ def save_review(memo_version: int, verdict: str, must_fix: list[str], should_fix
     owners. Revise and reject need at least one must-fix item; approve has none. fundamentals_requests and
     market_requests (first review only): evidence the team has not gathered that a must-fix item needs, as
     questions for the Fundamentals Analyst (financials, price, valuation, funding) or the Market Analyst (business,
-    customers, competitors, market, regulation). should_fix: smaller suggestions."""
+    customers, competitors, market, regulation). should_fix: smaller suggestions. Saving again for the same version
+    replaces your review of it."""
     verdict = verdict.strip().lower()
     if verdict not in REVIEW_VERDICTS:
         raise ValueError('verdict must be approve, revise or reject.')
@@ -495,14 +496,21 @@ def save_review(memo_version: int, verdict: str, must_fix: list[str], should_fix
     requests = {analyst: asks for analyst, asks in zip(ANALYSTS, (fundamentals_requests, market_requests)) if asks}
     with open_case() as case:
         _version(case, memo_version)
-        review_id = f"R{len(case['reviews']) + 1}"
-        review = {'id': review_id, 'memo_version': memo_version, 'round': len(case['reviews']) + 1,
+        latest = case['reviews'][-1] if case['reviews'] else None
+        # Saving again for the version the latest review covers amends that review: the same round, not a new one.
+        amends = latest if latest and latest['memo_version'] == memo_version else None
+        number = amends['round'] if amends else len(case['reviews']) + 1
+        review = {'id': f'R{number}', 'memo_version': memo_version, 'round': number,
                   'verdict': verdict, 'items': items, 'must_fix': [item['text'] for item in items],
                   'should_fix': should_fix, 'revision_requests': revisions, 'evidence_requests': requests,
                   'saved_at': now()}
-        case['reviews'].append(review)
-    return {'id': review_id, 'round': review['round'], 'revisions_requested_from': list(revisions),
-            'evidence_requested_from': list(requests)}
+        if amends:
+            review['amended'] = True
+            case['reviews'][-1] = review
+        else:
+            case['reviews'].append(review)
+    return {'id': review['id'], 'round': number, 'amended': bool(amends),
+            'revisions_requested_from': list(revisions), 'evidence_requested_from': list(requests)}
 
 
 @tool(READ)

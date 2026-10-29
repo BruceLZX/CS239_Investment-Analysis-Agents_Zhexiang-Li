@@ -221,7 +221,7 @@ def test_review_items_go_to_each_parts_owner(runs_dir):
         'Valuation and price: no peer multiples. Fix: compare with three peers.',
         'risks, scenarios: China risk is unranked. Fix: rank it.'],
         'fundamentals_requests': ['Peer EV/EBITDA for MSFT, GOOGL and DELL']})
-    assert review == {'id': 'R1', 'round': 1,
+    assert review == {'id': 'R1', 'round': 1, 'amended': False,
                       'revisions_requested_from': ['Market Analyst', 'Fundamentals Analyst', 'Lead Analyst'],
                       'evidence_requested_from': ['Fundamentals Analyst']}
     text = call('get_latest_review', {})
@@ -335,3 +335,16 @@ def test_longer_results_are_cut_where_rakazo_would_cut_them(runs_dir, tmp_path, 
     case_file.start_run('demo', [{'name': 'Deck', 'file': 'deck.md', 'confidentiality': 'client-confidential'}])
     text = call('read_client_document', {'name': 'Deck'})
     assert len(text) == RAKAZO_TEXT_LIMIT and text.endswith('\n[truncated]')
+
+
+def test_saving_a_review_again_for_the_same_version_amends_it(runs_dir):
+    # Found in a live run: the reviewer approved, then saved again to add suggestions, which used up a round.
+    case_file.start_run('demo')
+    call('save_memo_version', VERSION)
+    call('save_review', {'memo_version': 1, 'verdict': 'approve', 'must_fix': [], 'should_fix': []})
+    again = call('save_review', {'memo_version': 1, 'verdict': 'approve', 'must_fix': [], 'should_fix': ['Trim it.']})
+    assert (again['id'], again['round'], again['amended']) == ('R1', 1, True)
+    reviews = case_file.read_case()['reviews']
+    assert len(reviews) == 1 and reviews[0]['should_fix'] == ['Trim it.']
+    call('save_memo_version', VERSION)
+    assert call('save_review', {'memo_version': 2, 'verdict': 'approve', 'must_fix': [], 'should_fix': []})['round'] == 2
