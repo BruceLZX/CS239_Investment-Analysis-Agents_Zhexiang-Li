@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{COMPANY_NAME}} - 投资分析报告</title>
+    <meta name="composite-score" content="{{COMPOSITE_SCORE}}">
+    <style>
+        :root {
+            --bg: #f7f7f3;
+            --surface: #ffffff;
+            --surface-2: #f1f5f4;
+            --ink: #202124;
+            --muted: #68716f;
+            --line: #d8dfdc;
+            --line-strong: #aab7b2;
+            --accent: #0f766e;
+            --accent-2: #b45309;
+            --danger: #b91c1c;
+            --warning: #a16207;
+            --success: #15803d;
+            --shadow: 0 12px 34px rgba(20, 28, 25, 0.08);
+            --radius: 8px;
+            --sidebar: 276px;
+        }
+
+        * { box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.72;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        a { color: var(--accent); }
+        a:hover { color: #0b5f59; }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        button:focus-visible,
+        input:focus-visible,
+        a:focus-visible {
+            outline: 3px solid rgba(15, 118, 110, 0.28);
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .skip-link {
+            position: absolute;
+            left: 16px;
+            top: -60px;
+            z-index: 20;
+            background: var(--ink);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .skip-link:focus {
+            top: 12px;
+        }
+
+        .report-shell {
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 30;
+            width: min(var(--sidebar), calc(100vw - 34px));
+            height: 100vh;
+            overflow-y: auto;
+            background: #18201e;
+            color: rgba(255, 255, 255, 0.82);
+            padding: 24px 18px;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 18px 0 44px rgba(15, 20, 18, 0.28);
+            transform: translateX(-105%);
+            transition: transform 180ms ease;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .toc-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 25;
+            display: none;
+            background: rgba(20, 24, 22, 0.34);
+        }
+
+        .toc-backdrop.visible {
+            display: block;
+        }
+
+        .brand-lockup {
+            position: relative;
+            padding: 4px 6px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+            margin-bottom: 18px;
+        }
+
+        .close-toc {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 34px;
+            height: 34px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 7px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .close-toc:hover {
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .eyebrow {
+            color: #90d9d2;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .brand-lockup h1 {
+            margin: 8px 0 6px;
+            font-size: 22px;
+            line-height: 1.2;
+            letter-spacing: 0;
+            color: #fff;
+        }
+
+        .brand-lockup p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.66);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .side-meta {
+            display: grid;
+            gap: 8px;
+            margin: 16px 0 18px;
+        }
+
+        .side-meta div {
+            display: grid;
+            gap: 2px;
+            padding: 9px 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius);
+        }
+
+        .side-meta span {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.52);
+        }
+
+        .side-meta strong {
+            font-size: 13px;
+            color: #fff;
+            font-weight: 650;
+        }
+
+        .toc-title {
+            margin: 18px 6px 8px;
+            color: rgba(255, 255, 255, 0.62);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .toc {
+            display: grid;
+            gap: 2px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .toc a {
+            display: grid;
+            grid-template-columns: 30px minmax(0, 1fr);
+            gap: 8px;
+            align-items: center;
+            min-height: 36px;
+            padding: 7px 9px;
+            border-radius: 7px;
+            color: rgba(255, 255, 255, 0.76);
+            text-decoration: none;
+            font-size: 13px;
+            line-height: 1.25;
+        }
+
+        .toc a:hover,
+        .toc a.active {
+            background: rgba(144, 217, 210, 0.14);
+            color: #fff;
+        }
+
+        .toc .num {
+            color: #90d9d2;
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+            padding: 12px 28px;
+            background: rgba(247, 247, 243, 0.92);
+            border-bottom: 1px solid var(--line);
+            backdrop-filter: blur(12px);
+        }
+
+        .search-wrap {
+            position: relative;
+        }
+
+        .search-wrap input {
+            width: 100%;
+            height: 40px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 0 12px 0 36px;
+            background: var(--surface);
+            color: var(--ink);
+        }
+
+        .search-wrap::before {
+            content: "";
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--muted);
+            border-radius: 50%;
+            transform: translateY(-57%);
+        }
+
+        .search-wrap::after {
+            content: "";
+            position: absolute;
+            left: 24px;
+            top: 25px;
+            width: 7px;
+            height: 2px;
+            background: var(--muted);
+            transform: rotate(45deg);
+        }
+
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-button {
+            min-height: 40px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--ink);
+            padding: 0 12px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .tool-button:hover {
+            border-color: var(--line-strong);
+            background: var(--surface-2);
+        }
+
+        .mobile-title {
+            display: none;
+            font-weight: 750;
+        }
+
+        .hero {
+            padding: 34px 34px 20px;
+        }
+
+        .hero-panel {
+            display: grid;
+            grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.75fr);
+            gap: 22px;
+            align-items: stretch;
+            max-width: 1220px;
+            margin: 0 auto;
+        }
+
+        .hero-main,
+        .hero-aside {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .hero-main {
+            padding: 28px;
+        }
+
+        .report-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .report-label::before {
+            content: "";
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        .hero h2 {
+            margin: 13px 0 8px;
+            font-size: clamp(30px, 5vw, 54px);
+            line-height: 1.05;
+            letter-spacing: 0;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--muted);
+            font-size: 17px;
+            max-width: 760px;
+        }
+
+        .business-summary {
+            margin: 12px 0 0;
+            color: var(--ink);
+            font-size: 15px;
+            max-width: 780px;
+        }
+
+        .hero-aside {
+            padding: 20px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .meta-row {
+            display: grid;
+            grid-template-columns: 96px minmax(0, 1fr);
+            gap: 12px;
+            align-items: start;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .meta-row:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .meta-row span {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .meta-row strong {
+            font-size: 14px;
+            font-weight: 650;
+        }
+
+        .disclaimer {
+            max-width: 1220px;
+            margin: 18px auto 0;
+            padding: 14px 16px;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-left: 4px solid var(--accent-2);
+            border-radius: var(--radius);
+            color: #7c2d12;
+            font-size: 13px;
+        }
+
+        main {
+            max-width: 1220px;
+            margin: 0 auto;
+            padding: 0 34px 52px;
+        }
+
+        .exec-summary {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 22px;
+            margin: 18px 0;
+        }
+
+        .exec-summary h3 {
+            margin: 0 0 14px;
+            font-size: 20px;
+        }
+
+        .exec-summary .summary-subtitle {
+            margin: -8px 0 18px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .verdict-strip {
+            display: grid;
+            gap: 8px;
+            padding: 16px;
+            margin: 0 0 16px;
+            border-radius: var(--radius);
+            border: 1px solid #99f6e4;
+            border-left: 5px solid var(--accent);
+            background: #f0fdfa;
+        }
+
+        .verdict-strip strong {
+            font-size: 20px;
+            line-height: 1.28;
+        }
+
+        .verdict-strip span {
+            color: #115e59;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .briefing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .brief-card {
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 14px;
+            background: #fbfcfb;
+        }
+
+        .brief-card h4 {
+            margin: 0 0 8px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 850;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .brief-card p,
+        .brief-card ul,
+        .brief-card ol {
+            margin-bottom: 0;
+        }
+
+        .section-card {
+            scroll-margin-top: 78px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin: 16px 0;
+            overflow: hidden;
+        }
+
+        .section-heading {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+            width: 100%;
+            border: 0;
+            border-bottom: 1px solid var(--line);
+            background: var(--surface);
+            color: var(--ink);
+            padding: 16px 18px;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .section-heading:hover {
+            background: var(--surface-2);
+        }
+
+        .section-index {
+            display: inline-grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 7px;
+            background: rgba(15, 118, 110, 0.1);
+            color: var(--accent);
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .section-title {
+            display: grid;
+            gap: 2px;
+        }
+
+        .section-title strong {
+            font-size: 18px;
+            line-height: 1.25;
+        }
+
+        .section-title span {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .section-toggle {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .section-body {
+            padding: 22px;
+        }
+
+        .section-card.collapsed .section-body {
+            display: none;
+        }
+
+        .section-card.hidden-by-search {
+            display: none;
+        }
+
+        .no-results {
+            display: none;
+            padding: 18px;
+            margin: 16px 0;
+            border: 1px dashed var(--line-strong);
+            border-radius: var(--radius);
+            color: var(--muted);
+            background: var(--surface);
+        }
+
+        .no-results.visible {
+            display: block;
+        }
+
+        h3 {
+            margin: 24px 0 10px;
+            font-size: 18px;
+            line-height: 1.3;
+        }
+
+        h4 {
+            margin: 20px 0 8px;
+            font-size: 15px;
+            line-height: 1.35;
+        }
+
+        p {
+            margin: 0 0 13px;
+            text-align: justify;
+            text-justify: inter-character;
+        }
+
+        ul,
+        ol {
+            padding-left: 22px;
+        }
+
+        li + li {
+            margin-top: 4px;
+        }
+
+        .kpi-grid,
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .kpi,
+        .score-card,
+        .info-card {
+            background: #fbfcfb;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+
+        .kpi span,
+        .score-card .score-label {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .kpi strong,
+        .score-card .score-value {
+            display: block;
+            color: var(--ink);
+            font-size: 28px;
+            line-height: 1;
+            font-weight: 850;
+        }
+
+        .score-card.score-high .score-value { color: var(--success); }
+        .score-card.score-mid .score-value { color: var(--warning); }
+        .score-card.score-low .score-value { color: var(--danger); }
+
+        .rating-badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 0 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: var(--surface-2);
+            color: var(--ink);
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .rating-strong-buy,
+        .rating-buy { background: #dcfce7; color: #14532d; border-color: #bbf7d0; }
+        .rating-neutral { background: #fef9c3; color: #713f12; border-color: #fde68a; }
+        .rating-sell,
+        .rating-strong-sell { background: #fee2e2; color: #7f1d1d; border-color: #fecaca; }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            margin: 16px 0;
+            background: var(--surface);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table.data-table,
+        .table-wrap table {
+            min-width: 640px;
+            font-size: 13px;
+            table-layout: auto;
+        }
+
+        th,
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            vertical-align: top;
+            word-break: break-word;
+            min-width: 60px;
+        }
+
+        th:first-child,
+        td:first-child {
+            min-width: 40px;
+            white-space: nowrap;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: #e7efed;
+            color: #24312e;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        tbody tr:hover {
+            background: #f5faf8;
+        }
+
+        .info-card {
+            margin: 14px 0;
+        }
+
+        .info-card.highlight { border-left: 4px solid var(--accent); }
+        .info-card.warning { border-left: 4px solid var(--warning); background: #fffbeb; }
+        .info-card.danger { border-left: 4px solid var(--danger); background: #fef2f2; }
+
+        .evidence-card {
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--accent);
+            border-radius: var(--radius);
+            padding: 14px;
+            margin: 14px 0;
+            background: #f8fbfa;
+        }
+
+        .evidence-card strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .quad-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .quad-item {
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 16px;
+            background: #fbfcfb;
+        }
+
+        .quad-strength { border-left: 4px solid var(--success); }
+        .quad-weakness { border-left: 4px solid var(--danger); }
+        .quad-opportunity { border-left: 4px solid var(--accent); }
+        .quad-threat { border-left: 4px solid var(--warning); }
+
+        .risk-matrix td.level-critical { background: #fee2e2; font-weight: 800; color: #7f1d1d; }
+        .risk-matrix td.level-high { background: #ffedd5; font-weight: 800; color: #7c2d12; }
+        .risk-matrix td.level-medium { background: #fef9c3; color: #713f12; }
+        .risk-matrix td.level-low { background: #dcfce7; color: #14532d; }
+
+        .timeline {
+            position: relative;
+            padding-left: 28px;
+            margin: 18px 0;
+        }
+
+        .timeline::before {
+            content: "";
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--line);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 16px;
+            padding: 2px 0 2px 16px;
+        }
+
+        .timeline-item::before {
+            content: "";
+            position: absolute;
+            left: -25px;
+            top: 7px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 0 3px #d7f1ee;
+        }
+
+        .timeline-item .date {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 750;
+        }
+
+        .source-tag,
+        .source-confidence {
+            display: inline-flex;
+            align-items: center;
+            min-height: 20px;
+            padding: 0 7px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            background: var(--surface-2);
+            color: var(--muted);
+            border: 1px solid var(--line);
+            margin-left: 4px;
+        }
+
+        .source-tag {
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+
+        .source-tag:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        /* Source Appendix */
+        .source-appendix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .source-appendix-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--line);
+            vertical-align: top;
+        }
+
+        .source-appendix-table .src-id {
+            font-weight: 800;
+            color: var(--accent);
+            white-space: nowrap;
+            width: 40px;
+        }
+
+        .source-appendix-table .src-desc {
+            font-weight: 650;
+        }
+
+        .source-appendix-table .src-url {
+            font-size: 11px;
+            color: var(--muted);
+            word-break: break-all;
+        }
+
+        .source-appendix-table .src-url a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .source-appendix-table .src-url a:hover {
+            text-decoration: underline;
+        }
+
+        .conf-high { background: #dcfce7; color: #14532d; border-color: #bbf7d0; }
+        .conf-medium { background: #fef9c3; color: #713f12; border-color: #fde68a; }
+        .conf-low { background: #fee2e2; color: #7f1d1d; border-color: #fecaca; }
+
+        /* KPI Dashboard */
+        .kpi-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .kpi-card {
+            background: #fbfcfb;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 14px;
+            display: grid;
+            gap: 4px;
+        }
+
+        .kpi-card .kpi-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .kpi-card .kpi-value {
+            font-size: 26px;
+            font-weight: 850;
+            color: var(--ink);
+            line-height: 1.1;
+        }
+
+        .kpi-card .kpi-benchmark {
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .kpi-card .kpi-benchmark.better { color: var(--success); }
+        .kpi-card .kpi-benchmark.worse { color: var(--danger); }
+
+        .kpi-card.kpi-warn {
+            border-left: 4px solid var(--warning);
+        }
+
+        .kpi-card.kpi-good {
+            border-left: 4px solid var(--success);
+        }
+
+        .kpi-card.kpi-critical {
+            border-left: 4px solid var(--danger);
+        }
+
+        /* Scenario Analysis */
+        .scenario-table .bull,
+        .scenario-table td.bull { background: #f0fdf4; }
+        .scenario-table .base,
+        .scenario-table td.base { background: #f8fafc; }
+        .scenario-table .bear,
+        .scenario-table td.bear { background: #fef2f2; }
+
+        /* Assumption Sensitivity */
+        .sensitivity-table .high-impact,
+        .sensitivity-table td.high-impact { background: #fee2e2; font-weight: 700; }
+        .sensitivity-table .medium-impact,
+        .sensitivity-table td.medium-impact { background: #fef9c3; }
+        .sensitivity-table .low-impact,
+        .sensitivity-table td.low-impact { background: #f0fdf4; }
+
+        /* Historical Analog Cards */
+        .analog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 14px;
+            margin: 16px 0;
+        }
+
+        .analog-card {
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 18px;
+            background: #fbfcfb;
+        }
+
+        .analog-card.best { border-left: 4px solid var(--success); }
+        .analog-card.cautionary { border-left: 4px solid var(--danger); }
+
+        .analog-card h4 { margin: 0 0 10px; }
+
+        .analog-card .lesson {
+            margin-top: 12px;
+            padding: 12px;
+            background: #fefce8;
+            border-radius: 6px;
+            font-size: 13px;
+            border: 1px solid #fde68a;
+        }
+
+        /* One Question Callout */
+        .one-question {
+            margin: 20px 0;
+            padding: 20px 24px;
+            background: #eff6ff;
+            border: 2px solid #93c5fd;
+            border-left: 5px solid #3b82f6;
+            border-radius: var(--radius);
+        }
+
+        .one-question .question-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #1e40af;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .one-question blockquote {
+            margin: 0;
+            padding: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e3a5f;
+            line-height: 1.4;
+            font-style: italic;
+        }
+
+        .one-question .why {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        /* Three Takeaways */
+        .takeaway-strip {
+            margin: 24px 0;
+            padding: 22px;
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            border-radius: var(--radius);
+            counter-reset: takeaway;
+        }
+
+        .takeaway-strip h4 {
+            margin: 0 0 14px;
+            color: #14532d;
+        }
+
+        .takeaway-item {
+            counter-increment: takeaway;
+            display: grid;
+            grid-template-columns: 34px minmax(0, 1fr);
+            gap: 12px;
+            align-items: start;
+            margin-bottom: 12px;
+            font-weight: 650;
+            color: #14532d;
+        }
+
+        .takeaway-item::before {
+            content: counter(takeaway);
+            display: grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #22c55e;
+            color: #fff;
+            font-weight: 850;
+            font-size: 16px;
+        }
+
+        /* Capital Efficiency Strip */
+        .efficiency-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .eff-card {
+            background: #fbfcfb;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 14px;
+            text-align: center;
+        }
+
+        .eff-card .eff-value {
+            font-size: 24px;
+            font-weight: 850;
+            color: var(--ink);
+            line-height: 1.1;
+        }
+
+        .eff-card .eff-label {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        footer {
+            max-width: 1220px;
+            margin: 0 auto 34px;
+            padding: 18px 34px 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .footer-panel {
+            border-top: 1px solid var(--line);
+            padding-top: 18px;
+        }
+
+        /* Compact navigation override: keep the table of contents visible without covering the report. */
+        .sidebar {
+            position: sticky;
+            top: 65px;
+            left: auto;
+            z-index: 9;
+            width: auto;
+            height: auto;
+            max-width: 1220px;
+            margin: 0 auto;
+            overflow: visible;
+            padding: 8px 34px 0;
+            background: rgba(247, 247, 243, 0.94);
+            color: var(--ink);
+            border-right: 0;
+            border-bottom: 1px solid var(--line);
+            box-shadow: none;
+            transform: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar.open {
+            transform: none;
+        }
+
+        .toc-backdrop,
+        .brand-lockup,
+        .side-meta,
+        .toc-title,
+        .close-toc,
+        #openToc {
+            display: none !important;
+        }
+
+        .toc {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 0 0 8px;
+            scrollbar-width: thin;
+            scroll-snap-type: x proximity;
+        }
+
+        .toc li {
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+        }
+
+        .toc a {
+            display: inline-flex;
+            grid-template-columns: none;
+            gap: 6px;
+            min-height: 32px;
+            max-width: 168px;
+            padding: 5px 9px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.78);
+            color: #33413f;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .toc a:hover,
+        .toc a.active {
+            background: #e7f5f2;
+            border-color: #a5d8d0;
+            color: #0f5f59;
+        }
+
+        .toc .num {
+            color: var(--accent);
+        }
+
+        .topbar {
+            z-index: 12;
+        }
+
+        @media (max-width: 1080px) {
+            .mobile-title {
+                display: block;
+            }
+
+            .topbar {
+                grid-template-columns: 1fr;
+                padding: 12px 16px;
+            }
+
+            .toolbar-actions {
+                overflow-x: auto;
+                padding-bottom: 2px;
+            }
+
+            .hero {
+                padding: 20px 16px 10px;
+            }
+
+            .hero-panel {
+                grid-template-columns: 1fr;
+            }
+
+            main {
+                padding: 0 16px 36px;
+            }
+        }
+
+        @media (max-width: 680px) {
+            body { font-size: 14px; }
+
+            .hero-main,
+            .hero-aside,
+            .section-body,
+            .exec-summary {
+                padding: 16px;
+            }
+
+            .section-heading {
+                grid-template-columns: auto minmax(0, 1fr);
+            }
+
+            .section-toggle {
+                grid-column: 2;
+            }
+
+            .quad-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .briefing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .meta-row {
+                grid-template-columns: 1fr;
+                gap: 2px;
+            }
+        }
+
+        @media print {
+            html { scroll-behavior: auto; }
+            body { background: #fff; font-size: 12px; line-height: 1.5; overflow-wrap: break-word; word-break: break-word; }
+            p { text-align: justify; text-justify: inter-character; }
+            .report-shell { display: block; }
+            .sidebar,
+            .toc-backdrop,
+            .topbar,
+            .section-toggle,
+            .skip-link { display: none !important; }
+            table { font-size: 10px; }
+            table.data-table, .table-wrap table { min-width: auto; width: 100%; }
+            th, td { padding: 6px 8px; min-width: 0; word-break: break-word; }
+            .hero,
+            main,
+            footer {
+                max-width: none;
+                padding-left: 0;
+                padding-right: 0;
+            }
+            .hero-panel {
+                display: block;
+            }
+            .hero-main,
+            .hero-aside,
+            .exec-summary,
+            .section-card {
+                box-shadow: none;
+                border-color: #bbb;
+                break-inside: avoid;
+            }
+            .hero-aside {
+                margin-top: 12px;
+            }
+            .section-card {
+                margin: 12px 0;
+                overflow: visible;
+            }
+            .section-card.collapsed .section-body {
+                display: block;
+            }
+            .section-heading {
+                break-after: avoid;
+                cursor: default;
+            }
+            th {
+                position: static;
+            }
+            a {
+                color: #000;
+                text-decoration: none;
+            }
+        }
+    </style>
+</head>
+<body data-template-version="codex-compact-toc-v3">
+<a class="skip-link" href="#main-content">Skip to report content</a>
+
+<div class="report-shell">
+    <div class="content">
+        <div class="topbar" role="region" aria-label="Report tools">
+            <div>
+                <div class="mobile-title">{{COMPANY_NAME}} 投资分析报告</div>
+                <label class="search-wrap">
+                    <span class="sr-only">Search report</span>
+                    <input id="reportSearch" type="search" placeholder="搜索章节、风险、来源或关键指标">
+                </label>
+            </div>
+            <div class="toolbar-actions">
+                <button class="tool-button" type="button" id="expandAll">展开全部</button>
+                <button class="tool-button" type="button" id="collapseAll">折叠全部</button>
+                <button class="tool-button" type="button" id="clearSearch">清除搜索</button>
+                <button class="tool-button" type="button" onclick="window.print()">打印 / PDF</button>
+            </div>
+        </div>
+
+        <nav class="sidebar" aria-label="Report navigation">
+            <ol class="toc" id="toc">
+                <li><a href="#s1"><span class="num">01</span><span>公司概览</span></a></li>
+                <li><a href="#s2"><span class="num">02</span><span>核心团队</span></a></li>
+                <li><a href="#s3"><span class="num">03</span><span>技术产品</span></a></li>
+                <li><a href="#s4"><span class="num">04</span><span>市场行业</span></a></li>
+                <li><a href="#s5"><span class="num">05</span><span>竞争格局</span></a></li>
+                <li><a href="#s6"><span class="num">06</span><span>商业模式</span></a></li>
+                <li><a href="#s7"><span class="num">07</span><span>财务分析</span></a></li>
+                <li><a href="#s8"><span class="num">08</span><span>融资估值</span></a></li>
+                <li><a href="#s9"><span class="num">09</span><span>发展战略</span></a></li>
+                <li><a href="#s10"><span class="num">10</span><span>风险评估</span></a></li>
+                <li><a href="#s11"><span class="num">11</span><span>投资逻辑</span></a></li>
+                <li><a href="#s12"><span class="num">12</span><span>退出策略</span></a></li>
+                <li><a href="#s13"><span class="num">13</span><span>ESG治理</span></a></li>
+                <li><a href="#s14"><span class="num">14</span><span>评分建议</span></a></li>
+            </ol>
+        </nav>
+
+        <header class="hero">
+            <div class="hero-panel">
+                <div class="hero-main">
+                    <div class="report-label">Investment Research Report</div>
+                    <h2>{{COMPANY_NAME}}</h2>
+                    <p class="subtitle">{{COMPANY_TAGLINE}}</p>
+                    <p class="business-summary">{{COMPANY_BUSINESS_SUMMARY}}</p>
+                </div>
+                <div class="hero-aside" aria-label="Company metadata">
+                    <div class="meta-row"><span>报告日期</span><strong>{{REPORT_DATE}}</strong></div>
+                    <div class="meta-row"><span>数据截至</span><strong>{{DATA_AS_OF}}</strong></div>
+                    <div class="meta-row"><span>行业</span><strong>{{INDUSTRY}}</strong></div>
+                    <div class="meta-row"><span>总部</span><strong>{{HEADQUARTERS}}</strong></div>
+                    <div class="meta-row"><span>阶段</span><strong>{{STAGE}}</strong></div>
+                </div>
+            </div>
+            <div class="disclaimer">
+                <strong>重要声明：</strong>本报告基于公开信息、用户提供材料与网络调研生成，仅供投资研究参考，不构成任何投资建议。报告信息可能存在不完整、滞后或来源偏差，投资决策应结合专业判断并咨询持牌投资顾问。本报告由 AI 辅助生成，分析独立，未受被分析公司委托或资助。
+            </div>
+        </header>
+
+        <main id="main-content">
+            <section class="exec-summary" aria-labelledby="exec-title">
+                <h3 id="exec-title">5分钟速读：综合结论 (Executive Briefing)</h3>
+                <p class="summary-subtitle">先读这里即可了解总体判断、核心理由、主要风险和下一步尽调重点。</p>
+                {{EXECUTIVE_SUMMARY}}
+            </section>
+
+            <div class="no-results" id="noResults">没有匹配的章节。请尝试更短的关键词。</div>
+
+            <section class="section-card" id="s1" data-title="公司概览 Company Overview">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s1-body">
+                    <span class="section-index">01</span>
+                    <span class="section-title"><strong>公司概览</strong><span>Company Overview</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s1-body">{{SECTION_1}}</div>
+            </section>
+
+            <section class="section-card" id="s2" data-title="创始人与核心团队 Founding Team Key Personnel">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s2-body">
+                    <span class="section-index">02</span>
+                    <span class="section-title"><strong>创始人与核心团队</strong><span>Founding Team & Key Personnel</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s2-body">{{SECTION_2}}</div>
+            </section>
+
+            <section class="section-card" id="s3" data-title="技术与产品 Technology Product">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s3-body">
+                    <span class="section-index">03</span>
+                    <span class="section-title"><strong>技术与产品</strong><span>Technology & Product</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s3-body">{{SECTION_3}}</div>
+            </section>
+
+            <section class="section-card" id="s4" data-title="市场与行业分析 Market Industry Analysis">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s4-body">
+                    <span class="section-index">04</span>
+                    <span class="section-title"><strong>市场与行业分析</strong><span>Market & Industry Analysis</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s4-body">{{SECTION_4}}</div>
+            </section>
+
+            <section class="section-card" id="s5" data-title="竞争格局 Competitive Landscape">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s5-body">
+                    <span class="section-index">05</span>
+                    <span class="section-title"><strong>竞争格局</strong><span>Competitive Landscape</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s5-body">{{SECTION_5}}</div>
+            </section>
+
+            <section class="section-card" id="s6" data-title="商业模式 Business Model">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s6-body">
+                    <span class="section-index">06</span>
+                    <span class="section-title"><strong>商业模式</strong><span>Business Model</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s6-body">{{SECTION_6}}</div>
+            </section>
+
+            <section class="section-card" id="s7" data-title="财务分析 Financial Analysis">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s7-body">
+                    <span class="section-index">07</span>
+                    <span class="section-title"><strong>财务分析</strong><span>Financial Analysis</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s7-body">{{SECTION_7}}</div>
+            </section>
+
+            <section class="section-card" id="s8" data-title="融资历程与估值 Funding History Valuation">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s8-body">
+                    <span class="section-index">08</span>
+                    <span class="section-title"><strong>融资历程与估值</strong><span>Funding History & Valuation</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s8-body">{{SECTION_8}}</div>
+            </section>
+
+            <section class="section-card" id="s9" data-title="发展方向与战略 Development Strategy">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s9-body">
+                    <span class="section-index">09</span>
+                    <span class="section-title"><strong>发展方向与战略</strong><span>Development Strategy</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s9-body">{{SECTION_9}}</div>
+            </section>
+
+            <section class="section-card" id="s10" data-title="风险评估 Risk Assessment">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s10-body">
+                    <span class="section-index">10</span>
+                    <span class="section-title"><strong>风险评估</strong><span>Risk Assessment</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s10-body">{{SECTION_10}}</div>
+            </section>
+
+            <section class="section-card" id="s11" data-title="投资潜力与投资逻辑 Investment Potential Thesis">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s11-body">
+                    <span class="section-index">11</span>
+                    <span class="section-title"><strong>投资潜力与投资逻辑</strong><span>Investment Potential & Thesis</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s11-body">{{SECTION_11}}</div>
+            </section>
+
+            <section class="section-card" id="s12" data-title="退出策略分析 Exit Strategy Analysis">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s12-body">
+                    <span class="section-index">12</span>
+                    <span class="section-title"><strong>退出策略分析</strong><span>Exit Strategy Analysis</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s12-body">{{SECTION_12}}</div>
+            </section>
+
+            <section class="section-card" id="s13" data-title="ESG评估 ESG Assessment">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s13-body">
+                    <span class="section-index">13</span>
+                    <span class="section-title"><strong>ESG评估</strong><span>ESG Assessment</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s13-body">{{SECTION_13}}</div>
+            </section>
+
+            <section class="section-card" id="s14" data-title="综合评分与投资建议 Comprehensive Scoring Recommendation">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="s14-body">
+                    <span class="section-index">14</span>
+                    <span class="section-title"><strong>综合评分与投资建议</strong><span>Comprehensive Scoring & Recommendation</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="s14-body">{{SECTION_14}}</div>
+            </section>
+
+            <!-- Source Appendix -->
+            <section class="section-card" id="sources-appendix">
+                <button class="section-heading" type="button" aria-expanded="true" aria-controls="sources-appendix-body">
+                    <span class="section-index">📚</span>
+                    <span class="section-title"><strong>数据来源与引用 (Source Appendix)</strong><span>Source Appendix</span></span>
+                    <span class="section-toggle">收起</span>
+                </button>
+                <div class="section-body" id="sources-appendix-body">
+                    {{SOURCE_APPENDIX}}
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="footer-panel">
+                <p><strong>{{COMPANY_NAME}} 投资分析报告</strong> | 报告日期：{{REPORT_DATE}} | 数据截至：{{DATA_AS_OF}}</p>
+                <p>本报告由 AI 辅助生成，基于公开信息独立分析，不构成投资建议。</p>
+                <p>分析方法论：14 维度投资分析框架 v2.0 | © {{YEAR}} Investment Analysis Skill</p>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var cards = Array.prototype.slice.call(document.querySelectorAll(".section-card"));
+        var navLinks = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+        var search = document.getElementById("reportSearch");
+        var noResults = document.getElementById("noResults");
+
+        function setCollapsed(card, collapsed) {
+            var button = card.querySelector(".section-heading");
+            var toggle = card.querySelector(".section-toggle");
+            card.classList.toggle("collapsed", collapsed);
+            button.setAttribute("aria-expanded", String(!collapsed));
+            toggle.textContent = collapsed ? "展开" : "收起";
+        }
+
+        cards.forEach(function (card) {
+            var button = card.querySelector(".section-heading");
+            button.addEventListener("click", function () {
+                setCollapsed(card, !card.classList.contains("collapsed"));
+            });
+        });
+
+        document.getElementById("expandAll").addEventListener("click", function () {
+            cards.forEach(function (card) { setCollapsed(card, false); });
+        });
+
+        document.getElementById("collapseAll").addEventListener("click", function () {
+            cards.forEach(function (card) { setCollapsed(card, true); });
+        });
+
+        document.getElementById("clearSearch").addEventListener("click", function () {
+            search.value = "";
+            filterSections("");
+            search.focus();
+        });
+
+        function filterSections(query) {
+            var normalized = query.trim().toLowerCase();
+            var visibleCount = 0;
+
+            cards.forEach(function (card) {
+                var haystack = (card.dataset.title + " " + card.textContent).toLowerCase();
+                var visible = !normalized || haystack.indexOf(normalized) !== -1;
+                card.classList.toggle("hidden-by-search", !visible);
+                if (visible) {
+                    visibleCount += 1;
+                    if (normalized) setCollapsed(card, false);
+                }
+            });
+
+            noResults.classList.toggle("visible", visibleCount === 0);
+        }
+
+        search.addEventListener("input", function () {
+            filterSections(search.value);
+        });
+
+        if ("IntersectionObserver" in window) {
+            var observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (!entry.isIntersecting) return;
+                    navLinks.forEach(function (link) {
+                        link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id);
+                    });
+                });
+            }, { rootMargin: "-20% 0px -70% 0px", threshold: 0.01 });
+
+            cards.forEach(function (card) { observer.observe(card); });
+        }
+
+        window.addEventListener("beforeprint", function () {
+            cards.forEach(function (card) { setCollapsed(card, false); });
+        });
+    })();
+</script>
+</body>
+</html>

@@ -6,3 +6,11 @@ pydantic==2.14.1
 starlette==1.7.0
 pyyaml==6.0.3
 pytest==9.1.1
+# The report's HTML and PDF (WeasyPrint needs Pango: brew install pango, or apt-get install libpango-1.0-0
+# libpangocairo-1.0-0), and the client documents the scenarios attach.
+weasyprint==70.0
+markdown-it-py==4.2.0
+pypdf==6.21.4
+python-docx==1.2.0
+python-pptx==1.0.2
+openpyxl==3.1.5
