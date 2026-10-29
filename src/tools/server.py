@@ -908,9 +908,17 @@ def save_memo_version(rating: str, data_as_of: str, tagline: str, business_summa
                  'markdown': str(folder / 'report.md')}
         version = case_file.add_version(case, rating, data_as_of, cover, composite or '', files,
                                         _check_summary(check, per_section=6))
-    return {'version': version['version'], 'rating': rating, 'composite_score': composite,
-            'changed_parts': version['changed_parts'], 'missing_parts': version['missing_parts'],
-            'files': files, 'check': _check_summary(check)}
+        # The first nine-bot Apple run asked for a second review while the first was still running, and so spent
+        # two of its three rounds on versions a minute apart.
+        open_review = next((r for r in case['reviews'] if not r.get('verdict')), None)
+    result = {'version': version['version'], 'rating': rating, 'composite_score': composite,
+              'changed_parts': version['changed_parts'], 'missing_parts': version['missing_parts'],
+              'files': files, 'check': _check_summary(check)}
+    if open_review:
+        result['note'] = (f"Review {open_review['id']} of version {open_review['memo_version']} is still under way. "
+                          'Wait for its verdict before asking for another review: each review is one of the three '
+                          'rounds.')
+    return result
 
 
 @tool(READ)

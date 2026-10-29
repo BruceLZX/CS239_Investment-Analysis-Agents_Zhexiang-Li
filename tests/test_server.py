@@ -376,6 +376,9 @@ def test_the_review_takes_five_passes_and_routes_items_to_owners(runs_dir):
     call('save_memo_version', VERSION, LEAD)
     review = call('start_review', {'memo_version': 1}, REVIEWER)
     assert review['review_id'] == 'R1' and review['passes']['5'] == 'Number stress-test'
+    # A version saved while a review is under way says so; it is still saved.
+    second = call('save_memo_version', VERSION, LEAD)
+    assert second['version'] == 2 and second['note'].startswith('Review R1 of version 1 is still under way')
     call('save_review_pass', {'review_id': 'R1', 'pass_number': 1, 'items': [
         {'severity': 'critical', 'sections': ['s7', 'scoring'], 'issue': 'No debt maturity table.',
          'action': 'Read the 10-K debt note.', 'evidence_request': 'Debt maturities by year'}]}, REVIEWER)
