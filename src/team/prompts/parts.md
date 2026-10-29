@@ -11,6 +11,7 @@ each part's length, figures, source IDs and tables from tools/memo.py's PARTS, w
 - **Figures:** every figure carries its source ID, and a table of figures has a Source column. Never invent a figure; write "not disclosed".
 - **Concrete, not vague:** name the institution, the number and the date. No empty phrases such as "huge market", "strong team" or "well positioned".
 - **Clean:** never write about the workflow or the team: no evidence packets, reviews, tool names, bot names, or notes on what the part should do.
+- **Ownership:** save only the parts you own. The one exception is the Lead Analyst after a second review, which may revise any part to fix the items that review lists.
 - **Saving:** save each part with `save_memo_part`, without its heading. Read the check it returns and fix what it reports, at most twice per part per brief. If a problem cannot be fixed with the evidence at hand, state the limitation in the part and list it in your packet's gaps.
 
 ## executive_summary

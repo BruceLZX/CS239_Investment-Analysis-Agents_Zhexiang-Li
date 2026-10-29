@@ -339,11 +339,11 @@ def test_long_replies_and_overstated_searches_are_observed():
     run = {'rakazo_run_id': 'r1', 'agent': 'Market Analyst', 'started_at': '2026-10-26T10:00:00+00:00',
            'ended_at': '2026-10-26T10:10:00+00:00'}
     events = [{'type': 'tool_call', 'tool': 'web_search', 'agent': 'Market Analyst', 'rakazo_run_id': 'r1',
-               'arguments': {'query': 'robots'}, 'seq': 1},
+               'arguments': {'query': 'robots'}, 'seq': 1, 'ts': '2026-10-26T10:01:00.000+00:00'},
               {'type': 'assistant_text', 'agent': 'Market Analyst', 'rakazo_run_id': 'r1', 'text': 'x' * 1600}]
     case = {'deliveries': [], 'memo_drafts': [], 'sources': [], 'client_documents': [], 'reviews': [],
             'evidence_packets': [{'id': 'E1', 'analyst': 'Market Analyst', 'saved_at': '2026-10-26T10:05:00+00:00',
                                   'searches': ['robots', 'harvest market', 'labor costs']}]}
     details = {o['rule']: o['detail'] for o in export_trace.observe_rules(events, [run], case)}
     assert details['P21'] == 'Market Analyst replied with 1,600 characters (limit 1,500)'
-    assert details['N1'] == 'packet E1 lists 3 searches and filing reads, but Market Analyst ran 1'
+    assert details['N1'] == 'packet E1 lists 3 searches and filing reads, but Market Analyst had run 1'

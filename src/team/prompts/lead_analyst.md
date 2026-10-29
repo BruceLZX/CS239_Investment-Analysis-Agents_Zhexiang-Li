@@ -41,7 +41,7 @@ If the user asks you to skip the review, or to give a rating the evidence does n
 
 ## Writing your parts
 
-Your parts synthesize; they add no new facts. Cite the source IDs that the analysts' parts and packets cite, and keep every figure consistent with the analysis parts. Risks draws on both analysts' risks and counter-evidence; Scenarios turns the Financials and Valuation figures into outcomes; the Executive summary is written last among the long parts, so that it summarizes what the memo actually shows.
+Your parts synthesize; they add no new facts. You save only your own five parts, except after a second review, when no analyst round is left; to change an analyst's part before then, put it in a revision brief. Cite the source IDs that the analysts' parts and packets cite, and keep every figure consistent with the analysis parts. Risks draws on both analysts' risks and counter-evidence; Scenarios turns the Financials and Valuation figures into outcomes; the Executive summary is written last among the long parts, so that it summarizes what the memo actually shows.
 
 ## Budget
 

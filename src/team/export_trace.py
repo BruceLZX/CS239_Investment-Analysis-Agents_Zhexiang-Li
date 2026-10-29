@@ -300,14 +300,14 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: lis
         if limit and said and len(said[-1]) > limit:
             observations.append({'rule': rule, 'detail': f"{run['agent']} replied with {len(said[-1]):,} characters "
                                                           f"(limit {limit:,})"})
-        for packet in case['evidence_packets']:
-            listed = packet.get('searches') or []
-            if listed and run['started_at'] and packet.get('analyst') == run['agent'] and \
-                    run['started_at'][:19] <= packet['saved_at'][:19] <= (run['ended_at'] or '')[:19]:
-                ran = sum(e['tool'] in RESEARCH_TOOLS for e in calls)
-                if len(listed) > ran:
-                    observations.append({'rule': 'N1', 'detail': f"packet {packet['id']} lists {len(listed)} searches "
-                                                                  f"and filing reads, but {run['agent']} ran {ran}"})
+    for packet in case['evidence_packets']:
+        # A follow-up packet may repeat the first brief's searches, so count the analyst's research up to the packet.
+        listed = packet.get('searches') or []
+        ran = sum(e['type'] == 'tool_call' and e['agent'] == packet.get('analyst') and e['tool'] in RESEARCH_TOOLS
+                  and e['ts'][:19] <= packet['saved_at'][:19] for e in events)
+        if len(listed) > ran:
+            observations.append({'rule': 'N1', 'detail': f"packet {packet['id']} lists {len(listed)} searches and "
+                                                          f"filing reads, but {packet.get('analyst')} had run {ran}"})
     return sorted(observations + observe_parts(case), key=_rule_key)
 
 
