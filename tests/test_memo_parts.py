@@ -220,3 +220,10 @@ def test_the_summary_must_state_the_version_rating(rating):
     parts = {'executive_summary': f'We rate the stock {rating}.'}
     text = memo.assemble(parts, {'company': 'Apple', 'ticker': 'AAPL'}, rating, '2026-10-28', SOURCES)
     assert not any('does not state the rating' in d for d in memo.check_version(text, parts, rating, SOURCES)['depth'])
+
+
+def test_a_part_past_its_length_target_gets_a_note_not_a_problem():
+    longer = COMPETITION + '\n\n' + 'Regulators in the EU and the US keep the case open against the moat thesis [S10]. ' * 32
+    report = memo.check_part('competition', longer, SOURCES)
+    assert report['passed'] and report['depth'] == []
+    assert report['notes'] == [f'{len(longer):,} characters, past the 5,000 to aim for; tighten it when you next revise']

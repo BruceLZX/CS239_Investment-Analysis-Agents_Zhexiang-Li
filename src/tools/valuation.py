@@ -14,7 +14,7 @@ from .retrieved import Retrieved
 
 MAX_PEERS = 4
 HOW = ('How these are built: market cap = latest price x shares outstanding from the latest filing cover page (all '
-       'classes); EV = market cap + debt - cash and equivalents - current marketable securities; earnings, sales, '
+       'classes); EV = market cap + debt - cash and equivalents - current and non-current marketable securities; earnings, sales, '
        'EBITDA (operating income + depreciation and amortization) and free cash flow (operating cash flow - capital '
        'expenditure) are trailing twelve months from 10-K and 10-Q XBRL; P/B uses the latest stockholders\' equity. '
        'Year-end multiples use the closing price on or before the fiscal year end, that year\'s diluted EPS, and '
@@ -54,7 +54,7 @@ def _company(ticker: str, fetch_json: sec_edgar.Fetch, fetch_chart: prices.Fetch
     if approximate:  # Multi-class companies tag cover-page shares by class, which the XBRL company facts leave out.
         shares = latest['Diluted shares']
     cap = price * shares if shares else None
-    cash = (latest['Cash and equivalents'] or 0) + (latest['Current marketable securities'] or 0)
+    cash = sum(latest[line] or 0 for line in sec_edgar.CASH_LINES)
     # Unknown debt leaves EV unknown rather than understated.
     ev = cap + latest['Debt'] - cash if cap is not None and latest['Debt'] is not None else None
     ebitda = (latest['Operating income'] + (latest['Depreciation and amortization'] or 0)
@@ -75,8 +75,8 @@ def _company(ticker: str, fetch_json: sec_edgar.Fetch, fetch_chart: prices.Fetch
         for year in figures['years'][-5:]:
             close = prices.close_on_or_before(points, datetime.fromisoformat(year['end']).replace(tzinfo=timezone.utc))
             shares_then = year['Diluted shares']
-            ev_then = (close * shares_then + year['Debt'] - (year['Cash and equivalents'] or 0)
-                       - (year['Current marketable securities'] or 0)) if close and shares_then and year['Debt'] is not None else None
+            ev_then = (close * shares_then + year['Debt'] - sum(year[line] or 0 for line in sec_edgar.CASH_LINES)
+                       if close and shares_then and year['Debt'] is not None else None)
             row['history'].append({'end': year['end'], 'price': close, 'eps': year['Diluted EPS'],
                                    'P/E': _multiple(close, year['Diluted EPS']), 'EV/Sales': _multiple(ev_then, year['Revenue']),
                                    'source': sec_edgar.filing_source(company, year['entry'])})

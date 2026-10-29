@@ -11,6 +11,7 @@ from contextvars import ContextVar
 import functools
 import json
 import os
+import re
 import time
 from urllib.parse import parse_qs
 
@@ -18,7 +19,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 import uvicorn
 
 from . import case_file, filings, memo, prices, sec_edgar, valuation
@@ -45,7 +46,11 @@ SOURCES_PER_PAGE = 40
 MEMO_RATINGS = {'buy', 'add', 'hold', 'reduce', 'sell', 'watchlist', 'hold-off', 'invest', 'wait', 'pass'}
 REVIEW_VERDICTS = {'approve', 'revise', 'reject'}
 PART_KEYS = ', '.join(part.key for part in memo.PARTS)
-EVIDENCE_FROM = {'fundamentals': AGENTS['fundamentals'], 'market': AGENTS['market']}
+# A part named at the start of a must-fix item, by its key or its heading.
+PART_NAMES = {name.lower(): part.key for part in memo.PARTS for name in (part.key, part.heading)}
+PART_NAME_RE = re.compile('|'.join(sorted((re.escape(name) for name in PART_NAMES), key=len, reverse=True)), re.I)
+# After this many saves of one part by one author since the last review, the result says to stop and state limitations.
+SAVES_BEFORE_NOTE = 3
 
 
 def _plain(value):
@@ -345,11 +350,18 @@ def save_memo_part(part: str, markdown: str) -> dict:
         check = memo.check_part(key, text, case['sources'], _listed(case))
         revision = case_file.save_part(case, key, text, CALLER.get(), check)
         scoped = bool(case.get('scope'))
+        since = case['reviews'][-1]['saved_at'] if case['reviews'] else ''
+        saves = sum(r['author'] == CALLER.get() and r['saved_at'] >= since for r in case['memo_parts'][key])
     result = {'part': key, 'revision': revision['revision'], 'chars': len(text),
               'owner': memo.PART_BY_KEY[key].owner, 'saved_by': CALLER.get(),
-              'check': {'passed': check['passed'], 'findings': check['findings'], 'depth': check['depth']}}
-    if not scoped:
-        result['note'] = 'The case has no scope yet, so the part was checked as a listed company.'
+              'check': {'passed': check['passed'], 'findings': check['findings'], 'depth': check['depth'],
+                        'notes': check['notes']}}
+    notes = [] if scoped else ['The case has no scope yet, so the part was checked as a listed company.']
+    if saves >= SAVES_BEFORE_NOTE and not check['passed']:
+        notes.append(f'This is your save {saves} of this part since the last review. Rather than saving again, state '
+                     'what is still open as a limitation in the part, or in your packet\'s gaps.')
+    if notes:
+        result['note'] = ' '.join(notes)
     return result
 
 
@@ -444,45 +456,50 @@ def get_memo_check(version: int | None = None, part: str | None = None) -> dict:
     return {'checked': label, **_check_summary(check)}
 
 
-class ReviewItem(BaseModel):
-    part: str = Field(description='The part to change, by its key, or "memo" for a problem across parts.')
-    issue: str = Field(description='What is wrong, and why it matters to the decision.')
-    fix: str = Field(description='What the author should change.')
-    evidence_from: str = Field('', description='"fundamentals" or "market" when the fix needs evidence the team '
-                                               'has not gathered (first review only); empty otherwise.')
+def _review_item(text: str) -> dict:
+    """A must-fix item and the parts it names before its first colon, each going to that part's owner."""
+    head = text.split(':', 1)[0] if ':' in text else text[:80]
+    parts = list(dict.fromkeys(PART_NAMES[m.group().lower()] for m in PART_NAME_RE.finditer(head)))
+    if not parts and head.strip().lower() != 'memo':
+        raise ValueError(f'Each must-fix item starts with the part it concerns, then a colon: {PART_KEYS}, or "memo" '
+                         f'for the memo as a whole. This one starts: {text[:60]!r}.')
+    owners = list(dict.fromkeys(memo.PART_BY_KEY[key].owner for key in parts)) or [AGENTS['lead']]
+    return {'parts': parts or ['memo'], 'owners': owners, 'text': text.strip()}
 
 
 @tool(WRITE)
-def save_review(memo_version: int, verdict: str, must_fix: list[ReviewItem], should_fix: list[str]) -> dict:
+def save_review(memo_version: int, verdict: str, must_fix: list[str], should_fix: list[str],
+                fundamentals_requests: list[str] | None = None, market_requests: list[str] | None = None) -> dict:
     """Save the investment committee review of one memo version. verdict: approve, revise or reject. must_fix:
-    the items to change, each naming its part; each goes to that part's owner, and any that needs new evidence
-    names the analyst who should gather it. should_fix: smaller suggestions."""
-    if verdict.strip().lower() not in REVIEW_VERDICTS:
+    the items to change, each starting with the part it concerns and a colon, then the issue and the fix, e.g.
+    "valuation: the $290 case mixes trailing and forward multiples. Fix: compare like with like." An item about
+    several parts names them all before the colon ("executive_summary, scenarios: ..."). Each goes to its parts'
+    owners. Revise and reject need at least one must-fix item; approve has none. fundamentals_requests and
+    market_requests (first review only): evidence the team has not gathered that a must-fix item needs, as
+    questions for the Fundamentals Analyst (financials, price, valuation, funding) or the Market Analyst (business,
+    customers, competitors, market, regulation). should_fix: smaller suggestions."""
+    verdict = verdict.strip().lower()
+    if verdict not in REVIEW_VERDICTS:
         raise ValueError('verdict must be approve, revise or reject.')
-    items = []
-    for item in must_fix:
-        key = item.part.strip().lower()
-        if key != 'memo':
-            key = _part_key(key)
-        evidence_from = item.evidence_from.strip().lower().removesuffix(' analyst')
-        if evidence_from and evidence_from not in EVIDENCE_FROM:
-            raise ValueError('evidence_from must be "fundamentals", "market" or empty.')
-        items.append({'part': key, 'owner': memo.PART_BY_KEY[key].owner if key in memo.PART_BY_KEY else AGENTS['lead'],
-                      'issue': item.issue, 'fix': item.fix, 'evidence_from': EVIDENCE_FROM.get(evidence_from)})
-    revisions, requests = {}, {}
+    items = [_review_item(text) for text in must_fix if text.strip()]
+    if verdict != 'approve' and not items:
+        raise ValueError(f'A verdict of {verdict} needs at least one must-fix item, each starting with its part.')
+    if verdict == 'approve' and items:
+        raise ValueError('An approving review has no must-fix items: approve, or revise with the items.')
+    revisions: dict[str, list[str]] = {}
     for item in items:
-        revisions.setdefault(item['owner'], [])
-        if item['part'] not in revisions[item['owner']]:
-            revisions[item['owner']].append(item['part'])
-        if item['evidence_from']:
-            requests.setdefault(item['evidence_from'], []).append(f"{item['issue']} {item['fix']}")
+        for key in item['parts']:
+            owner = memo.PART_BY_KEY[key].owner if key in memo.PART_BY_KEY else AGENTS['lead']
+            if key not in revisions.setdefault(owner, []):
+                revisions[owner].append(key)
+    requests = {analyst: asks for analyst, asks in zip(ANALYSTS, (fundamentals_requests, market_requests)) if asks}
     with open_case() as case:
         _version(case, memo_version)
         review_id = f"R{len(case['reviews']) + 1}"
         review = {'id': review_id, 'memo_version': memo_version, 'round': len(case['reviews']) + 1,
-                  'verdict': verdict.strip().lower(), 'items': items,
-                  'must_fix': [f"{i['part']}: {i['issue']} Fix: {i['fix']}" for i in items], 'should_fix': should_fix,
-                  'revision_requests': revisions, 'evidence_requests': requests, 'saved_at': now()}
+                  'verdict': verdict, 'items': items, 'must_fix': [item['text'] for item in items],
+                  'should_fix': should_fix, 'revision_requests': revisions, 'evidence_requests': requests,
+                  'saved_at': now()}
         case['reviews'].append(review)
     return {'id': review_id, 'round': review['round'], 'revisions_requested_from': list(revisions),
             'evidence_requested_from': list(requests)}
@@ -498,13 +515,10 @@ def get_latest_review() -> str:
     r = reviews[-1]
     lines = [f"Review {r['id']} of memo version {r['memo_version']} (round {r.get('round', len(reviews))} of "
              f"{case_file.MAX_REVIEW_ROUNDS}): verdict {r['verdict']}"]
-    items = r.get('items') or [{'part': 'memo', 'owner': AGENTS['lead'], 'issue': text, 'fix': '', 'evidence_from': None}
-                               for text in r['must_fix']]
-    for owner in [owner for owner in AGENTS.values() if any(i['owner'] == owner for i in items)]:
+    items = r.get('items') or [{'owners': [AGENTS['lead']], 'text': text} for text in r['must_fix']]
+    for owner in [owner for owner in AGENTS.values() if any(owner in i['owners'] for i in items)]:
         lines.append(f'Must fix, for the {owner}:')
-        lines += [f"- [{i['part']}] {i['issue']}" + (f" Fix: {i['fix']}" if i['fix'] else '')
-                  + (f" (new evidence from the {i['evidence_from']})" if i['evidence_from'] else '')
-                  for i in items if i['owner'] == owner]
+        lines += [f"- {i['text']}" for i in items if owner in i['owners']]
     if not items:
         lines.append('Must fix: none')
     lines.append('Should fix:' + (''.join(f'\n- {item}' for item in r['should_fix']) or ' none'))

@@ -35,7 +35,7 @@ def test_statements_work_out_margins_free_cash_flow_debt_and_net_cash(sec_fetch)
     assert row['Revenue growth'].endswith('| -2.8% | 2.0% | 6.4% |')
     assert row['Free cash flow'].endswith('| 99,584M | 108,807M | 98,767M |')
     assert row['Debt'].startswith('| Debt | 111,088M | 106,629M | 98,657M |')
-    assert row['Net cash (debt)'].endswith('| -49,533M | -41,458M | -43,960M |')
+    assert row['Net cash (debt)'].endswith('| 51,011M | 50,021M | 33,763M |')  # non-current securities count
     assert lines[-1].endswith('Debt = LongTermDebtNoncurrent + LongTermDebtCurrent + CommercialPaper as tagged; '
                               'finance leases are not included.')
 

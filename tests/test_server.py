@@ -47,9 +47,9 @@ def test_every_tool_is_listed_with_text_only_results():
         'get_evidence_packets', 'save_memo_part', 'get_memo_parts', 'save_memo_version', 'get_memo_check',
         'save_review', 'get_latest_review', 'deliver_memo'}
     assert all(t.output_schema is None for t in tools)
+    # Rakazo passes only plain types through to the model: review items are strings, not objects.
     review = next(t for t in tools if t.name == 'save_review').input_schema
-    item = review['$defs']['ReviewItem']['properties']
-    assert set(item) == {'part', 'issue', 'fix', 'evidence_from'}
+    assert '$defs' not in review and review['properties']['must_fix']['items'] == {'type': 'string'}
 
 
 def test_calls_are_logged_to_the_active_run(runs_dir):
@@ -217,26 +217,52 @@ def test_review_items_go_to_each_parts_owner(runs_dir):
     case_file.start_run('demo')
     call('save_memo_version', VERSION)
     review = call('save_review', {'memo_version': 1, 'verdict': 'revise', 'should_fix': ['Shorter summary'], 'must_fix': [
-        {'part': 'business', 'issue': 'No segment split.', 'fix': 'Add the 10-K segment table.'},
-        {'part': 'valuation', 'issue': 'No peer multiples.', 'fix': 'Compare with three peers.',
-         'evidence_from': 'fundamentals'},
-        {'part': 'risks', 'issue': 'China risk is unranked.', 'fix': 'Rank it.', 'evidence_from': 'market'}]})
+        'business: no segment split. Fix: add the 10-K segment table.',
+        'Valuation and price: no peer multiples. Fix: compare with three peers.',
+        'risks, scenarios: China risk is unranked. Fix: rank it.'],
+        'fundamentals_requests': ['Peer EV/EBITDA for MSFT, GOOGL and DELL']})
     assert review == {'id': 'R1', 'round': 1,
                       'revisions_requested_from': ['Market Analyst', 'Fundamentals Analyst', 'Lead Analyst'],
-                      'evidence_requested_from': ['Fundamentals Analyst', 'Market Analyst']}
+                      'evidence_requested_from': ['Fundamentals Analyst']}
     text = call('get_latest_review', {})
     assert text.startswith('Review R1 of memo version 1 (round 1 of 3): verdict revise\n'
-                           'Must fix, for the Lead Analyst:\n- [risks] China risk is unranked. Fix: Rank it. '
-                           '(new evidence from the Market Analyst)\n'
-                           'Must fix, for the Fundamentals Analyst:\n- [valuation] No peer multiples.')
+                           'Must fix, for the Lead Analyst:\n- risks, scenarios: China risk is unranked. Fix: rank it.\n'
+                           'Must fix, for the Fundamentals Analyst:\n- Valuation and price: no peer multiples.')
     assert 'Should fix:\n- Shorter summary' in text
+    assert text.endswith('Evidence requests:\n- Fundamentals Analyst: Peer EV/EBITDA for MSFT, GOOGL and DELL')
+    saved = case_file.read_case()['reviews'][0]
+    assert saved['revision_requests'] == {'Market Analyst': ['business'], 'Fundamentals Analyst': ['valuation'],
+                                          'Lead Analyst': ['risks', 'scenarios']}
     status = call('get_case_status', {})['latest_review']
     assert status['revisions_requested']['Market Analyst'] == ['business'] and status['revised_since']['Market Analyst'] == []
     save_part('business', 'Apple sells phones.')
     assert call('get_case_status', {})['latest_review']['revised_since']['Market Analyst'] == ['business']
-    bad = call_tool(server.server, 'save_review', {'memo_version': 1, 'verdict': 'revise', 'should_fix': [],
-                                                    'must_fix': [{'part': 'outlook', 'issue': 'x', 'fix': 'y'}]})
-    assert bad.is_error and 'No memo part' in result_text(bad)
+
+
+def test_a_review_must_agree_with_its_items(runs_dir):
+    case_file.start_run('demo')
+    call('save_memo_version', VERSION)
+    for arguments, message in (
+            ({'verdict': 'revise', 'must_fix': []}, 'needs at least one must-fix item'),
+            ({'verdict': 'approve', 'must_fix': ['business: add segments.']}, 'An approving review has no must-fix items'),
+            ({'verdict': 'revise', 'must_fix': ['The outlook is thin.']}, 'starts with the part it concerns')):
+        result = call_tool(server.server, 'save_review', {'memo_version': 1, 'should_fix': [], **arguments})
+        assert result.is_error and message in result_text(result), arguments
+    assert case_file.read_case()['reviews'] == []
+    memo_wide = call('save_review', {'memo_version': 1, 'verdict': 'revise', 'should_fix': [],
+                                     'must_fix': ['memo: the parts disagree on net cash. Fix: use one figure.']})
+    assert memo_wide['revisions_requested_from'] == ['Lead Analyst']
+
+
+def test_a_part_saved_again_and_again_gets_a_note(runs_dir):
+    case_file.start_run('demo')
+    with caller('Lead Analyst'):
+        call('set_case_scope', {'company': 'Apple', 'ticker': 'AAPL', 'company_type': 'listed', 'decision': 'x'})
+    first, second = save_part('risks', 'Too short [S1].'), save_part('risks', 'Still too short [S1].')
+    assert 'note' not in first and 'note' not in second
+    third = save_part('risks', 'Short again [S1].')
+    assert third['note'].startswith('This is your save 3 of this part since the last review.')
+    assert third['check']['notes'] == []
 
 
 PACKET = {'topic': 'BYD vs Tesla', 'summary': 'BEV volumes', 'findings': ['BYD sold 2.26M BEVs in 2025 [S1]'],
@@ -264,13 +290,12 @@ def test_a_packet_saved_after_a_review_answers_its_evidence_requests(runs_dir):
     with caller('Market Analyst'):
         call('save_evidence_packet', {**PACKET, 'parts': ['competition'], 'risks': ['Price war in China [S1]']})
         call('save_memo_version', VERSION)
-        call('save_review', {'memo_version': 1, 'verdict': 'revise', 'should_fix': [], 'must_fix': [
-            {'part': 'competition', 'issue': 'Compare BEVs with BEVs.', 'fix': "Use BYD's BEV-only sales.",
-             'evidence_from': 'market'}]})
+        call('save_review', {'memo_version': 1, 'verdict': 'revise', 'should_fix': [],
+                             'must_fix': ['competition: compare BEVs with BEVs.'],
+                             'market_requests': ["BYD's 2025 BEV-only sales"]})
         follow_up = call('save_evidence_packet', PACKET)
     assert follow_up['follow_up_for'] == 'R1'
-    assert call('get_latest_review', {}).endswith(
-        "Evidence requests:\n- Market Analyst: Compare BEVs with BEVs. Use BYD's BEV-only sales.")
+    assert call('get_latest_review', {}).endswith("Evidence requests:\n- Market Analyst: BYD's 2025 BEV-only sales")
     packets = call('get_evidence_packets', {})
     assert '## E1 (Market Analyst): BYD vs Tesla\nBEV volumes\nParts: competition' in packets
     assert 'Risks:\n- Price war in China [S1]' in packets

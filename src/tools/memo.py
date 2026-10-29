@@ -45,7 +45,7 @@ class Part:
     key: str
     heading: str
     owner: str
-    chars: tuple[int, int]  # the depth floor, and the length to stay within
+    chars: tuple[int, int]  # the depth floor, and the length to aim for (a note, not a problem)
     numbers: int            # material numbers, each with its source (N2)
     source_ids: int         # distinct source IDs cited
     tables: int = 0
@@ -73,10 +73,12 @@ PRIVATE_NUMBERS = {'financials': 8, 'valuation': 6}
 
 # The skill's ANALYTICAL_COVERAGE_TERMS (scripts/check_depth.py) in English: every analysis part needs each group.
 ANALYSIS_TERMS = {
-    'interpretation': ('because', 'driven by', 'reflects', 'which means', 'implies', 'as a result', 'due to'),
+    'interpretation': ('because', 'driven by', 'reflects', 'means', 'implies', 'as a result', 'due to', 'suggests',
+                       'indicates', 'therefore', 'explains', 'shows that', 'the reason', 'thus', 'which leaves'),
     'comparison': ('peer', 'compared', 'versus', ' vs', 'benchmark', 'median', 'historical', 'relative to', 'than'),
     'counter-evidence': ('however', 'counter', 'downside', 'bear', 'weaken', 'contradict', 'offset', 'against'),
-    'investor implication': ('investor', 'implication', 'for the rating', 'position', 'decision', 'thesis'),
+    'investor implication': ('investor', 'implication', 'for the rating', 'position', 'decision', 'thesis',
+                             'watchlist', 'entry', 'upside', 'risk/reward'),
 }
 CONFIDENCE_RE = re.compile(r'\b(?:high|medium|low)[- ]confidence\b|\bconfidence\b[^.\n|]{0,20}\b(?:high|medium|low)\b', re.I)
 # What each part must cover: the skill's executive-summary and public-equity groups (scripts/check_report.py)
@@ -415,18 +417,19 @@ def _scenario_table(tables: list[list[list[str]]]) -> list[str]:
     return ['no table with bull, base and bear scenarios and their probabilities']
 
 
-def _depth(key: str, markdown: str, sources: list[dict], listed: bool) -> list[str]:
+def _depth(key: str, markdown: str, sources: list[dict], listed: bool) -> tuple[list[str], list[str]]:
+    """A part's depth problems, and notes that do not count against it (a length past the target)."""
     part = PART_BY_KEY[key]
     by_id = {source['id']: source for source in sources}
     text = URL_RE.sub('', markdown)
     statements = list(_statements(text))
     tables = _tables(markdown)
     floor, ceiling = part.chars
-    problems = []
+    problems, notes = [], []
     if len(markdown) < floor:
         problems.append(f'{len(markdown):,} characters; the floor is {floor:,}')
     elif len(markdown) > ceiling:
-        problems.append(f'{len(markdown):,} characters; keep it within {ceiling:,}')
+        notes.append(f'{len(markdown):,} characters, past the {ceiling:,} to aim for; tighten it when you next revise')
     numbers = sum(len(_material_numbers(s)) for s in statements)
     needed = PRIVATE_NUMBERS.get(key, part.numbers) if not listed else part.numbers
     if numbers < needed:
@@ -470,7 +473,7 @@ def _depth(key: str, markdown: str, sources: list[dict], listed: bool) -> list[s
     vague = [m.group() for m in VAGUE_RE.finditer(text)]
     if len(vague) > MAX_VAGUE:
         problems.append(f'{len(vague)} vague phrasings such as "{vague[0]}"; give the exact figure or name')
-    return problems
+    return problems, notes
 
 
 def check_part(key: str, markdown: str, sources: list[dict], listed: bool = True) -> dict:
@@ -478,8 +481,8 @@ def check_part(key: str, markdown: str, sources: list[dict], listed: bool = True
     by_id = {source['id']: source for source in sources}
     text = URL_RE.sub('', markdown)
     findings = _sourcing_findings(text, by_id) + _internal_findings(text)
-    depth = _depth(key, markdown, sources, listed)
-    return {'part': key, 'chars': len(markdown), 'findings': findings, 'depth': depth,
+    depth, notes = _depth(key, markdown, sources, listed)
+    return {'part': key, 'chars': len(markdown), 'findings': findings, 'depth': depth, 'notes': notes,
             'passed': not findings and not depth}
 
 

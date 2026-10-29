@@ -50,7 +50,9 @@ REVISION_TURN_BUDGET = 25
 BRIEF_BUDGETS = {'first': {'web_search': 12, 'web_fetch': 10}, 'revision': {'web_search': 6, 'web_fetch': 6}}
 # Reply lengths from the role prompts (P21 for the analysts, P27 for the IC Reviewer).
 REPLY_LIMITS = {FUNDAMENTALS: ('P21', 1500), MARKET: ('P21', 1500), REVIEWER: ('P27', 1000)}
-RESEARCH_TOOLS = {'web_search', 'read_sec_filing'}
+# What counts as a search or filing read when a packet lists the ones it ran.
+RESEARCH_TOOLS = {'web_search', 'web_fetch', 'read_sec_filing', 'get_sec_financials', 'list_sec_filings',
+                  'find_sec_company', 'get_price_history', 'get_valuation_snapshot', 'read_client_document'}
 
 
 def _iso(ms: float) -> str:

@@ -49,6 +49,8 @@ METRICS = [
                               'CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents'], 'USD', 'instant'),
     ('Current marketable securities', ['MarketableSecuritiesCurrent', 'AvailableForSaleSecuritiesDebtSecuritiesCurrent',
                                        'ShortTermInvestments'], 'USD', 'instant'),
+    ('Non-current marketable securities', ['MarketableSecuritiesNoncurrent',
+                                           'AvailableForSaleSecuritiesDebtSecuritiesNoncurrent'], 'USD', 'instant'),
     ('Receivables', ['AccountsReceivableNetCurrent'], 'USD', 'instant'),
     ('Inventory', ['InventoryNet'], 'USD', 'instant'),
     ('Current assets', ['AssetsCurrent'], 'USD', 'instant'),
@@ -58,13 +60,15 @@ METRICS = [
     ("Stockholders' equity", ['StockholdersEquity',
                               'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'], 'USD', 'instant'),
 ]
+# Cash for net cash and enterprise value: Apple, for one, holds most of its securities as non-current.
+CASH_LINES = ('Cash and equivalents', 'Current marketable securities', 'Non-current marketable securities')
 # Debt adds noncurrent debt, current debt, commercial paper and short-term borrowings, each from the first concept
 # here that a company reports: Apple tags LongTermDebtNoncurrent, Tesla tags its noncurrent debt LongTermDebt.
 DEBT_PARTS = (('LongTermDebtNoncurrent', 'LongTermDebt'), ('LongTermDebtCurrent', 'DebtCurrent'), ('CommercialPaper',),
               ('ShortTermBorrowings',))
 DEFINITIONS = ('Definitions: free cash flow = operating cash flow - capital expenditure; net cash = cash and '
-               'equivalents + current marketable securities - debt; trailing twelve months (TTM) = last fiscal year '
-               '+ this year to date - last year to date (for EPS an approximation).')
+               'equivalents + current and non-current marketable securities - debt; trailing twelve months (TTM) = '
+               'last fiscal year + this year to date - last year to date (for EPS an approximation).')
 
 Fetch = Callable[[str], dict]
 
@@ -252,7 +256,7 @@ def statements(ticker: str, years: int = 3, fetch: Fetch = fetch_json) -> Retrie
             gross = revenue - value('Cost of revenue', end)
         ocf, capex, net = value('Operating cash flow', end), value('Capital expenditure', end), value('Net income', end)
         fcf = ocf - capex if ocf is not None and capex is not None else None
-        cash = (value('Cash and equivalents', end) or 0) + (value('Current marketable securities', end) or 0)
+        cash = sum(value(label, end) or 0 for label in CASH_LINES)
         return {
             'Debt': _format_value(debt.get(end), 'USD'),
             'Revenue growth': _ratio(revenue - before, before) if revenue is not None and before else 'n/a',
@@ -322,7 +326,7 @@ def recent_filings(ticker: str, forms: list[str] | None = None, limit: int = 8,
 
 VALUATION_LINES = ('Revenue', 'Operating income', 'Depreciation and amortization', 'Net income', 'Diluted EPS',
                    'Diluted shares', 'Operating cash flow', 'Capital expenditure', 'Cash and equivalents',
-                   'Current marketable securities', "Stockholders' equity")
+                   'Current marketable securities', 'Non-current marketable securities', "Stockholders' equity")
 
 
 def fundamentals(facts: dict) -> dict:
