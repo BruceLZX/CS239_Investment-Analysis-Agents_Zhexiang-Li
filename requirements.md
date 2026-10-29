@@ -4,7 +4,7 @@
 
 ## 1. Purpose and scope
 
-The agent team does what the [investment-analysis skill](https://github.com/BruceLZX/investment-analysis-skill) does: it turns a company into an evidence-backed investment memo. Four bots split the work the way a small research desk would:
+The agent team does what the investment-analysis team does: it turns a company into an evidence-backed investment memo. Four bots split the work the way a small research desk would:
 - a **Lead Analyst** who owns the request and the memo;
 - two analysts who research in parallel: a **Fundamentals Analyst** for the numbers (filings, price, valuation, funding) and a **Market Analyst** for the business and its market (customers, competitors, market size, news, regulation);
 - an **IC (investment committee) Reviewer** who challenges each draft before anything ships, and sends gaps that need new evidence back to the analyst whose area they are.
