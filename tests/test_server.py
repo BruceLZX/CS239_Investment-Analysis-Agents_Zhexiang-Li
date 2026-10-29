@@ -339,6 +339,10 @@ def test_the_qa_loop_writes_a_rewrite_plan_for_each_failing_section(runs_dir):
     assert 'financials' in loop['rewrite_items_by_owner'][FUNDAMENTALS] and loop['required_fixes']
     workflow = case_file.read_case()['workflow']
     assert workflow['iteration_log'][0]['passed'] is False and workflow['rewrite_plan'][0]['owner'] == FUNDAMENTALS
+    # A second loop does not make the open plan an item of its own.
+    call('run_qa_loop', {}, LEAD)
+    assert not any(item['problems'][0].startswith('rewrite plan:')
+                   for item in case_file.read_case()['workflow']['rewrite_plan'])
 
 
 def test_a_version_is_rendered_checked_and_never_changes(runs_dir):

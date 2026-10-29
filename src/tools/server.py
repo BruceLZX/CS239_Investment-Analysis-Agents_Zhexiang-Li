@@ -845,14 +845,15 @@ def run_qa_loop() -> dict:
     citations, report completeness, evidence, register, workflow records) and, when it fails, write the rewrite plan:
     one item per failing section for its owner and one per report-level problem for you. Logged as an iteration."""
     with open_case() as case:
+        workflow = case.setdefault('workflow', {})
+        stamp = now()
+        diagnose_report.resolve(workflow.get('rewrite_plan') or [], case_file.current_parts(case), stamp)
         texts = {key: r['markdown'] for key, r in case_file.current_parts(case).items()}
         composite, problems = composite_score(texts.get('scoring', ''))
         html_text = _render(case, texts, _cover(case, '', '', '', '', ''), '', composite or '')
         check = _run_checks(case, texts, html_text, None, None, composite)
         check['report'] = problems + check['report']
         check['passed'] = check['passed'] and not problems
-        workflow = case.setdefault('workflow', {})
-        stamp = now()
         if not check['passed']:
             workflow['rewrite_plan'] = diagnose_report.rewrite_plan(check['sections'], check['report'], stamp)
         workflow.setdefault('iteration_log', []).append({'at': stamp, 'by': CALLER.get(), 'passed': check['passed'],
@@ -898,6 +899,8 @@ def save_memo_version(rating: str, data_as_of: str, tagline: str, business_summa
         (folder / 'report.md').write_text(report.plain_report(texts, case['sources'], report.Cover(**cover), rating,
                                                               data_as_of, composite or '', case_file.language(case)))
         pdf = report.write_pdf(folder / 'report.html', folder / 'report.pdf')
+        diagnose_report.resolve((case.get('workflow') or {}).get('rewrite_plan') or [], case_file.current_parts(case),
+                                now())
         check = _run_checks(case, texts, html_text, folder / 'report.pdf', rating, composite)
         check['report'] = problems + ([f"PDF: {pdf['error']}"] if 'error' in pdf else []) + check['report']
         check['passed'] = check['passed'] and not problems and 'error' not in pdf
@@ -905,8 +908,6 @@ def save_memo_version(rating: str, data_as_of: str, tagline: str, business_summa
                  'markdown': str(folder / 'report.md')}
         version = case_file.add_version(case, rating, data_as_of, cover, composite or '', files,
                                         _check_summary(check, per_section=6))
-        diagnose_report.resolve((case.get('workflow') or {}).get('rewrite_plan') or [], case_file.current_parts(case),
-                                version['saved_at'])
     return {'version': version['version'], 'rating': rating, 'composite_score': composite,
             'changed_parts': version['changed_parts'], 'missing_parts': version['missing_parts'],
             'files': files, 'check': _check_summary(check)}

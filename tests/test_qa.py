@@ -265,6 +265,15 @@ def test_the_rewrite_plan_resolves_when_the_section_is_saved_again():
     assert all(i['resolved'] for i in items) and items[0]['still_failing']
 
 
+def test_an_open_plan_is_never_an_item_and_report_items_resolve_when_checked_again():
+    # A failed loop's open item once failed every later loop, which wrote it into the plan again.
+    items = diagnose_report.rewrite_plan({}, ['rewrite plan: 1 items unresolved after a failed QA loop', 'no timeline'],
+                                         '2026-10-29T01')
+    assert [i['problems'] for i in items] == [['no timeline']]
+    diagnose_report.resolve(items, {}, '2026-10-29T01')  # a check starting in the same second still counts
+    assert items[0]['resolved']
+
+
 def test_the_delivery_folder_holds_only_sources_one_html_and_one_pdf(tmp_path: Path):
     (tmp_path / 'sources').mkdir()
     (tmp_path / 'Report.html').write_text('x')
