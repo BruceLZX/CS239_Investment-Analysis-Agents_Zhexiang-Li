@@ -347,3 +347,13 @@ def test_long_replies_and_overstated_searches_are_observed():
     details = {o['rule']: o['detail'] for o in export_trace.observe_rules(events, [run], case)}
     assert details['P21'] == 'Market Analyst replied with 1,600 characters (limit 1,500)'
     assert details['N1'] == 'packet E1 lists 3 searches and filing reads, but Market Analyst had run 1'
+
+
+def test_a_next_line_character_inside_a_transcript_record_keeps_it_whole(tmp_path):
+    # Found in a live run: a fetched page put U+0085 into a JSON string, unescaped, and splitlines() broke there.
+    text = transcript('run-x', 'bot-res', '2026-10-26T10:00:00+00:00', [
+        ('2026-10-26T10:00:01+00:00', tool_result('c1', 'web_fetch', 'Line one\x85line two'))])
+    path = tmp_path / 'run-x.jsonl'
+    path.write_text(text.replace('\\u0085', '\x85'))
+    [(_, message)] = export_trace.read_transcript(path)['messages']
+    assert message['content'][0]['text'] == 'Line one\x85line two'

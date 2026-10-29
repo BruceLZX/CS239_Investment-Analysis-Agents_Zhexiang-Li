@@ -42,3 +42,17 @@ def test_setting_up_the_team_archives_retired_bots_and_gives_each_bot_its_own_en
     assigned = {data['botId']: data['assignments'][0] for route, data in calls if route == 'mcp/assignments/replace'}
     assert assigned['bot-market']['serverId'] == 'server-research-market'
     assert 'get_sec_financials' not in assigned['bot-market']['allowedTools']
+
+
+def test_the_reviewers_thinking_is_capped(monkeypatch):
+    # At max, the reviewer's reasoning over a whole memo used up Rakazo's 32,768-token output limit three times.
+    thinking = lambda: {profile.name: profile.model.thinking_level for profile in team_profiles()}
+    monkeypatch.setenv('THINKING_LEVEL', 'max')
+    monkeypatch.delenv('REVIEWER_THINKING_LEVEL', raising=False)
+    assert thinking() == {'Lead Analyst': 'max', 'Fundamentals Analyst': 'max', 'Market Analyst': 'max',
+                          'IC Reviewer': 'high'}
+    monkeypatch.setenv('THINKING_LEVEL', 'low')
+    assert thinking()['IC Reviewer'] == 'low'  # a cap, never a raise
+    monkeypatch.setenv('THINKING_LEVEL', 'max')
+    monkeypatch.setenv('REVIEWER_THINKING_LEVEL', 'max')
+    assert thinking()['IC Reviewer'] == 'max'

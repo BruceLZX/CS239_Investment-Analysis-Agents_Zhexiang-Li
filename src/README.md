@@ -41,6 +41,7 @@ runs/          created at run time and gitignored: per-run case files, tool logs
 | `RAKAZO_URL` | Rakazo's web origin, `http://127.0.0.1:5174` |
 | `SEC_USER_AGENT` | your contact for SEC requests, e.g. `Your Name you@example.com`; `team.connect_model` asks for it |
 | `MODEL_ID`, `THINKING_LEVEL` | the bots' model and thinking level (defaults `deepseek-flash`, `max`) |
+| `REVIEWER_THINKING_LEVEL` | the most thinking the IC Reviewer gets (default `high`): at `max`, its reasoning over the whole memo can use up Rakazo's 32,768-token output limit before it writes a review |
 | `MCP_HOST`, `MCP_PORT` | where the MCP server listens (`127.0.0.1`, `8766`) |
 | `MCP_ENDPOINT` | the address Rakazo's containers use to reach it (`http://host.docker.internal:8766/mcp`); each bot gets this address with its own `?agent=` key |
 | `RAKAZO_TEST_EMAIL`, `RAKAZO_TEST_PASSWORD` | written by `team.login --local-test`; never printed |

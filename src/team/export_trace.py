@@ -89,7 +89,9 @@ def _text_of(content) -> str:
 def read_transcript(path: Path) -> dict | None:
     """One Rakazo run from a Pi format-4 JSONL file: its context entry and recorded messages."""
     records = []
-    for line in path.read_text().splitlines():
+    # Split on newlines only: splitlines() also breaks at characters such as U+0085, which a fetched page can put
+    # inside a JSON string, unescaped.
+    for line in path.read_text().split('\n'):
         if line.strip():
             parsed = json.loads(line)
             records.extend(parsed if isinstance(parsed, list) else [parsed])

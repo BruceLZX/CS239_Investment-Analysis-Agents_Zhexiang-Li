@@ -74,9 +74,16 @@ def _disabled(*kept: str) -> tuple[str, ...]:
     return tuple(tool for tool in BUILTIN_TOOLS if tool not in kept)
 
 
-def model_choice() -> ModelChoice:
-    return ModelChoice('deepseek', os.environ.get('MODEL_ID', 'deepseek-flash'),
-                       os.environ.get('THINKING_LEVEL', 'max'))
+# Rakazo's thinking levels, lowest first (ThinkingLevelSchema on the pinned build).
+THINKING_LEVELS = ('off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max')
+
+
+def model_choice(cap: str | None = None) -> ModelChoice:
+    """The bots' model and thinking level (MODEL_ID, THINKING_LEVEL), with the thinking level at most cap."""
+    level = os.environ.get('THINKING_LEVEL', 'max')
+    if cap in THINKING_LEVELS and level in THINKING_LEVELS and THINKING_LEVELS.index(cap) < THINKING_LEVELS.index(level):
+        level = cap
+    return ModelChoice('deepseek', os.environ.get('MODEL_ID', 'deepseek-flash'), level)
 
 
 def mcp_connection(agent: str) -> MCPConnection:
@@ -89,6 +96,9 @@ def mcp_connection(agent: str) -> MCPConnection:
 
 def team_profiles() -> list[BotProfile]:
     model = model_choice()
+    # At max, the IC Reviewer's reasoning over a whole memo used up Rakazo's 32,768-token output limit before it wrote
+    # a review, three times in one run, so its thinking is capped (REVIEWER_THINKING_LEVEL, default high).
+    reviewer_model = model_choice(os.environ.get('REVIEWER_THINKING_LEVEL', 'high'))
     memo_tools = ('get_memo_parts', 'save_memo_part', 'get_memo_check')
     return [
         BotProfile(
@@ -120,7 +130,7 @@ def team_profiles() -> list[BotProfile]:
             REVIEWER, 'Reviews each memo version part by part like a skeptical investment committee partner, and '
                       'approves it or sends it back to the Lead Analyst with must-fix items for each part\'s owner '
                       'and any evidence the analysts should add.',
-            _instructions('ic_reviewer.md'), model, mcp_connection(REVIEWER),
+            _instructions('ic_reviewer.md'), reviewer_model, mcp_connection(REVIEWER),
             mcp_tools=('get_memo_parts', 'get_memo_check', 'list_sources', 'get_evidence_packets',
                        'get_latest_review', 'save_review'),
             disabled_builtin_tools=_disabled()),
