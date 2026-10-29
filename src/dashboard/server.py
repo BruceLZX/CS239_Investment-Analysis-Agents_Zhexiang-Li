@@ -38,7 +38,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PAGE = Path(__file__).with_name('index.html')
 RUN_ID_RE = re.compile(r'^[\w-]+$')
 _runner: dict = {}  # The scenario run started from the page: its process, scenario and log file.
-_traces: dict = {}  # Rule observations and cost of captured runs, keyed by run id.
+_traces: dict = {}  # Rule observations, cost and trace timeline of captured runs, keyed by run id.
 
 
 def _ms(iso: str | None) -> int | None:
@@ -98,6 +98,57 @@ def turns(messages: dict[str, list[dict]]) -> list[dict]:
                                 {'bot': event['agent'], 'start': ts, 'end': ts})
         span['start'], span['end'] = min(span['start'], ts), max(span['end'], ts)
     return sorted(spans.values(), key=lambda span: span['start'])
+
+
+# The trace timeline: what each agent thought, did (tool calls), observed (tool results and Rakazo's guard) and
+# said, in time order. A message between bots is taken from its receiving end, which every delivery has: a reply
+# that Rakazo returns to the Lead has no sending end. A turn's prompt repeats a message, and an analyst's or the
+# reviewer's own text is narration or that reply.
+TRACE_KINDS = {'thought': 'thought', 'tool_call': 'action', 'tool_result': 'observation',
+               'platform_guard': 'observation', 'user_message': 'message', 'peer_message_received': 'message'}
+# Thoughts and messages are shown whole. A tool call or result can hold a whole memo or filing, so it is cut.
+TRACE_TEXT = 4_000
+
+
+def _result_text(text: str) -> str:
+    """An MCP tool result's text, taken out of its content envelope."""
+    try:
+        body = json.loads(text)
+    except (TypeError, ValueError):
+        return text
+    if isinstance(body, dict) and isinstance(body.get('content'), list):
+        return '\n'.join(str(item.get('text', '')) for item in body['content'] if isinstance(item, dict))
+    return text
+
+
+def timeline(events: list[dict]) -> list[dict]:
+    items = []
+    for event in sorted(events, key=lambda e: (_ms(e['ts']), e.get('seq', 0))):
+        lead_text = event['type'] == 'assistant_text' and event['agent'] == LEAD  # what the user reads
+        kind = 'message' if lead_text else TRACE_KINDS.get(event['type'])
+        if not kind:
+            continue
+        item = {'ts': _ms(event['ts']), 'kind': kind, 'agent': event['agent'], 'label': kind}
+        text = event.get('text', '')
+        if event['type'] == 'tool_call':
+            item['label'] = event.get('tool', '')
+            text = json.dumps(event.get('arguments') or {}, ensure_ascii=False)
+        elif event['type'] == 'tool_result':
+            item.update(label=event.get('tool', ''), error=bool(event.get('is_error')))
+            text = _result_text(text)
+        elif event['type'] == 'platform_guard':
+            item.update(label='platform guard', error=True)
+            text = f"{text}. {event.get('detail') or ''}".strip()
+        elif event['type'] == 'user_message':
+            item.update(agent='User', to=event['agent'])
+        elif event['type'] == 'peer_message_received':
+            item.update(agent=event.get('from') or 'User', to=event['agent'])
+        elif lead_text:
+            item['to'] = 'User'
+        if kind in ('action', 'observation') and len(text) > TRACE_TEXT:
+            text = text[:TRACE_TEXT] + f'… ({len(text) - TRACE_TEXT:,} more characters in the trace)'
+        items.append({**item, 'text': text})
+    return items
 
 
 def _summary(tool: str, arguments: dict) -> str:
@@ -227,15 +278,16 @@ def snapshot(run_dir: Path, rakazo: Rakazo | None = None) -> dict:
         'status': status, 'live_error': live_error,
         'conversation': entries, 'turns': turns(messages), 'tools': tool_calls(run_dir, entries),
         'case': case_view(case, started), 'usage': usage_points(records, bot_ids, started),
-        'observations': None, 'cost': None,
+        'observations': None, 'cost': None, 'timeline': None,
     }
     if captured:
         key = (run_dir / 'outcome.json').stat().st_mtime
         if _traces.get(case['run_id'], {}).get('key') != key:
             trace = build_trace(run_dir)
-            _traces[case['run_id']] = {'key': key, 'observations': trace['observations'], 'cost': trace['usage']}
-        view['observations'] = _traces[case['run_id']]['observations']
-        view['cost'] = _traces[case['run_id']]['cost']
+            _traces[case['run_id']] = {'key': key, 'observations': trace['observations'], 'cost': trace['usage'],
+                                       'timeline': timeline(trace['events'])}
+        for name in ('observations', 'cost', 'timeline'):
+            view[name] = _traces[case['run_id']][name]
     return view
 
 

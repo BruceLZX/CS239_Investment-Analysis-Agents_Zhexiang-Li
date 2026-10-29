@@ -53,10 +53,31 @@ def test_a_run_counts_as_finished_only_once_its_outcome_is_written(runs, client)
     outcome = runs / 'r1' / 'outcome.json'
     outcome.unlink()
     early = server.snapshot(runs / 'r1')
-    assert not early['captured'] and early['observations'] is None
+    assert not early['captured'] and early['observations'] is None and early['timeline'] is None
     assert client.get('/api/state').json()['runs'][0]['captured'] is False
     outcome.write_text(json.dumps({'outcome': 'delivered'}))
     assert server.snapshot(runs / 'r1')['observations']
+
+
+def test_the_trace_timeline_shows_thoughts_actions_observations_and_messages_in_time_order(runs):
+    timeline = server.snapshot(runs / 'r1')['timeline']
+    assert [item['ts'] for item in timeline] == sorted(item['ts'] for item in timeline)
+    assert {item['kind'] for item in timeline} == {'thought', 'action', 'observation', 'message'}
+    # The Market Analyst's reply has only a receiving end, at the Lead; the Lead's own text goes to the user.
+    assert [(item['agent'], item['to']) for item in timeline if item['kind'] == 'message'] == [
+        ('User', 'Lead Analyst'), ('Lead Analyst', 'Market Analyst'), ('Lead Analyst', 'User'),
+        ('Market Analyst', 'Lead Analyst'), ('Lead Analyst', 'User')]
+    result = next(item for item in timeline if item['kind'] == 'observation')
+    assert result['label'] == 'get_case_status' and result['text'] == '{"evidence_packets": []}'
+
+
+def test_thoughts_are_shown_whole_and_long_tool_results_are_cut():
+    at = '2026-10-26T10:00:00+00:00'
+    thought, result = server.timeline([
+        {'type': 'thought', 'agent': 'IC Reviewer', 'ts': at, 'seq': 1, 'text': 'x' * 50_000},
+        {'type': 'tool_result', 'agent': 'IC Reviewer', 'ts': at, 'seq': 2, 'tool': 'get_memo_draft', 'text': 'y' * 5000}])
+    assert thought['text'] == 'x' * 50_000
+    assert result['text'] == 'y' * 4000 + '… (1,000 more characters in the trace)'
 
 
 def test_each_tool_call_is_credited_to_the_bot_that_could_make_it(runs):
