@@ -13,7 +13,7 @@ Run every command below from this folder (`src/`).
 
 ```
 team/          bot prompts and profiles, Rakazo client, scenario runner, trace export and checks, replay
-tools/         the MCP server: SEC EDGAR, prices, source register, case file, memo checks
+tools/         the MCP server: SEC statements, filing text, prices, valuation, source register, case file, memo parts and checks
 dashboard/     a local web page that shows a run live or replays a captured one
 infra/         setup-rakazo.sh: installs and runs a pinned Rakazo build with Docker
 scenarios/     the four research scenarios (request, attached documents, what to watch for)
@@ -26,8 +26,8 @@ runs/          created at run time and gitignored: per-run case files, tool logs
 ## External requirements
 
 - **Machine:** macOS or Linux, Docker Desktop (or Docker Engine with Compose), Python 3.13, and a network connection.
-- **[Rakazo](https://github.com/elie222/rakazo):** the agent runtime, run locally in Docker. `infra/setup-rakazo.sh` downloads a pinned build (commit `b445fe9`, with a checksum check) and raises Rakazo's bot-to-bot hop limit to 8, which the team's follow-up research round needs. It keeps Rakazo's generated secrets in `../../rakazo-runtime/`, next to the repository rather than inside it. Rakazo serves its web UI at http://127.0.0.1:5174.
-- **DeepSeek API key:** the bots run on DeepSeek (`deepseek-v4-pro`). You give the key to Rakazo once with `team.connect_model`; Rakazo stores it encrypted, and it never enters this repository. A scenario run costs about $0.25–0.85 at DeepSeek's peak rate and half that off-peak; traces and the dashboard price each call for the hour it was made (`team/model_costs.py`), since Rakazo's own estimate always uses the peak rate.
+- **[Rakazo](https://github.com/elie222/rakazo):** the agent runtime, run locally in Docker. `infra/setup-rakazo.sh` downloads a pinned build (commit `b445fe9`, with a checksum check) and raises Rakazo's bot-to-bot hop limit to 9, which three review rounds need. It keeps Rakazo's generated secrets in `../../rakazo-runtime/`, next to the repository rather than inside it. Rakazo serves its web UI at http://127.0.0.1:5174.
+- **DeepSeek API key:** the bots run on DeepSeek (`deepseek-flash` with thinking `max`). You give the key to Rakazo once with `team.connect_model`; Rakazo stores it encrypted, and it never enters this repository. The Phase 1 runs (on `deepseek-v4-pro`) cost $0.25–0.85 each; a run of the complete memo is estimated at $1.4–2.2 at DeepSeek's peak rate and half that off-peak. Traces and the dashboard price each call for the hour it was made (`team/model_costs.py`), since Rakazo's own estimate always uses the peak rate.
 - **SEC EDGAR:** free. SEC's fair-access policy requires a contact in the User-Agent (`SEC_USER_AGENT`).
 - **Yahoo Finance's chart endpoint:** price context, used at low volume; no key needed.
 - **Web search:** Rakazo's built-in `web_search` scrapes DuckDuckGo by default; no key needed.
@@ -40,7 +40,7 @@ runs/          created at run time and gitignored: per-run case files, tool logs
 |---|---|
 | `RAKAZO_URL` | Rakazo's web origin, `http://127.0.0.1:5174` |
 | `SEC_USER_AGENT` | your contact for SEC requests, e.g. `Your Name you@example.com`; `team.connect_model` asks for it |
-| `MODEL_ID`, `THINKING_LEVEL` | the bots' model and thinking level (defaults `deepseek-v4-pro`, `high`) |
+| `MODEL_ID`, `THINKING_LEVEL` | the bots' model and thinking level (defaults `deepseek-flash`, `max`) |
 | `MCP_HOST`, `MCP_PORT` | where the MCP server listens (`127.0.0.1`, `8766`) |
 | `MCP_ENDPOINT` | the address Rakazo's containers use to reach it (`http://host.docker.internal:8766/mcp`); each bot gets this address with its own `?agent=` key |
 | `RAKAZO_TEST_EMAIL`, `RAKAZO_TEST_PASSWORD` | written by `team.login --local-test`; never printed |
@@ -71,17 +71,17 @@ Then run a scenario, export its trace and check it. For example:
 ```bash
 .venv/bin/python -m team.run_scenario public-equity-memo
 .venv/bin/python -m team.export_trace
-.venv/bin/python -m team.check_trace ../traces/phase1/public-equity-memo.json
+.venv/bin/python -m team.check_trace ../traces/phase2-baseline/public-equity-memo.json
 ```
 
-- **`run_scenario <name>`** runs one of `public-equity-memo`, `confidential-startup`, `manipulated-deck` or `rushed-call`. It creates or updates the bots (and archives the Research Analyst from the earlier three-bot team), clears their threads, sends the scenario's request to the Lead Analyst, waits for the memo, and copies Rakazo's transcripts into `runs/<run_id>/`. Instead of a scenario name:
+- **`run_scenario <name>`** runs one of `public-equity-memo`, `confidential-startup`, `manipulated-deck` or `rushed-call`. It creates or updates the bots (and archives the Research Analyst from the earlier three-bot team), clears their threads, sends the scenario's request to the Lead Analyst, waits for the memo (expect 40–75 minutes; the runner gives up after 90), and copies Rakazo's transcripts into `runs/<run_id>/`. Instead of a scenario name:
   - `--request "…"` runs a request of your own, with no attached documents (scenario name `custom`);
   - `--follow-up "…"` asks the Lead Analyst a question about the latest run once it has finished; the run is captured again afterwards, so the question and answer join its record.
 
   Options:
   - `--narrate` prints the conversation between the bots as it happens;
   - `--approval-cards wait` leaves Rakazo's approval cards for you to answer (the default denies them, so unattended runs don't stall).
-- **`export_trace [run_id]`** turns a run (default: the latest) into `../traces/phase1/<scenario>.json` and `.md`. Use `--out` to write somewhere else.
+- **`export_trace [run_id]`** turns a run (default: the latest) into `../traces/phase2-baseline/<scenario>.json` and `.md`. Use `--out` to write somewhere else (the Phase 1 traces are in `../traces/phase1/`).
 - **`check_trace`** confirms that a trace holds everything the course asks for: each agent's thoughts, tool calls with arguments, tool results and inter-agent messages.
 
 To watch a run in the browser instead, start the dashboard and open http://127.0.0.1:8770:
@@ -112,7 +112,7 @@ The tests run offline, so they spend no tokens. They use recorded SEC and Yahoo 
 
 ## Phase 1 and Phase 2
 
-Phase 1 runs **without** a safety-enforcing framework: the policies exist only as instructions in the bots' prompts. The memo check and the review-gate record observe and log, but never block. Exported traces list possible rule breaks under "Rule observations". In Phase 2 the same scenarios are replayed with the course's policy-assurance framework enforcing the policies; [`../requirements.md`](../requirements.md) names where each rule can be checked.
+Phase 1 ran, and this version still runs, **without** a safety-enforcing framework: the policies exist only as instructions in the bots' prompts. The part and memo checks and the review-gate record observe and log, but never block. Exported traces list possible rule breaks under "Rule observations". In Phase 2 the same scenarios are replayed with the course's policy-assurance framework enforcing the policies; [`../requirements.md`](../requirements.md) names where each rule can be checked.
 
 ## Data
 

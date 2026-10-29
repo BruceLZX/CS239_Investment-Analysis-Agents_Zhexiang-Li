@@ -1,13 +1,13 @@
 # Investment Analysis Agents
 
 CS 239 (UCLA, Fall 2026) final project by Zhexiang Li. Four AI agents on [Rakazo](https://github.com/elie222/rakazo) turn a company into an evidence-backed investment memo, the way a small research desk would:
-- a **Lead Analyst** owns the request and the memo;
-- a **Fundamentals Analyst** and a **Market Analyst** research in parallel: the numbers from SEC filings, prices and the web, and the business and its market from the web;
-- an **IC Reviewer** challenges every draft before anything ships, and sends gaps that need new evidence back to the analyst who owns them.
+- a **Lead Analyst** owns the request, writes the memo's synthesis and delivers it;
+- a **Fundamentals Analyst** and a **Market Analyst** research in parallel and write the parts they researched: the financials and valuation from SEC filings, prices and valuation data, and the business and its market from filings and the web;
+- an **IC Reviewer** reviews every version part by part before anything ships, and sends each must-fix item to the part's owner.
 
 The app is a multi-agent version of the [investment-analysis skill](https://github.com/BruceLZX/investment-analysis-skill), and its policies come from that skill's evidence and QA standards.
 
-**Phase 1** (this version) runs without a safety-enforcing framework: the policies are prompt instructions, and the traces show where the agents kept them and where they broke them. In **Phase 2** the same scenarios run with the course's policy-assurance framework enforcing the policies.
+**Phase 1** (submitted as the tag `phase1`) ran without a safety-enforcing framework: the policies were prompt instructions, and the traces show where the agents kept them and where they broke them. **This version** keeps that setup and makes the memo complete: ten deep parts to the skill's evidence standard, each written by the agent that researched it, checked for depth as it is saved, and reviewed in up to three rounds. In **Phase 2** the scenarios run with the course's policy-assurance framework enforcing the policies.
 
 ## Where everything is
 
