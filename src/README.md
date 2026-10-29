@@ -1,7 +1,7 @@
 # Investment Analysis Agents: source code
 
-This folder holds the application: four Rakazo bots that turn a company into an evidence-backed investment memo, and the MCP server their tools run on.
-- **The bots:** a Lead Analyst, a Fundamentals Analyst, a Market Analyst and an IC Reviewer.
+This folder holds the application: nine Rakazo bots that turn a company into a decision-grade investment report to the standard of the investment-analysis skill, and the MCP server their tools run on.
+- **The bots:** a Lead Analyst; six analysts (Company, Product, Market, Fundamentals, Valuation, Regulatory); a Red Team Analyst; and an IC Reviewer.
 - **What the app does:** [`../app.md`](../app.md).
 - **The agents and their exact prompts:** [`../agents/`](../agents/).
 - **The tools:** [`../tools.md`](../tools.md).
@@ -13,7 +13,11 @@ Run every command below from this folder (`src/`).
 
 ```
 team/          bot prompts and profiles, Rakazo client, scenario runner, trace export and checks, replay
-tools/         the MCP server: SEC statements, filing text, prices, valuation, source register, case file, memo parts and checks
+team/playbooks the investment-analysis skill's playbooks, copied unchanged; the bots read them with read_playbook
+tools/         the MCP server: SEC statements, filing text, prices, valuation, source register, case file, workflow records,
+               report sections, versions, reviews and delivery
+tools/qa/      the skill's QA scripts, ported: depth, report completeness, citations, evidence, register, workflow, output
+tools/templates the skill's HTML report template; tools/report.py renders it and tools/pdf.py prints it
 dashboard/     a local web page that shows a run live or replays a captured one
 infra/         setup-rakazo.sh: installs and runs a pinned Rakazo build with Docker
 scenarios/     the four research scenarios (request, attached documents, what to watch for)
@@ -25,9 +29,9 @@ runs/          created at run time and gitignored: per-run case files, tool logs
 
 ## External requirements
 
-- **Machine:** macOS or Linux, Docker Desktop (or Docker Engine with Compose), Python 3.13, and a network connection.
-- **[Rakazo](https://github.com/elie222/rakazo):** the agent runtime, run locally in Docker. `infra/setup-rakazo.sh` downloads a pinned build (commit `b445fe9`, with a checksum check) and raises Rakazo's bot-to-bot hop limit to 11, which three review rounds and one resent brief need, and retries a broken model stream up to three times. It keeps Rakazo's generated secrets in `../../rakazo-runtime/`, next to the repository rather than inside it. Rakazo serves its web UI at http://127.0.0.1:5174.
-- **DeepSeek API key:** the bots run on DeepSeek (`deepseek-flash` with thinking `max`). You give the key to Rakazo once with `team.connect_model`; Rakazo stores it encrypted, and it never enters this repository. The Phase 1 runs (on `deepseek-v4-pro`) cost $0.25–0.85 each; a run of the complete memo is estimated at $1.4–2.2 at DeepSeek's peak rate and half that off-peak. Traces and the dashboard price each call for the hour it was made (`team/model_costs.py`), since Rakazo's own estimate always uses the peak rate.
+- **Machine:** macOS or Linux, Docker Desktop (or Docker Engine with Compose), Python 3.13, Pango for the PDF (`brew install pango`, or `apt-get install libpango-1.0-0 libpangocairo-1.0-0`), and a network connection.
+- **[Rakazo](https://github.com/elie222/rakazo):** the agent runtime, run locally in Docker. `infra/setup-rakazo.sh` downloads a pinned build (commit `b445fe9`, with a checksum check) and raises Rakazo's bot-to-bot hop limit to 17, which the red-team pass, three review rounds, two revision rounds and one resent brief need, and retries a broken model stream up to three times. It keeps Rakazo's generated secrets in `../../rakazo-runtime/`, next to the repository rather than inside it. Rakazo serves its web UI at http://127.0.0.1:5174.
+- **DeepSeek API key:** the bots run on DeepSeek (`deepseek-flash` with thinking `max`). You give the key to Rakazo once with `team.connect_model`; Rakazo stores it encrypted, and it never enters this repository. The Phase 1 runs (on `deepseek-v4-pro`) cost $0.25–0.85 each and the four-bot Phase 2 baseline $0.29–0.61; a nine-bot run of the full report is estimated at $1.5–2.5 at DeepSeek's peak rate and half that off-peak. Traces and the dashboard price each call for the hour it was made (`team/model_costs.py`), since Rakazo's own estimate always uses the peak rate.
 - **SEC EDGAR:** free. SEC's fair-access policy requires a contact in the User-Agent (`SEC_USER_AGENT`).
 - **Yahoo Finance's chart endpoint:** price context, used at low volume; no key needed.
 - **Web search:** Rakazo's built-in `web_search` scrapes DuckDuckGo by default; no key needed.
@@ -75,7 +79,7 @@ Then run a scenario, export its trace and check it. For example:
 .venv/bin/python -m team.check_trace ../traces/phase2-baseline/public-equity-memo.json
 ```
 
-- **`run_scenario <name>`** runs one of `public-equity-memo`, `confidential-startup`, `manipulated-deck` or `rushed-call`. It creates or updates the bots (and archives the Research Analyst from the earlier three-bot team), clears their threads, sends the scenario's request to the Lead Analyst, waits for the memo (expect 40–75 minutes; the runner gives up after 90), and copies Rakazo's transcripts into `runs/<run_id>/`. Instead of a scenario name:
+- **`run_scenario <name>`** runs one of `public-equity-memo`, `confidential-startup`, `manipulated-deck` or `rushed-call`. It creates or updates the nine bots (and archives the Research Analyst from the earlier three-bot team), clears their threads, sends the scenario's request to the Lead Analyst, waits for the report (expect 50–90 minutes; the runner gives up after 150), and copies Rakazo's transcripts into `runs/<run_id>/`. Each version's HTML, PDF and Markdown are in `runs/<run_id>/versions/`, and the delivered report folder in `runs/<run_id>/delivery/`. Instead of a scenario name:
   - `--request "…"` runs a request of your own, with no attached documents (scenario name `custom`);
   - `--follow-up "…"` asks the Lead Analyst a question about the latest run once it has finished; the run is captured again afterwards, so the question and answer join its record.
 
@@ -92,10 +96,11 @@ To watch a run in the browser instead, start the dashboard and open http://127.0
 ```
 
 It starts a scenario and follows the team live:
-- who is working and what they're doing;
+- who is working and what they're doing, and where the case is in the skill's steps (plan, briefs, evidence and sections, red team, version, review, delivery);
 - the messages between the bots;
-- the source register, memo versions and reviews;
-- at the end, the delivered memo, rule observations and cost.
+- the source register, the fourteen sections, versions and reviews (items by severity);
+- the latest version as the rendered HTML report, with its PDF;
+- at the end, rule observations and cost.
 
 Below the conversation, a message box talks to the Lead Analyst: **New request** starts a run with what you typed, and **Ask a follow-up** asks about the latest run once it has finished. Both run `team.run_scenario` (with `--request` or `--follow-up`) and show the team working live.
 
@@ -113,7 +118,7 @@ The tests run offline, so they spend no tokens. They use recorded SEC and Yahoo 
 
 ## Phase 1 and Phase 2
 
-Phase 1 ran, and this version still runs, **without** a safety-enforcing framework: the policies exist only as instructions in the bots' prompts. The part and memo checks and the review-gate record observe and log, but never block. Exported traces list possible rule breaks under "Rule observations". In Phase 2 the same scenarios are replayed with the course's policy-assurance framework enforcing the policies; [`../requirements.md`](../requirements.md) names where each rule can be checked.
+Phase 1 ran, and this version still runs, **without** a safety-enforcing framework: the policies exist only as instructions in the bots' prompts. The skill's gates and QA checks, the section and version checks and the review-gate record observe and log, but never block. Exported traces list possible rule breaks under "Rule observations". In Phase 2 the same scenarios are replayed with the course's policy-assurance framework enforcing the policies; [`../requirements.md`](../requirements.md) names where each rule can be checked.
 
 ## Data
 
