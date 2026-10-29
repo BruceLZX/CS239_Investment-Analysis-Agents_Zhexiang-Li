@@ -155,19 +155,24 @@ WRITER_TOOLS = ('read_client_document', 'read_playbook', 'register_source', 'lis
 SEC_READING = ('find_sec_company', 'list_sec_filings', 'read_sec_filing')
 ANALYSTS = {
     COMPANY: ('Researches and writes the report\'s company overview (legal entities, timeline, cap table) and team '
-              'sections from filings, registries and public records.', 'company_analyst.md', SEC_READING),
+              'sections from filings, registries and public records.', 'company_analyst.md',
+              SEC_READING + ('get_insider_activity',)),
     PRODUCT: ('Researches and writes the report\'s technology and product and development strategy sections from papers, '
-              'patents, regulators\' databases and product evidence.', 'product_analyst.md', SEC_READING),
+              'patents, regulators\' databases and product evidence.', 'product_analyst.md',
+              SEC_READING + ('search_public_records', 'search_literature')),
     MARKET: ('Researches and writes the report\'s market and industry and competitive landscape sections, product by '
-             'product and region by region.', 'market_analyst.md', SEC_READING + ('get_sec_financials',)),
+             'product and region by region.', 'market_analyst.md',
+             SEC_READING + ('get_sec_financials', 'search_public_records')),
     FUNDAMENTALS: ('Researches and writes the report\'s business model and financial analysis sections from SEC '
                    'filings, their notes and unit economics.', 'fundamentals_analyst.md',
                    SEC_READING + ('get_sec_financials', 'get_price_history')),
     VALUATION: ('Researches and writes the report\'s funding history and valuation and exit strategy sections from '
                 'prices, peer multiples, rounds and precedent exits.', 'valuation_analyst.md',
-                SEC_READING + ('get_sec_financials', 'get_price_history', 'get_valuation_snapshot')),
+                SEC_READING + ('get_sec_financials', 'get_price_history', 'get_valuation_snapshot',
+                               'get_trading_snapshot', 'get_market_regime', 'get_insider_activity')),
     REGULATORY: ('Researches regulators\' and courts\' records and policy for the whole report, writes its ESG section '
-                 'and files user data requests for records behind a login.', 'regulatory_analyst.md', SEC_READING),
+                 'and files user data requests for records behind a login.', 'regulatory_analyst.md',
+                 SEC_READING + ('search_public_records',)),
 }
 
 
@@ -186,7 +191,7 @@ def team_profiles() -> list[BotProfile]:
                    'save_scenario_analysis', 'save_evidence_block', 'get_evidence_matrix', 'get_gate',
                    'get_workflow_doc', 'get_memo_parts', 'save_memo_part', 'get_memo_check', 'run_qa_loop',
                    'save_memo_version', 'get_latest_review', 'deliver_memo', 'request_user_data',
-                   'get_price_history'),
+                   'get_price_history', 'get_market_regime'),
         disabled_builtin_tools=_disabled('message_bot', 'web_search', 'web_fetch'))]
     for name, (description, prompt_file, data_tools) in ANALYSTS.items():
         profiles.append(BotProfile(

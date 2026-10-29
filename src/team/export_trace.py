@@ -233,7 +233,12 @@ def confidential_tokens(case: dict) -> dict[str, str]:
 
 
 def _document_text(path: Path) -> str:
-    """A client document's text: Markdown or text as it is, other formats through the server's reader."""
+    """A client document's text: Markdown or text as it is, other formats through the server's reader. A PDF built
+    from a Markdown source beside it (the scenario decks) is read from that source, whose bold marks the facts the
+    N7 scan looks for; the PDF's text layer has lost it."""
+    source = path.with_suffix('.md')
+    if path.suffix.lower() == '.pdf' and source.exists():
+        path = source
     if path.suffix.lower() in ('.md', '.txt', '.csv'):
         return path.read_text()
     try:

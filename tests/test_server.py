@@ -74,8 +74,9 @@ def test_every_tool_is_listed_with_text_only_results():
     tools = list_tools(server.server)
     assert {t.name for t in tools} == {
         'find_sec_company', 'get_sec_financials', 'list_sec_filings', 'read_sec_filing', 'get_price_history',
-        'get_valuation_snapshot', 'read_playbook', 'register_source', 'list_sources', 'get_case_status',
-        'set_case_scope', 'read_client_document', 'request_user_data', 'save_evidence_block', 'get_evidence_matrix',
+        'get_valuation_snapshot', 'get_trading_snapshot', 'get_market_regime', 'get_insider_activity',
+        'search_public_records', 'search_literature', 'read_playbook', 'register_source', 'list_sources',
+        'get_case_status', 'set_case_scope', 'read_client_document', 'request_user_data', 'save_evidence_block', 'get_evidence_matrix',
         'get_gate', 'save_research_plan', 'save_profile_requirements', 'save_thesis_table', 'save_scenario_analysis',
         'save_red_team_review', 'get_workflow_doc', 'save_memo_part', 'get_memo_parts', 'run_qa_loop',
         'save_memo_version', 'get_memo_check', 'start_review', 'save_review_pass', 'finish_review',
@@ -166,14 +167,26 @@ def test_client_documents_carry_their_confidentiality_label(runs_dir, tmp_path, 
     (tmp_path / 'deck.md').write_text('ARR $3.2M')
     monkeypatch.setattr(case_file, 'ROOT', tmp_path)
     case_file.start_run('demo', [{'name': 'Deck', 'file': 'deck.md', 'confidentiality': 'client-confidential'}])
-    assert call('read_client_document', {'name': 'deck'}) == '[CLIENT-CONFIDENTIAL: Deck]\nARR $3.2M'
+    assert call('read_client_document', {'name': 'deck'}) == ('[CLIENT-CONFIDENTIAL: Deck]\ndeck.md: Markdown, 1 line. '
+                                                              'Output page 1 of 1. Cite as "deck.md".\n\nARR $3.2M\n\n'
+                                                              '--- End of deck.md. ---')
 
 
-def test_longer_results_are_cut_where_rakazo_would_cut_them(runs_dir, tmp_path, monkeypatch):
-    (tmp_path / 'deck.md').write_text('x' * 20_000)
-    monkeypatch.setattr(case_file, 'ROOT', tmp_path)
-    case_file.start_run('demo', [{'name': 'Deck', 'file': 'deck.md', 'confidentiality': 'client-confidential'}])
-    text = call('read_client_document', {'name': 'Deck'})
+def test_client_documents_are_read_a_page_at_a_time_with_page_markers(runs_dir, monkeypatch):
+    monkeypatch.setattr(case_file, 'ROOT', Path(__file__).resolve().parents[1] / 'src')
+    case_file.start_run('demo', [{'name': 'Vantelle deck', 'file': 'fixtures/vantelle_deck.pdf',
+                                  'confidentiality': 'client-confidential'}])
+    first = call('read_client_document', {'name': 'Vantelle deck'})
+    assert first.startswith('[CLIENT-CONFIDENTIAL: Vantelle deck]\nvantelle_deck.pdf: PDF, 15 pages.')
+    assert '--- p.1 ---' in first and 'read it with page=2' in first
+    assert '--- End of vantelle_deck.pdf. ---' in call('read_client_document', {'name': 'Vantelle deck', 'page': 2})
+
+
+def test_longer_results_are_cut_where_rakazo_would_cut_them(runs_dir):
+    case_file.start_run('demo')
+    for n in range(40):
+        call('register_source', {**SOURCE, 'title': 'A long title ' * 30, 'location': f'https://sec.example/{n}'})
+    text = call('list_sources', {})
     assert len(text) == RAKAZO_TEXT_LIMIT and text.endswith('\n[truncated]')
 
 

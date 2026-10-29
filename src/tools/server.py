@@ -24,7 +24,7 @@ from mcp.types import ToolAnnotations
 from pydantic import BaseModel
 import uvicorn
 
-from . import case_file, filings, memo, prices, report, sec_edgar, sections, valuation
+from . import case_file, documents, filings, market, memo, prices, records, report, sec_edgar, sections, valuation
 from .agents import AGENTS
 from .case_file import now, open_case, read_case
 from .env import load_env
@@ -145,10 +145,12 @@ def find_sec_company(ticker: str) -> dict:
 
 @tool(READ_WEB)
 def get_sec_financials(ticker: str, years: int = 3) -> str:
-    """Financial statements from the company's 10-K and 10-Q XBRL filings: about 28 income statement, cash flow
+    """Financial statements from the company's 10-K and 10-Q XBRL filings: about 32 income statement, cash flow
     and balance sheet lines for up to five fiscal years (years: 1-5), with growth, margins, free cash flow, debt and
-    net cash worked out, and the latest quarter, year to date and trailing twelve months. The filings are registered
-    as sources, and the result lists the IDs to cite. XBRL has no segment split; read it with read_sec_filing."""
+    net cash worked out; returns (ROE, ROA, ROIC), working-capital days, interest coverage and the shares of goodwill
+    and stock-based compensation, each year and over the trailing twelve months; and the latest quarter, year to date
+    and trailing twelve months. The filings are registered as sources, and the result lists the IDs to cite. XBRL has
+    no segment split; read it with read_sec_filing."""
     return _registered(sec_edgar.statements(ticker, years), 'get_sec_financials')
 
 
@@ -161,12 +163,17 @@ def list_sec_filings(ticker: str, forms: list[str] | None = None, limit: int = 8
 @tool(READ_WEB)
 def read_sec_filing(ticker: str, form: str = '10-K', item: str = '7', page: int = 1,
                     keywords: list[str] | None = None, accession: str | None = None) -> str:
-    """Read the text of the company's latest 10-K or 10-Q, one item a page (about 9,000 characters) at a time.
-    10-K items: 1 business and segments, 1A risk factors, 7 management's discussion and analysis, 7A market risk,
-    8 financial statements and notes. 10-Q items: 1 financial statements, 2 management's discussion, 1A risk
-    factors. keywords: return only the paragraphs mentioning any of them, within the item or, with item empty, the
-    whole filing; the search runs on this server. accession: a specific filing instead of the latest. The filing
-    is registered as a source, and the result gives the ID to cite."""
+    """Read the text of the company's latest 10-K, 10-Q or 8-K, or a section of its proxy statement (DEF 14A), one
+    item a page (about 9,000 characters) at a time. 10-K items: 1 business and segments, 1A risk factors, 1B staff
+    comments, 1C cybersecurity, 2 properties, 3 legal proceedings, 5 the stock market and buybacks, 7 management's
+    discussion and analysis, 7A market risk, 8 financial statements and notes, 9A controls, 10-14 (usually in the
+    proxy), EX-21 the subsidiaries. 10-Q items: 1 financial statements, 2 management's discussion, 1A risk factors.
+    8-K items, from the latest 8-K reporting one: 2.02 results, 5.02 officer and director changes, 7.01 and 8.01
+    other news, each with its press release; 99.1 the press release alone. DEF 14A sections: directors (with the
+    executive officers), compensation, ownership, related (related-party transactions), committees, auditor.
+    keywords: return only the paragraphs mentioning any of them, within the item or, with item empty, the whole
+    filing; the search runs on this server. accession: a specific filing instead of the latest. The filing is
+    registered as a source, and the result gives the ID to cite."""
     return _registered(filings.read_filing(ticker, form, item, page, keywords, accession), 'read_sec_filing')
 
 
@@ -180,12 +187,64 @@ def get_price_history(ticker: str, period: str = '1y') -> str:
 
 @tool(READ_WEB)
 def get_valuation_snapshot(ticker: str, peers: list[str] | None = None) -> str:
-    """Price, market cap, enterprise value and multiples (P/E, EV/Sales, EV/EBITDA, FCF yield, P/B, trailing twelve
-    months) for the company and up to four peers, worked out from SEC XBRL filings and Yahoo prices; the company's
-    P/E and EV/Sales at its last five fiscal year ends; the peer median and the company's premium or discount to it.
+    """Price, market cap, enterprise value and multiples (P/E, EV/Sales, EV/EBITDA, FCF yield, P/B; then EV/EBIT,
+    P/FCF and dividend, buyback and total shareholder yield; trailing twelve months) for the company and up to four
+    peers, worked out from SEC XBRL filings and Yahoo prices; the company's P/E and EV/Sales at its last five fiscal
+    year ends; the peer median and the company's premium or discount to it.
     Peers that do not file US GAAP statements with the SEC show as n/a. Every filing and price used is registered as
     a source, and the result lists the IDs to cite."""
     return _registered(valuation.snapshot(ticker, peers), 'get_valuation_snapshot')
+
+
+@tool(READ_WEB)
+def get_trading_snapshot(ticker: str, sector_etf: str = '') -> str:
+    """The stock's trading over a year: the latest price with its time, average daily volume over 20 days and 3
+    months (shares and value), the 50- and 200-day moving averages, where the price sits in its 52-week range, and the
+    1-, 3-, 6- and 12-month returns against the S&P 500 and a sector ETF (sector_etf, e.g. XLK; empty for none), from
+    Yahoo Finance. The prices are registered as sources, and the result lists the IDs to cite."""
+    return _registered(market.trading_snapshot(ticker, sector_etf.strip() or None), 'get_trading_snapshot')
+
+
+@tool(READ_WEB)
+def get_market_regime() -> str:
+    """The market regime a listed company's call is made in, each figure dated: the S&P 500 and Nasdaq (level, year
+    to date, distance from the 52-week high and low), the VIX and its 1-year percentile, 3-month, 2-year and 10-year
+    Treasury yields and the 2s10s curve, investment-grade and high-yield credit spreads, the fed funds target, the
+    dollar index and USD/CNY, oil, gold and copper, and the eleven sector ETFs' 1- and 3-month strength against the
+    S&P 500, from Yahoo Finance and FRED. Each series is registered as a source, and the result lists the IDs to
+    cite."""
+    return _registered(market.market_regime(), 'get_market_regime')
+
+
+@tool(READ_WEB)
+def get_insider_activity(ticker: str, months: int = 6) -> str:
+    """Insider buying and selling from the company's Form 4 filings over the last months (1-24, default 6):
+    purchases against sales by count, shares and value, 10b5-1 plan and tax-withholding sales apart, the other
+    transaction codes, the insiders with the largest trades, and a row per filing (at most the 40 most recent).
+    EDGAR's Form 4 list and the filings with the largest trades are registered as sources, and the result lists the
+    IDs to cite."""
+    return _registered(sec_edgar.insider_activity(ticker, months), 'get_insider_activity')
+
+
+@tool(READ_WEB)
+def search_public_records(source: str, query: str, limit: int = 10) -> str:
+    """Search a regulator's or government's records, free and without a login: openfda_device (FDA 510(k)
+    clearances, De Novo grants and PMA approvals), openfda_drug (Drugs@FDA applications), openfda_recalls (device
+    recalls and drug enforcement reports), clinicaltrials (ClinicalTrials.gov), nhtsa_recalls (vehicle recalls; start
+    the query with the make, as in "Tesla Model Y 2025"), usaspending (federal contracts, grants and loans, by
+    recipient name) or sec_fulltext (EDGAR full-text search of the last five years; quote a phrase). Returns each
+    record's ID, title, date, status and link (limit: records a list, at most 20 in all), each registered as a
+    primary source, with the IDs to cite. The query leaves this server: never put a client's non-public detail in it."""
+    return _registered(records.search_public_records(source, query, limit), 'search_public_records')
+
+
+@tool(READ_WEB)
+def search_literature(source: str, query: str, limit: int = 10) -> str:
+    """Search research papers: pubmed (PubMed, with journal and DOI) or arxiv (preprints, not peer reviewed).
+    Returns each paper's ID, title, year, authors, venue and link (limit: at most 20), each registered as an
+    independent source, with the IDs to cite. The query leaves this server: never put a client's non-public detail
+    in it."""
+    return _registered(records.search_literature(source, query, limit), 'search_literature')
 
 
 # The skill's playbooks
@@ -348,12 +407,17 @@ def set_case_scope(company: str, ticker: str | None, company_type: str, decision
 
 
 @tool(READ)
-def read_client_document(name: str) -> str:
-    """Read a document the client attached to this request, with its confidentiality label."""
+def read_client_document(name: str, page: int = 1) -> str:
+    """Read a document the client attached to this request (PDF, Word, PowerPoint, Excel, Markdown or text), headed by
+    its confidentiality label, about 9,000 characters an output page (page: 1, 2, ...). Each block is marked with its
+    page, slide or sheet, to cite as the header says (e.g. "deck.pdf p.4"). Text a reader of the file would not see
+    (white, tiny or hidden text, hidden slides, sheets or rows, speaker notes, comments) is kept and labelled. A result
+    that starts "[needs OCR or a text version]" means nothing in the file is readable: ask the user for a text version
+    with request_user_data."""
     case = read_case()
     for document in case['client_documents']:
         if document['name'].lower() == name.strip().lower():
-            text = (case_file.ROOT / document['file']).read_text()
+            text = documents.read_document(case_file.ROOT / document['file'], page)
             return f"[{document['confidentiality'].upper()}: {document['name']}]\n{text}"
     names = ', '.join(d['name'] for d in case['client_documents']) or 'none'
     raise ValueError(f'No client document named {name!r}. Attached: {names}.')
@@ -600,8 +664,9 @@ def save_memo_part(section: str, markdown: str) -> dict:
     """Save your revision of one report section and get its check: the rules and the section's depth standard.
     section: a section key (executive_summary, company_overview, team, technology_product, market, competition,
     business_model, financials, funding_valuation, strategy, risk, thesis, exit, esg, scoring) or its number (s1-s14).
-    markdown: the section's text in Markdown with inline [S#] citations and its "::: kind" components, without its
-    title; at most 9,000 characters. Fix what the check reports and save again."""
+    markdown: the section's text in Markdown with inline [S#] citations and its components (each fenced by its
+    name, e.g. "::: kpi", and ":::"), without its title; at most 9,000 characters. Fix what the check reports and
+    save again."""
     key = _section(section)
     text = _normalize(key, markdown)
     if len(text) > sections.MAX_SECTION_CHARS:

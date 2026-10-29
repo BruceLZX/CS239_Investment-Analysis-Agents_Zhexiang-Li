@@ -295,3 +295,6 @@ def test_the_new_tools_get_short_summaries():
     assert server._summary('read_playbook', {'name': 'decision_framework.md', 'heading': 'The One Question'}) == \
         'decision_framework.md > The One Question'
     assert server._summary('set_case_scope', {'company': 'Apple', 'company_type': 'listed'}) == 'Apple'
+    assert server._summary('search_public_records', {'source': 'openfda_device', 'query': 'Vantelle'}) == \
+        'openfda_device: Vantelle'
+    assert server._summary('get_trading_snapshot', {'ticker': 'AAPL', 'sector_etf': 'XLK'}) == 'AAPL'

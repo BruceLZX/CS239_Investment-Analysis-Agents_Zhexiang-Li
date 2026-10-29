@@ -172,6 +172,8 @@ def _summary(tool: str, arguments: dict) -> str:
     if tool == 'get_valuation_snapshot':
         peers = ', '.join(arguments.get('peers') or [])
         return arguments.get('ticker', '') + (f' vs {peers}' if peers else '')
+    if tool in ('search_public_records', 'search_literature'):
+        return f"{arguments.get('source', '')}: {arguments.get('query', '')}"
     if tool == 'get_memo_check' and arguments.get('section'):
         return arguments['section'] + (f" in v{arguments['version']}" if arguments.get('version') else '')
     if arguments.get('version'):
