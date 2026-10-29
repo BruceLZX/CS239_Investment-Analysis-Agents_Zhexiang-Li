@@ -99,9 +99,10 @@ set_env MCP_ALLOW_PRIVATE_ENDPOINT true
 # Bot-to-bot messages one request may chain (Rakazo's default is 6). Rakazo counts hops only on messages a bot
 # sends, not on the replies it returns, so the Lead's sends land on odd hops. The team's longest path ends with the
 # Lead's seventh send at hop 13: briefs, the red-team request, the review request, revision briefs, the re-review
-# request, second revision briefs and the final review request. Four more leave room to resend a brief whose run
-# failed (P2), as the first Apple run of the four-bot team needed, and a follow-up question.
-set_env BOT_MESSAGE_MAX_HOPS 17
+# request, second revision briefs and the final review request. Eight more leave room for four more sends: a
+# section sent back before the first review, as the first nine-bot Apple run needed (it reached hop 16), and
+# briefs resent after a failed run (P2), as the first Apple run of the four-bot team needed.
+set_env BOT_MESSAGE_MAX_HOPS 21
 # A model stream that breaks off is retried (Rakazo's default is once); a dropped connection ended a run.
 set_env MODEL_STREAM_MAX_RETRIES 3
 
