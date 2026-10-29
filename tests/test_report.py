@@ -4,6 +4,7 @@ import re
 import pytest
 
 from tools import report, sections
+from tools.qa import check_report
 
 from .report_samples import EXECUTIVE_SUMMARY, FINANCIALS, SCORING, SOURCES
 
@@ -134,6 +135,15 @@ def test_names_follow_the_skills_output_contract():
 def test_the_report_language_follows_the_request():
     assert report.language_of('Prepare an investment memo on Apple (AAPL).') == 'en'
     assert report.language_of('帮我分析一下苹果公司（AAPL）是否值得买入') == 'zh'
+
+
+def test_a_report_in_english_has_its_labels_and_disclaimers_in_english_too():
+    template = report.TEMPLATE.read_text()
+    assert all(chinese in template for chinese, _ in report.ENGLISH_CHROME)
+    english, chinese = full_report(), full_report('zh')
+    assert 'Report date' in english and 'it is not investment advice' in english
+    assert all(text in english for text in check_report.REQUIRED_TEXT)  # the Chinese the skill's check needs
+    assert 'Report date' not in chinese and 'not investment advice' not in chinese
 
 
 def test_every_section_has_a_template_title():

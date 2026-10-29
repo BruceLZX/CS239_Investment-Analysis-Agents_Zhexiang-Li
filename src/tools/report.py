@@ -61,6 +61,28 @@ LABELS = {
            'appendix_id': '编号', 'appendix_source': '来源', 'appendix_link': '链接或文件', 'appendix_conf': '置信度',
            'requests': '监管数据库信息请求', 'further': '待尽调事项', 'tagline': '投资分析报告'},
 }
+# The template's chrome is Chinese, with bilingual section titles. A report in English gets the English beside the
+# cover's labels, the briefing's subtitle and the disclaimers; the Chinese stays, since check_report.py looks for it.
+ENGLISH_CHROME = (
+    ('<span>报告日期</span>', '<span>报告日期 Report date</span>'),
+    ('<span>数据截至</span>', '<span>数据截至 Data as of</span>'),
+    ('<span>行业</span>', '<span>行业 Industry</span>'),
+    ('<span>总部</span>', '<span>总部 Headquarters</span>'),
+    ('<span>阶段</span>', '<span>阶段 Stage</span>'),
+    ('先读这里即可了解总体判断、核心理由、主要风险和下一步尽调重点。</p>',
+     '先读这里即可了解总体判断、核心理由、主要风险和下一步尽调重点。<br>Read this first for the overall judgement, the '
+     'core reasons, the main risks and the next diligence steps.</p>'),
+    ('<strong>重要声明：</strong>', '<strong>重要声明 Important notice：</strong>'),
+    ('本报告由 AI 辅助生成，分析独立，未受被分析公司委托或资助。',
+     '本报告由 AI 辅助生成，分析独立，未受被分析公司委托或资助。<br>This report was generated from public information, '
+     'materials the user provided and web research, for investment research only; it is not investment advice. It may '
+     'be incomplete, out of date or biased by its sources: investment decisions need professional judgement and a '
+     'licensed adviser. It was produced with AI assistance, independently, and was neither commissioned nor paid for by '
+     'the company analysed.'),
+    ('<p>本报告由 AI 辅助生成，基于公开信息独立分析，不构成投资建议。</p>',
+     '<p>本报告由 AI 辅助生成，基于公开信息独立分析，不构成投资建议。<br>Produced with AI assistance from public '
+     'information, independently; for research only and not investment advice.</p>'),
+)
 QUADRANTS = {'strength': ('strength', 's', '优势'), 'weakness': ('weakness', 'w', '劣势'),
              'opportunity': ('opportunit', 'o', '机会'), 'threat': ('threat', 't', '威胁')}
 QUADRANT_LABELS = {'strength': 'strengths', 'weakness': 'weaknesses', 'opportunity': 'opportunities',
@@ -462,6 +484,8 @@ def render_report(section_markdown: dict[str, str], sources: list[dict], cover: 
     text = TEMPLATE.read_text()
     if language != 'zh':
         text = text.replace('<html lang="zh-CN">', '<html lang="en">', 1)
+        for chinese, bilingual in ENGLISH_CHROME:
+            text = text.replace(chinese, bilingual, 1)
 
     def body(key: str) -> str:
         markdown = (section_markdown.get(key) or '').strip()

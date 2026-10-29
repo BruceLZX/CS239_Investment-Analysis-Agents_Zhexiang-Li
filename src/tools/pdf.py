@@ -25,11 +25,16 @@ p { text-align: left !important; }
 .section-title strong, .section-title span { display: block; }
 .source-tag, .source-confidence { display: inline !important; min-height: 0 !important; padding: 0 4px !important;
                                   line-height: 1.4; margin-left: 2px !important; }
-.kpi-dashboard, .efficiency-strip, .briefing-grid, .quad-grid, .analog-grid { display: flex !important;
-                                                                              flex-wrap: wrap; }
+.kpi-dashboard, .efficiency-strip, .quad-grid, .analog-grid { display: flex !important; flex-wrap: wrap; }
 .kpi-card { flex: 1 1 21%; margin: 0 8px 8px 0; }
 .eff-card { flex: 1 1 17%; margin: 0 8px 8px 0; }
-.brief-card { flex: 1 1 29%; margin: 0 8px 8px 0; }
+/* WeasyPrint moves a flex box taller than the rest of a page to the next page whole, which left most of the
+   executive summary's first page blank; inline blocks break between rows of cards instead. */
+.exec-summary { break-before: page; break-inside: auto !important; }
+.verdict-strip, .one-question, .takeaway-item, .info-card, .evidence-card { break-inside: avoid; }
+.briefing-grid { display: block !important; }
+.brief-card { display: inline-block !important; width: 46%; vertical-align: top; margin: 0 8px 8px 0;
+              break-inside: avoid; }
 .quad-item, .analog-card { flex: 1 1 44%; margin: 0 8px 8px 0; }
 .verdict-strip { display: block !important; }
 .verdict-strip strong, .verdict-strip span { display: block; }
