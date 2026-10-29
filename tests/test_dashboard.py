@@ -86,11 +86,11 @@ def test_each_tool_call_is_credited_to_the_bot_that_could_make_it(runs):
               ('00:30', 'list_sources', {}),                            # shared; the analyst was briefed at 00:21
               ('00:40', 'register_source', {'title': 'Strawberry robots enter the field',
                                                 'source_type': 'independent media'}),
-              ('03:10', 'get_evidence_packets', {}))                    # Lead or Reviewer; the Lead got the result at 03:00
+              ('03:10', 'get_latest_review', {}))                       # Lead or Reviewer; the Lead got the result at 03:00
     tools = server.snapshot(runs / 'r1')['tools']
     assert [(call['tool'], call['bot']) for call in tools] == [
         ('get_case_status', 'Lead Analyst'), ('list_sources', 'Market Analyst'),
-        ('register_source', 'Market Analyst'), ('get_evidence_packets', 'Lead Analyst')]
+        ('register_source', 'Market Analyst'), ('get_latest_review', 'Lead Analyst')]
     assert tools[2]['summary'] == 'Strawberry robots enter the field (independent media)'
 
 
@@ -252,26 +252,46 @@ def test_a_second_message_from_the_user_is_a_follow_up():
         ('request', 'request'), ('reply', None), ('request', 'follow-up')]
 
 
-def test_memo_parts_and_whom_a_review_asks_reach_the_page(runs):
+def test_sections_evidence_and_review_items_reach_the_page(runs, client):
     case = json.loads((runs / 'r1' / 'case.json').read_text())
-    case['memo_parts'] = {'business': [{'revision': 1, 'author': 'Market Analyst', 'markdown': 'x', 'chars': 1,
-                                        'sha256': 'h', 'passed': False, 'findings': ['N1'],
-                                        'depth': ['too short', 'no table'], 'saved_at': '2026-10-26T10:02:00+00:00'}]}
-    case['reviews'] = [{'id': 'R1', 'memo_version': 1, 'round': 1, 'verdict': 'revise', 'must_fix': ['business: x'],
-                        'revision_requests': {'Market Analyst': ['business']}, 'saved_at': '2026-10-26T10:04:30+00:00'}]
+    case['memo_parts'] = {'competition': [{'revision': 1, 'author': 'Market Analyst', 'markdown': 'x', 'chars': 1,
+                                           'sha256': 'h', 'passed': False, 'findings': ['N1'],
+                                           'depth': ['too short', 'no table'], 'evidence_before_draft': True,
+                                           'saved_at': '2026-10-26T10:02:00+00:00'}]}
+    case['evidence'] = {'competition': [{'author': 'Market Analyst', 'queries': ['a', 'b', 'c', 'd'], 'rows': [{}] * 4,
+                                         'gate_passed': True, 'saved_at': '2026-10-26T10:01:00+00:00'}]}
+    case['reviews'] = [{'id': 'R1', 'memo_version': 1, 'round': 1, 'verdict': 'revise', 'grade': 'C',
+                        'items': [{'severity': 'Critical', 'pass': 3, 'sections': ['competition'],
+                                   'owners': ['Market Analyst'], 'issue': 'No Chinese rivals.'}],
+                        'revision_requests': {'Market Analyst': ['competition']},
+                        'finished_at': '2026-10-26T10:04:30+00:00'}]
+    version = runs / 'r1' / 'versions' / 'v1'
+    version.mkdir(parents=True)
+    (version / 'report.html').write_text('<html>report</html>')
+    case['memo_drafts'][0]['files'] = {'html': str(version / 'report.html')}
     (runs / 'r1' / 'case.json').write_text(json.dumps(case))
     view = server.snapshot(runs / 'r1')['case']
-    assert [part['key'] for part in view['part_list']][:2] == ['executive_summary', 'business']
-    assert view['parts'] == [{'part': 'business', 'revision': 1, 'author': 'Market Analyst', 'chars': 1,
-                              'passed': False, 'problems': 3, 'ts': ms('2026-10-26T10:02:00+00:00')}]
-    assert (view['reviews'][0]['round'], view['reviews'][0]['owners']) == (1, {'Market Analyst': ['business']})
+    assert [part['key'] for part in view['part_list']][:2] == ['executive_summary', 'company_overview']
+    assert view['parts'] == [{'part': 'competition', 'revision': 1, 'author': 'Market Analyst', 'chars': 1,
+                              'passed': False, 'problems': 3, 'evidence_first': True,
+                              'ts': ms('2026-10-26T10:02:00+00:00')}]
+    assert view['evidence'][0]['section'] == 'competition' and view['evidence'][0]['passed']
+    review = view['reviews'][0]
+    assert (review['round'], review['grade'], review['items'][0]['severity']) == (1, 'C', 'Critical')
+    assert view['drafts'][0]['report'] is True
+    assert client.get('/api/runs/r1/report/v1.html').text == '<html>report</html>'
+    assert client.get('/api/runs/r1/report/v2.html').status_code == 404
 
 
 def test_the_new_tools_get_short_summaries():
-    assert server._summary('save_memo_part', {'part': 'financials', 'markdown': 'x' * 3200}) == 'financials (3,200 characters)'
-    assert server._summary('get_memo_parts', {'parts': ['business', 'competition'], 'version': 2}) == \
-        'business, competition in v2'
+    assert server._summary('save_memo_part', {'section': 'financials', 'markdown': 'x' * 3200}) == \
+        'financials (3,200 characters)'
+    assert server._summary('get_memo_parts', {'sections_wanted': ['market', 'competition'], 'version': 2}) == \
+        'market, competition in v2'
     assert server._summary('read_sec_filing', {'ticker': 'AAPL', 'form': '10-K', 'item': '1A', 'keywords': ['China']}) == \
         'AAPL 10-K item 1A · China'
-    assert server._summary('get_valuation_snapshot', {'ticker': 'AAPL', 'peers': ['MSFT', 'GOOGL']}) == 'AAPL vs MSFT, GOOGL'
+    assert server._summary('save_review_pass', {'review_id': 'R1', 'pass_number': 3, 'items': [{}, {}]}) == \
+        'pass 3: 2 items'
+    assert server._summary('read_playbook', {'name': 'decision_framework.md', 'heading': 'The One Question'}) == \
+        'decision_framework.md > The One Question'
     assert server._summary('set_case_scope', {'company': 'Apple', 'company_type': 'listed'}) == 'Apple'

@@ -36,12 +36,15 @@ def test_setting_up_the_team_archives_retired_bots_and_gives_each_bot_its_own_en
     app.rpc = rpc
     ids = app.configure_team(team_profiles(), RETIRED)
     assert ('bots/archive', {'botId': 'bot-old'}) in calls
-    assert list(ids) == ['Lead Analyst', 'Fundamentals Analyst', 'Market Analyst', 'IC Reviewer']
+    assert list(ids) == ['Lead Analyst', 'Company Analyst', 'Product Analyst', 'Market Analyst', 'Fundamentals Analyst',
+                         'Valuation Analyst', 'Regulatory Analyst', 'Red Team Analyst', 'IC Reviewer']
     assert [data['endpoint'] for route, data in calls if route == 'mcp/servers/create'] == [
-        f'http://host.docker.internal:8766/mcp?agent={key}' for key in ('lead', 'fundamentals', 'market', 'reviewer')]
+        f'http://host.docker.internal:8766/mcp?agent={key}' for key in (
+            'lead', 'company', 'product', 'market', 'fundamentals', 'valuation', 'regulatory', 'red_team', 'reviewer')]
     assigned = {data['botId']: data['assignments'][0] for route, data in calls if route == 'mcp/assignments/replace'}
     assert assigned['bot-market']['serverId'] == 'server-research-market'
-    assert 'get_sec_financials' not in assigned['bot-market']['allowedTools']
+    assert 'get_sec_financials' not in assigned['bot-company']['allowedTools']
+    assert 'save_red_team_review' in assigned['bot-red']['allowedTools']
 
 
 def test_the_reviewers_thinking_is_capped(monkeypatch):
@@ -49,8 +52,7 @@ def test_the_reviewers_thinking_is_capped(monkeypatch):
     thinking = lambda: {profile.name: profile.model.thinking_level for profile in team_profiles()}
     monkeypatch.setenv('THINKING_LEVEL', 'max')
     monkeypatch.delenv('REVIEWER_THINKING_LEVEL', raising=False)
-    assert thinking() == {'Lead Analyst': 'max', 'Fundamentals Analyst': 'max', 'Market Analyst': 'max',
-                          'IC Reviewer': 'high'}
+    assert {name: level for name, level in thinking().items() if level != 'max'} == {'IC Reviewer': 'high'}
     monkeypatch.setenv('THINKING_LEVEL', 'low')
     assert thinking()['IC Reviewer'] == 'low'  # a cap, never a raise
     monkeypatch.setenv('THINKING_LEVEL', 'max')

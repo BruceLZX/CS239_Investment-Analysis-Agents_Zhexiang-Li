@@ -31,7 +31,7 @@ from team.model_costs import call_cost
 from team.profiles import LEAD, team_profiles
 from team.rakazo_client import WAITING_STATUSES, Rakazo, RakazoError
 from team.run_scenario import CUSTOM, SCENARIOS
-from tools import case_file, memo
+from tools import case_file, sections
 from tools.env import load_env
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -154,24 +154,30 @@ def timeline(events: list[dict]) -> list[dict]:
 def _summary(tool: str, arguments: dict) -> str:
     if tool == 'register_source':
         return f"{arguments.get('title', '')} ({arguments.get('source_type', '')})"
-    if tool == 'save_review':
-        return f"v{arguments.get('memo_version')}: {arguments.get('verdict')}"
-    if tool == 'save_memo_part':
-        return f"{arguments.get('part', '')} ({len(arguments.get('markdown') or ''):,} characters)"
+    if tool in ('start_review', 'finish_review'):
+        return f"v{arguments.get('memo_version')}" if 'memo_version' in arguments else str(arguments.get('verdict', ''))
+    if tool == 'save_review_pass':
+        return f"pass {arguments.get('pass_number')}: {len(arguments.get('items') or [])} items"
+    if tool in ('save_memo_part', 'save_evidence_block'):
+        size = f" ({len(arguments.get('markdown') or ''):,} characters)" if tool == 'save_memo_part' else ''
+        return f"{arguments.get('section', '')}{size}"
+    if tool == 'read_playbook':
+        return ' > '.join(filter(None, (arguments.get('name', ''), arguments.get('heading', ''))))
     if tool == 'get_memo_parts':
-        parts = ', '.join(arguments.get('parts') or []) or 'list of parts'
-        return parts + (f" in v{arguments['version']}" if arguments.get('version') else '')
+        wanted = ', '.join(arguments.get('sections_wanted') or []) or 'list of sections'
+        return wanted + (f" in v{arguments['version']}" if arguments.get('version') else '')
     if tool == 'read_sec_filing':
         searched = f" · {', '.join(arguments['keywords'])}" if arguments.get('keywords') else ''
         return f"{arguments.get('ticker', '')} {arguments.get('form', '10-K')} item {arguments.get('item') or 'any'}{searched}"
     if tool == 'get_valuation_snapshot':
         peers = ', '.join(arguments.get('peers') or [])
         return arguments.get('ticker', '') + (f' vs {peers}' if peers else '')
-    if tool == 'get_memo_check' and arguments.get('part'):
-        return arguments['part'] + (f" in v{arguments['version']}" if arguments.get('version') else '')
+    if tool == 'get_memo_check' and arguments.get('section'):
+        return arguments['section'] + (f" in v{arguments['version']}" if arguments.get('version') else '')
     if arguments.get('version'):
         return f"v{arguments['version']}"
-    return next((str(arguments[key]) for key in ('ticker', 'topic', 'company', 'name', 'rating') if arguments.get(key)), '')
+    return next((str(arguments[key]) for key in ('ticker', 'section', 'company', 'name', 'rating', 'kind', 'database')
+                 if arguments.get(key)), '')
 
 
 def tool_calls(run_dir: Path, entries: list[dict]) -> list[dict]:
@@ -197,31 +203,50 @@ def tool_calls(run_dir: Path, entries: list[dict]) -> list[dict]:
     return calls
 
 
+def _version_report(version: dict) -> str:
+    path = Path((version.get('files') or {}).get('markdown') or '')
+    return path.read_text() if path.is_file() else version.get('markdown', '')
+
+
 def case_view(case: dict, started: int) -> dict:
     """The case file with a timestamp on every item, so a replay can show each one when it arrived."""
     when = lambda item, key: _ms(item.get(key)) or started
+    workflow = case.get('workflow') or {}
     return {
         'documents': [{'name': d['name'], 'confidentiality': d['confidentiality']} for d in case['client_documents']],
         'sources': [{'id': s['id'], 'title': s.get('title'), 'type': s.get('source_type'),
                      'location': s.get('location'), 'ts': when(s, 'registered_at')} for s in case['sources']],
-        'packets': [{'id': p['id'], 'analyst': p.get('analyst'), 'follow_up_for': p.get('follow_up_for'),
-                     'topic': p.get('topic'), 'source_ids': p.get('source_ids', []),
-                     'ts': when(p, 'saved_at')} for p in case['evidence_packets']],
-        'part_list': [{'key': part.key, 'heading': part.heading, 'owner': part.owner} for part in memo.PARTS],
+        'workflow': [{'kind': kind, 'author': record.get('author'), 'ts': when(record, 'saved_at')}
+                     for kind, record in workflow.items() if isinstance(record, dict) and record.get('saved_at')],
+        'evidence': [{'section': key, 'author': b.get('author'), 'queries': len(b.get('queries') or []),
+                      'rows': len(b.get('rows') or []), 'passed': b.get('gate_passed'), 'ts': when(b, 'saved_at')}
+                     for key, blocks in (case.get('evidence') or {}).items() for b in blocks],
+        'requests': [{'id': r['id'], 'section': r['section'], 'database': r['database'], 'query': r['query'],
+                      'by': r.get('requested_by'), 'ts': when(r, 'requested_at')}
+                     for r in case.get('user_data_requests') or []],
+        'part_list': [{'key': s.key, 'number': s.number, 'heading': s.title, 'owner': s.owner}
+                      for s in sections.ALL_SECTIONS],
         'parts': [{'part': key, 'revision': r['revision'], 'author': r.get('author'), 'chars': r.get('chars'),
                    'passed': r.get('passed'), 'problems': len(r.get('depth') or []) + len(r.get('findings') or []),
-                   'ts': when(r, 'saved_at')}
+                   'evidence_first': r.get('evidence_before_draft'), 'ts': when(r, 'saved_at')}
                   for key, revisions in (case.get('memo_parts') or {}).items() for r in revisions],
-        'drafts': [{'version': d['version'], 'rating': d.get('rating'), 'markdown': d.get('markdown', ''),
-                    'changed_parts': d.get('changed_parts'), 'passed': d.get('passed'),
-                    'ts': when(d, 'saved_at')} for d in case['memo_drafts']],
+        'drafts': [{'version': d['version'], 'rating': d.get('rating'), 'markdown': _version_report(d),
+                    'composite': d.get('composite_score'), 'changed_parts': d.get('changed_parts'),
+                    'passed': d.get('passed'), 'report': bool((d.get('files') or {}).get('html')),
+                    'pdf': bool((d.get('files') or {}).get('pdf')), 'ts': when(d, 'saved_at')}
+                   for d in case['memo_drafts']],
         'reviews': [{'id': r['id'], 'version': r.get('memo_version'), 'round': r.get('round'),
-                     'verdict': r.get('verdict'), 'must_fix': r.get('must_fix', []),
+                     'verdict': r.get('verdict'), 'grade': r.get('grade'),
+                     'items': [{k: i.get(k) for k in ('severity', 'pass', 'sections', 'owners', 'issue')}
+                               for i in r.get('items') or []],
                      'owners': r.get('revision_requests') or {}, 'requests': r.get('evidence_requests') or {},
-                     'ts': when(r, 'saved_at')} for r in case['reviews']],
+                     'ts': when(r, 'finished_at') if r.get('finished_at') else when(r, 'started_at')}
+                    for r in case['reviews']],
         'deliveries': [{'version': d['memo_version'], 'gate': d.get('review_gate') or {},
                         'findings': (d.get('memo_check') or {}).get('findings', []),
-                        'ts': when(d, 'delivered_at')} for d in case['deliveries']],
+                        'final_passed': (d.get('final_check') or {}).get('passed'),
+                        'folder': Path(d.get('folder') or '').name, 'ts': when(d, 'delivered_at')}
+                       for d in case['deliveries']],
     }
 
 
@@ -306,6 +331,16 @@ def _runner_state() -> dict | None:
 
 def page(request):
     return FileResponse(PAGE)
+
+
+def version_report(request):
+    """A saved version's HTML report or PDF, as the server rendered it with the skill's template."""
+    run_id, version, kind = (request.path_params['run_id'], request.path_params['version'],
+                             request.path_params['kind'])
+    path = case_file.RUNS / run_id / 'versions' / f'v{version}' / f'report.{kind}'
+    if not RUN_ID_RE.match(run_id) or kind not in ('html', 'pdf') or not path.is_file():
+        return JSONResponse({'error': f'No {kind} report for version {version} of run {run_id}.'}, status_code=404)
+    return FileResponse(path)
 
 
 def state(request):
@@ -409,6 +444,7 @@ async def follow_up(request):
 
 app = Starlette(
     routes=[Route('/', page), Route('/api/state', state), Route('/api/runs/{run_id}', run),
+            Route('/api/runs/{run_id}/report/v{version:int}.{kind}', version_report),
             Route('/api/start', start, methods=['POST']), Route('/api/follow-up', follow_up, methods=['POST'])],
     # Only this machine's own addresses, so a web page can't reach the server through DNS rebinding.
     middleware=[Middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1', 'localhost'])])

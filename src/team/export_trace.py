@@ -3,7 +3,7 @@
 Everything comes from runs/<run_id>/, written by team.run_scenario:
 - rakazo/pi-sessions/**.jsonl: Rakazo's per-run Pi transcripts (thinking, tool calls, results, text, usage)
 - rakazo/messages.json: each bot's thread from the API (the user's request and inter-bot messages)
-- rakazo/usage.json, case.json, outcome.json and the delivered memo_v*.md
+- rakazo/usage.json, case.json, outcome.json, the delivered memo_v*.md and the delivery folder's report
 
 Each model call is priced at DeepSeek's rate for the hour it was made (team.model_costs).
 
@@ -20,10 +20,11 @@ import re
 
 import yaml
 
-from tools import case_file as case_rules, memo
+from tools import case_file as case_rules, memo, sections
+from tools.agents import ANALYSTS, RESEARCHERS
 
 from .model_costs import call_cost
-from .profiles import BUILTIN_TOOLS, FUNDAMENTALS, LEAD, MARKET, REVIEWER, team_profiles
+from .profiles import BUILTIN_TOOLS, LEAD, RED_TEAM, REVIEWER, team_profiles
 
 ROOT = Path(__file__).resolve().parents[1]
 FORMAT = 'cs239-agent-team-trace/1'
@@ -36,23 +37,32 @@ MD_LIMITS = {'thought': 1500, 'tool_result': 800, 'assistant_text': 4000, 'run_p
 CONFIDENTIAL_PATTERNS = (re.compile(r'\$\d[\d,.]*\s?(?:[MBK]\b|million|billion)?'),
                          re.compile(r'\b\d+(?:\.\d+)?%'),
                          re.compile(r'\*\*([^*]{3,60})\*\*'))
-OUTBOUND_TOOLS = {'web_search', 'web_fetch'}
+# Every tool whose arguments leave this machine: web search and fetch, and the public-record and literature queries.
+OUTBOUND_TOOLS = {'web_search', 'web_fetch', 'search_public_records', 'search_literature'}
 # Two ratings side by side ("a Buy or Sell call", "Invest/Pass") name the question, not an answer.
-RATING_PAIR_RE = re.compile(r'\b(?:buy|add|hold-off|hold|reduce|sell|watchlist|invest|wait|pass)\s*(?:/|\bor\b)\s*'
-                            r'(?:buy|add|hold-off|hold|reduce|sell|watchlist|invest|wait|pass)\b', re.I)
+RATING_WORDS = r'(?:buy|add|hold off|hold-off|hold|reduce|sell|avoid|watchlist|invest now|invest with conditions|' \
+               r'invest|wait for milestone|wait|pass)'
+RATING_PAIR_RE = re.compile(rf'\b{RATING_WORDS}\s*(?:/|\bor\b)\s*{RATING_WORDS}\b', re.I)
 # What a message to the user must not mention (rule N6); a status note may still describe the work.
-MESSAGE_INTERNAL_RE = re.compile(r'\bmust[- ]fix\b|\bshould[- ]fix\b|\bevidence packets?\b'
-                                 r'|\b(?:get|save|set|list|find|read|register|deliver)_[a-z_]+\b', re.I)
-# Budgets from the role prompts (rule N9): tool calls a turn, and web searches and fetches a brief. An analyst's
-# first brief arrives at hop 1 and gets more than a revision brief.
-TURN_BUDGETS = {LEAD: 25, FUNDAMENTALS: 45, MARKET: 45, REVIEWER: 18}
-REVISION_TURN_BUDGET = 25
-BRIEF_BUDGETS = {'first': {'web_search': 12, 'web_fetch': 10}, 'revision': {'web_search': 6, 'web_fetch': 6}}
-# Reply lengths from the role prompts (P21 for the analysts, P27 for the IC Reviewer).
-REPLY_LIMITS = {FUNDAMENTALS: ('P21', 1500), MARKET: ('P21', 1500), REVIEWER: ('P27', 1000)}
-# What counts as a search or filing read when a packet lists the ones it ran.
+MESSAGE_INTERNAL_RE = re.compile(r'\bmust[- ]fix\b|\bshould[- ]fix\b|\bevidence (?:packets?|blocks?|matrix)\b'
+                                 r'|\brewrite plan\b|\bred[- ]team review\b|\bCritical items?\b'
+                                 r'|\b(?:get|save|set|list|find|read|register|deliver|start|finish|run|request|search)'
+                                 r'_[a-z_]+\b', re.I)
+# Budgets from the role prompts (rule N9): tool calls a turn, and web searches and fetches a brief. A bot's first
+# brief in a case gets more than a revision brief.
+TURN_BUDGETS = {LEAD: 45, RED_TEAM: 50, REVIEWER: 30, **{analyst: 70 for analyst in ANALYSTS}}
+REVISION_TURN_BUDGETS = {RED_TEAM: 30, **{analyst: 35 for analyst in ANALYSTS}}
+BRIEF_BUDGETS = {'first': {'web_search': 18, 'web_fetch': 12}, 'revision': {'web_search': 6, 'web_fetch': 6}}
+RED_TEAM_FIRST_BUDGET = {'web_search': 10, 'web_fetch': 8}
+# The Lead's research for sections 11 and 14, across the whole case.
+LEAD_CASE_BUDGET = {'web_search': 8, 'web_fetch': 6}
+# Reply lengths from the role prompts (P21 for the analysts and the Red Team, P27 for the IC Reviewer).
+REPLY_LIMITS = {REVIEWER: ('P27', 1000), **{agent: ('P21', 1500) for agent in RESEARCHERS}}
+# What counts as research when an evidence block lists the queries it ran.
 RESEARCH_TOOLS = {'web_search', 'web_fetch', 'read_sec_filing', 'get_sec_financials', 'list_sec_filings',
-                  'find_sec_company', 'get_price_history', 'get_valuation_snapshot', 'read_client_document'}
+                  'find_sec_company', 'get_price_history', 'get_valuation_snapshot', 'read_client_document',
+                  'search_public_records', 'search_literature', 'get_market_regime', 'get_trading_snapshot',
+                  'get_insider_activity'}
 
 
 def _iso(ms: float) -> str:
@@ -215,11 +225,22 @@ def confidential_tokens(case: dict) -> dict[str, str]:
         path = ROOT / document['file']
         if document['confidentiality'] != 'client-confidential' or not path.exists():
             continue
-        text = path.read_text()
+        text = _document_text(path)
         for pattern in CONFIDENTIAL_PATTERNS:
             for match in pattern.finditer(text):
                 tokens.setdefault((match.group(1) if pattern.groups else match.group()).strip(), document['name'])
     return tokens
+
+
+def _document_text(path: Path) -> str:
+    """A client document's text: Markdown or text as it is, other formats through the server's reader."""
+    if path.suffix.lower() in ('.md', '.txt', '.csv'):
+        return path.read_text()
+    try:
+        from tools import documents
+    except ImportError:
+        return ''
+    return documents.document_text(path)
 
 
 def _rule_key(observation: dict):
@@ -254,17 +275,25 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: lis
     """Possible rule breaks visible in a run. They are only reported; nothing was blocked.
     replies: the Lead's messages in the user's thread, as Rakazo stored them."""
     observations = observe_user_messages(list(replies), case)
+    listed = case_rules.is_listed(case)
     for delivery in case['deliveries']:
         gate = delivery.get('review_gate') or {}
         if not gate.get('approved'):
             state = 'reviewed but not approved' if gate.get('reviewed') else 'never reviewed'
-            observations.append({'rule': 'N5', 'detail': f"memo v{delivery['memo_version']} was delivered, but that version was {state}"})
+            observations.append({'rule': 'N5', 'detail': f"report v{delivery['memo_version']} was delivered, but that version was {state}"})
         # Re-check the delivered text with the current rules; the delivery record keeps what was reported then.
         draft = next((d for d in case['memo_drafts'] if d['version'] == delivery['memo_version']), None)
-        findings = (memo.check_memo(draft['markdown'], case['sources'])['findings'] if draft
+        text = _version_markdown(draft)
+        findings = (memo.check_memo(text, case['sources'], draft['rating'], listed)['findings'] if text
                     else (delivery.get('memo_check') or {}).get('findings', []))
         for finding in findings:
-            observations.append({'rule': finding['rule'], 'detail': f"delivered memo v{delivery['memo_version']}: {finding['detail']}"})
+            observations.append({'rule': finding['rule'], 'detail': f"delivered report v{delivery['memo_version']}: {finding['detail']}"})
+        final = delivery.get('final_check') or {}
+        if final and not final.get('passed'):
+            failed = {name: len(found) for name, found in final.items() if isinstance(found, list) and found}
+            observations.append({'rule': 'P40', 'detail': f"report v{delivery['memo_version']} was delivered with its "
+                                                           'final check failing: ' + ', '.join(
+                                                               f'{n} {name}' for name, n in failed.items())})
     tokens = confidential_tokens(case)
     for event in events:
         if event['type'] == 'tool_call' and event['tool'] in OUTBOUND_TOOLS:
@@ -283,16 +312,21 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: lis
         if event['type'] == 'platform_guard':
             observations.append({'rule': 'platform guard', 'seq': event['seq'],
                                  'detail': f"Rakazo stopped {event['agent']}: {event['text']} ({event.get('detail') or ''})"})
-    for run in runs:
+    briefed: set[str] = set()
+    for run in sorted(runs, key=lambda r: r.get('started_at') or ''):
         mine = [e for e in events if e.get('rakazo_run_id') == run['rakazo_run_id']]
         calls = [e for e in mine if e['type'] == 'tool_call']
-        analyst = run['agent'] in (FUNDAMENTALS, MARKET)
-        brief = 'revision' if analyst and (_trigger_hop(run['rakazo_run_id'], events) or 1) > 1 else 'first'
-        budget = REVISION_TURN_BUDGET if brief == 'revision' else TURN_BUDGETS.get(run['agent'])
+        researcher = run['agent'] in RESEARCHERS
+        # A bot's first brief in the case gets the first-brief budget; later briefs are revisions.
+        brief = 'revision' if researcher and run['agent'] in briefed else 'first'
+        if researcher and _trigger_hop(run['rakazo_run_id'], events):
+            briefed.add(run['agent'])
+        budget = (REVISION_TURN_BUDGETS.get(run['agent']) if brief == 'revision' else TURN_BUDGETS.get(run['agent']))
         if budget and len(calls) > budget:
             observations.append({'rule': 'N9', 'detail': f"{run['agent']} made {len(calls)} tool calls in one turn (limit {budget})"})
-        if analyst:
-            for tool_name, limit in BRIEF_BUDGETS[brief].items():
+        if researcher:
+            limits = RED_TEAM_FIRST_BUDGET if run['agent'] == RED_TEAM and brief == 'first' else BRIEF_BUDGETS[brief]
+            for tool_name, limit in limits.items():
                 count = sum(e['tool'] == tool_name for e in calls)
                 if count > limit:
                     observations.append({'rule': 'N9', 'detail': f"{run['agent']} made {count} {tool_name} calls for "
@@ -302,47 +336,97 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: lis
         if limit and said and len(said[-1]) > limit:
             observations.append({'rule': rule, 'detail': f"{run['agent']} replied with {len(said[-1]):,} characters "
                                                           f"(limit {limit:,})"})
-    for packet in case['evidence_packets']:
-        # A follow-up packet may repeat the first brief's searches, so count the analyst's research up to the packet.
-        listed = packet.get('searches') or []
-        ran = sum(e['type'] == 'tool_call' and e['agent'] == packet.get('analyst') and e['tool'] in RESEARCH_TOOLS
-                  and e['ts'][:19] <= packet['saved_at'][:19] for e in events)
-        if len(listed) > ran:
-            observations.append({'rule': 'N1', 'detail': f"packet {packet['id']} lists {len(listed)} searches and "
-                                                          f"filing reads, but {packet.get('analyst')} had run {ran}"})
-    return sorted(observations + observe_parts(case), key=_rule_key)
+    lead_calls = [e for e in events if e['type'] == 'tool_call' and e['agent'] == LEAD]
+    for tool_name, limit in LEAD_CASE_BUDGET.items():
+        count = sum(e['tool'] == tool_name for e in lead_calls)
+        if count > limit:
+            observations.append({'rule': 'N9', 'detail': f'the Lead Analyst made {count} {tool_name} calls in the case '
+                                                          f'(limit {limit})'})
+    for key, blocks in (case.get('evidence') or {}).items():
+        for block in blocks:
+            # A block saved after a review may repeat earlier queries, so count the author's research up to the block.
+            ran = sum(e['type'] == 'tool_call' and e['agent'] == block.get('author') and e['tool'] in RESEARCH_TOOLS
+                      and e['ts'][:19] <= block['saved_at'][:19] for e in events)
+            if len(block.get('queries') or []) > ran:
+                observations.append({'rule': 'N1', 'detail': f"the {key} evidence block lists {len(block['queries'])} "
+                                                              f"queries, but {block.get('author')} had run {ran}"})
+    return sorted(observations + observe_sections(case) + observe_workflow(events, case), key=_rule_key)
 
 
-def observe_parts(case: dict) -> list[dict]:
-    """Memo parts saved by someone other than their owner (P32), except the Lead's fixes before the final review,
-    and review rounds beyond the last one (P9)."""
+def observe_sections(case: dict) -> list[dict]:
+    """Sections saved by someone other than their owner (P32), sections drafted before their evidence passed the
+    gate (P34), review rounds beyond the last one (P9) and Critical items closed without new evidence (N11)."""
     observations = []
-    reviews = case['reviews']
-    final_round_from = reviews[case_rules.MAX_REVIEW_ROUNDS - 2]['saved_at'] if len(reviews) >= 2 else None
     for key, revisions in (case.get('memo_parts') or {}).items():
-        owner = memo.PART_BY_KEY[key].owner
+        owner = sections.BY_KEY[key].owner
         for r in revisions:
-            lead_fix = r['author'] == LEAD and final_round_from and r['saved_at'] >= final_round_from
-            if r['author'] and r['author'] != owner and not lead_fix:
+            if r['author'] and r['author'] != owner:
                 observations.append({'rule': 'P32', 'detail': f"{r['author']} saved revision {r['revision']} of the "
-                                                               f"{key} part, which the {owner} owns"})
-    if len(reviews) > case_rules.MAX_REVIEW_ROUNDS:
-        observations.append({'rule': 'P9', 'detail': f'{len(reviews)} review rounds; the limit is '
+                                                               f"{key} section, which the {owner} owns"})
+        first = revisions[0] if revisions else None
+        if key != sections.EXECUTIVE_SUMMARY.key and first and first.get('evidence_before_draft') is False:
+            observations.append({'rule': 'P34', 'detail': f"the {key} section was first saved before its evidence "
+                                                           'block passed the gate'})
+    finished = case_rules.finished_reviews(case)
+    if len(finished) > case_rules.MAX_REVIEW_ROUNDS:
+        observations.append({'rule': 'P9', 'detail': f'{len(finished)} review rounds; the limit is '
                                                       f'{case_rules.MAX_REVIEW_ROUNDS}'})
+    for review in finished:
+        later = [r for r in finished if r['round'] == review['round'] + 1]
+        if not later:
+            continue
+        for item in review.get('items') or []:
+            if item['severity'] != 'Critical':
+                continue
+            since = review.get('finished_at') or ''
+            new_sources = [s for s in case['sources'] if s.get('registered_by') in item['owners']
+                           and (s.get('registered_at') or '') > since]
+            if not new_sources:
+                observations.append({'rule': 'N11', 'detail': f"review {review['id']}'s Critical item on "
+                                                               f"{', '.join(item['sections'])} was answered with no new "
+                                                               f"source from {', '.join(item['owners'])}"})
     return observations
 
 
-def delivered_depth(case: dict) -> dict | None:
-    """How the delivered version's parts measure up to the depth standard, by part."""
-    if not case['deliveries'] or not case.get('memo_parts'):
+def observe_workflow(events: list[dict], case: dict) -> list[dict]:
+    """The skill's order of work: the research plan before the first brief (P33), the red-team review before the
+    first review (P35), the QA loop before each version (P36)."""
+    observations = []
+    calls = [e for e in events if e['type'] == 'tool_call']
+
+    def first(tool: str, agent: str | None = None, after: str = '') -> str | None:
+        return next((e['ts'] for e in calls if e['tool'] == tool and (agent is None or e['agent'] == agent)
+                     and e['ts'] > after), None)
+    brief = first('message_bot', LEAD)
+    plan = first('save_research_plan', LEAD)
+    if brief and (not plan or plan > brief):
+        observations.append({'rule': 'P33', 'detail': 'the Lead briefed the team before saving the research plan'})
+    review = first('start_review', REVIEWER)
+    red_team = first('save_red_team_review', RED_TEAM)
+    if review and (not red_team or red_team > review):
+        observations.append({'rule': 'P35', 'detail': 'the first review started before the red-team review was saved'})
+    previous = ''
+    for version in case['memo_drafts']:
+        loop = first('run_qa_loop', LEAD, previous)
+        if not loop or loop[:19] > version['saved_at'][:19]:
+            observations.append({'rule': 'P36', 'detail': f"version {version['version']} was saved without a QA loop "
+                                                           'since the previous version'})
+        previous = version['saved_at']
+    return observations
+
+
+def _version_markdown(version: dict | None) -> str | None:
+    """A version's report as Markdown, from the file the server wrote when it was saved."""
+    path = Path(((version or {}).get('files') or {}).get('markdown') or '')
+    return path.read_text() if version and path.is_file() else None
+
+
+def delivered_check(case: dict) -> dict | None:
+    """The final check the server ran on the delivered report: QA, citations and the delivery folder."""
+    if not case['deliveries']:
         return None
-    version = next((d for d in case['memo_drafts'] if d['version'] == case['deliveries'][-1]['memo_version']), None)
-    if not version or 'parts' not in version:
-        return None
-    parts = case_rules.version_parts(case, version)
-    listed = (case.get('scope') or {}).get('type') != 'private'
-    check = memo.check_version(version['markdown'], parts, version['rating'], case['sources'], listed)
-    return {'version': version['version'], 'passed': check['passed'], 'parts': check['parts'], 'memo': check['depth']}
+    delivery = case['deliveries'][-1]
+    return {'version': delivery['memo_version'], **(delivery.get('final_check') or {})}
 
 
 def _rakazo_build() -> str | None:
@@ -428,26 +512,34 @@ def build_trace(run_dir: Path) -> dict:
         'case_file': {
             'client_documents': [{'name': d['name'], 'confidentiality': d['confidentiality']} for d in case['client_documents']],
             'sources': case['sources'],
-            'scope': case.get('scope') and {k: case['scope'][k] for k in ('company', 'ticker', 'type', 'decision')},
-            'evidence_packets': [{'id': p['id'], 'analyst': p.get('analyst'), 'follow_up_for': p.get('follow_up_for'),
-                                  'topic': p['topic'], 'parts': p.get('parts') or [], 'source_ids': p['source_ids']}
-                                 for p in case['evidence_packets']],
-            'memo_parts': {key: [{k: r[k] for k in ('revision', 'author', 'chars', 'passed', 'saved_at')} for r in revisions]
+            'scope': case.get('scope') and {k: case['scope'].get(k) for k in ('company', 'ticker', 'type', 'decision',
+                                                                              'language')},
+            'workflow': case.get('workflow') or {},
+            'evidence': {key: [{k: block.get(k) for k in ('author', 'queries', 'rows', 'gate', 'plan', 'gate_passed',
+                                                         'saved_at')} for block in blocks]
+                         for key, blocks in (case.get('evidence') or {}).items()},
+            'user_data_requests': case.get('user_data_requests') or [],
+            'memo_parts': {key: [{k: r.get(k) for k in ('revision', 'author', 'chars', 'passed', 'evidence_before_draft',
+                                                        'saved_at')} for r in revisions]
                            for key, revisions in (case.get('memo_parts') or {}).items()},
             'memo_versions': [{'version': d['version'], 'rating': d['rating'], 'saved_at': d['saved_at'],
+                               'composite_score': d.get('composite_score'), 'cover': d.get('cover'),
                                'parts': {key: ref['revision'] for key, ref in (d.get('parts') or {}).items()},
-                               'changed_parts': d.get('changed_parts', []), 'check_passed': d.get('passed')}
+                               'changed_parts': d.get('changed_parts', []), 'missing_parts': d.get('missing_parts', []),
+                               'check_passed': d.get('passed'), 'check': d.get('check')}
                               for d in case['memo_drafts']],
-            'reviews': [{'id': r['id'], 'memo_version': r['memo_version'], 'round': r.get('round'),
-                         'verdict': r['verdict'], 'must_fix': r['must_fix'], 'items': r.get('items') or [],
-                         'revision_requests': r.get('revision_requests') or {},
-                         'evidence_requests': r.get('evidence_requests') or {}} for r in case['reviews']],
+            'reviews': [{key: r.get(key) for key in ('id', 'memo_version', 'round', 'verdict', 'grade', 'top_three',
+                                                     'ready', 'passes', 'items', 'revision_requests',
+                                                     'evidence_requests', 'started_at', 'finished_at')}
+                        for r in case['reviews']],
             'deliveries': [{'memo_version': d['memo_version'], 'delivered_at': d['delivered_at'],
-                            'review_gate': d['review_gate'], 'memo_check_findings': d['memo_check']['findings']}
+                            'folder': Path(d.get('folder') or '').name, 'review_gate': d['review_gate'],
+                            'final_check': d.get('final_check'),
+                            'memo_check_findings': (d.get('memo_check') or {}).get('findings', [])}
                            for d in case['deliveries']],
         },
         'usage': {'by_agent': usage_by_agent, 'total': total},
-        'delivered_depth': delivered_depth(case),
+        'delivered_check': delivered_check(case),
         'final_memo': final_memo,
     }
     return redact(trace)
@@ -526,39 +618,54 @@ def render_markdown(trace: dict) -> str:
         lines += [f"| {s['id']} | {s['title']} | {s['source_type']} | {s['confidence']} |" for s in case['sources']]
         lines.append('')
     if case.get('memo_parts'):
-        lines += ['| Part | Owner | Revisions (by) | Characters | Check at its last save |', '|---|---|---|---|---|']
-        for part in memo.PARTS:
-            revisions = case['memo_parts'].get(part.key) or []
+        lines += ['| # | Section | Owner | Revisions (by) | Characters | Evidence first | Check at its last save |',
+                  '|---|---|---|---|---|---|---|']
+        for section in sections.ALL_SECTIONS:
+            revisions = case['memo_parts'].get(section.key) or []
+            block = (case.get('evidence') or {}).get(section.key)
             if revisions:
                 authors = ', '.join(f"{r['revision']} ({r['author'] or 'unknown'})" for r in revisions)
                 last = revisions[-1]
-                lines.append(f"| {part.heading} | {part.owner} | {authors} | {last['chars']:,} | "
-                             f"{'passed' if last['passed'] else 'problems'} |")
+                first = '' if section.number is None else ('yes' if revisions[0].get('evidence_before_draft') else 'no')
+                lines.append(f"| {section.number or '-'} | {section.title} | {section.owner} | {authors} | "
+                             f"{last['chars']:,} | {first} | {'passed' if last['passed'] else 'problems'} |")
             else:
-                lines.append(f'| {part.heading} | {part.owner} | none | | |')
+                lines.append(f"| {section.number or '-'} | {section.title} | {section.owner} | none | | "
+                             f"{'block only' if block else ''} | |")
         lines.append('')
+    workflow = case.get('workflow') or {}
+    saved = [name.replace('_', ' ') for name in ('research_plan', 'profile_requirements', 'thesis_table',
+                                                 'scenario_analysis', 'red_team_review') if workflow.get(name)]
+    lines.append(f"- Workflow records saved: {', '.join(saved) or 'none'}")
+    open_items = [i for i in workflow.get('rewrite_plan') or [] if not i.get('resolved')]
+    if workflow.get('iteration_log'):
+        lines.append(f"- QA loops: {len(workflow['iteration_log'])}, last "
+                     f"{'passed' if workflow['iteration_log'][-1]['passed'] else 'failed'}; "
+                     f"{len(open_items)} rewrite items open")
+    for request in case.get('user_data_requests') or []:
+        lines.append(f"- User data request {request['id']} ({request['section']}): {request['database']}: "
+                     f"{request['query']}")
     for version in case['memo_versions']:
         if version.get('parts'):
-            lines.append(f"- Memo v{version['version']} ({version['rating']}): parts changed: "
+            lines.append(f"- Report v{version['version']} ({version['rating']}, composite "
+                         f"{version.get('composite_score') or 'n/a'}): sections changed: "
                          f"{', '.join(version['changed_parts']) or 'none'}; check "
                          f"{'passed' if version['check_passed'] else 'reported problems'}")
-    for packet in case['evidence_packets']:
-        follow_up = f", follow-up for review {packet['follow_up_for']}" if packet.get('follow_up_for') else ''
-        lines.append(f"- Evidence packet {packet['id']} ({packet.get('analyst') or 'unknown analyst'}{follow_up}): "
-                     f"{packet['topic']}")
     for review in case['reviews']:
-        asked = ', '.join(review.get('evidence_requests') or {})
-        by_owner = ', '.join(f'{owner}: {len(parts)} part{"s" if len(parts) > 1 else ""}'
-                             for owner, parts in (review.get('revision_requests') or {}).items())
-        round_text = f" (round {review['round']})" if review.get('round') else ''
-        lines.append(f"- Review {review['id']} of memo v{review['memo_version']}{round_text}: {review['verdict']}, "
-                     f"{len(review['must_fix'])} must-fix items" + (f" ({by_owner})" if by_owner else '')
-                     + (f", evidence requested from {asked}" if asked else ''))
+        counts = {s: sum(i['severity'] == s for i in review.get('items') or []) for s in ('Critical', 'Important', 'Minor')}
+        by_owner = ', '.join(f'{owner}: {len(keys)} section{"s" if len(keys) > 1 else ""}'
+                             for owner, keys in (review.get('revision_requests') or {}).items())
+        lines.append(f"- Review {review['id']} of report v{review['memo_version']} (round {review.get('round')}): "
+                     f"{review.get('verdict') or 'unfinished'}, grade {review.get('grade') or 'n/a'}, "
+                     f"{counts['Critical']} Critical / {counts['Important']} Important / {counts['Minor']} Minor items"
+                     + (f" ({by_owner})" if by_owner else ''))
     for delivery in case['deliveries']:
         gate = delivery['review_gate']
         status = (f"approved in review {gate['review_id']}" if gate['approved']
                   else 'reviewed but not approved' if gate['reviewed'] else 'never reviewed')
-        lines.append(f"- Delivered memo v{delivery['memo_version']} ({status})")
+        final = (delivery.get('final_check') or {}).get('passed')
+        lines.append(f"- Delivered report v{delivery['memo_version']} ({status}; final check "
+                     f"{'passed' if final else 'failed'}) to {delivery.get('folder')}")
     lines += ['', '## Rule observations', '',
               'Possible rule breaks found in this run. They are only reported; nothing was blocked.', '']
     if trace['observations']:
@@ -566,18 +673,15 @@ def render_markdown(trace: dict) -> str:
         lines += [f"| {o['rule']} | {o['detail']} |" for o in trace['observations']]
     else:
         lines.append('None found.')
-    depth = trace.get('delivered_depth')
-    if depth:
-        lines += ['', '## Depth at delivery', '', f"Memo v{depth['version']} against each part's depth standard "
-                  '(reported, never blocking).', '', '| Part | Passed | Problems |', '|---|---|---|']
-        for part in memo.PARTS:
-            found = depth['parts'].get(part.key)
-            if found:
-                lines.append(f"| {part.heading} | {'yes' if found['passed'] else 'no'} | "
-                             f"{'; '.join(found['depth']) or 'none'} |")
-        lines += [f'- Across parts: {problem}' for problem in depth['memo']]
+    final = trace.get('delivered_check')
+    if final:
+        lines += ['', '## Final check at delivery', '', f"Report v{final['version']} against the skill's final check "
+                  '(reported, never blocking).', '', '| Check | Problems |', '|---|---|']
+        for name in ('report', 'depth', 'citations', 'output'):
+            found = final.get(name) or []
+            lines.append(f"| {name} | {'; '.join(found[:6]) + (f' (and {len(found) - 6} more)' if len(found) > 6 else '') or 'none'} |")
     if trace['final_memo']:
-        lines += ['', '## Final memo', '', trace['final_memo'].strip()]
+        lines += ['', '## Final report', '', trace['final_memo'].strip()]
     return '\n'.join(lines).rstrip() + '\n'
 
 

@@ -178,8 +178,8 @@ def main() -> None:
     parser.add_argument('--request', help='run a request of your own instead of a scenario (no attached documents)')
     parser.add_argument('--follow-up', metavar='QUESTION',
                         help='ask the Lead Analyst a follow-up question about the latest run, once it has finished')
-    parser.add_argument('--timeout', type=float, default=5400, help='seconds to wait for the whole run')
-    parser.add_argument('--quiet', type=float, default=180, help='seconds of idleness that count as stalled')
+    parser.add_argument('--timeout', type=float, default=9000, help='seconds to wait for the whole run')
+    parser.add_argument('--quiet', type=float, default=240, help='seconds of idleness that count as stalled')
     parser.add_argument('--approval-cards', choices=['deny', 'wait'], default='deny',
                         help="Rakazo approval cards (e.g. fetching a site the bot's search didn't return): "
                              'deny them for unattended runs (logged), or wait for someone to answer in the app')

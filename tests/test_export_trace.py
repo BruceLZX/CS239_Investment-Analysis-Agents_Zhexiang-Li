@@ -1,8 +1,9 @@
 """The exporter on a captured run that follows Rakazo's real formats (Pi format-4 JSONL + API threads).
 
 The run is a confidential-startup diligence with planted rule breaks: a web search containing a figure
-from the confidential deck (N7), thirteen searches for one first brief (N9), a registered URL no tool ever
-returned (N1) and a memo delivered without review (N5).
+from the confidential deck (N7), nineteen searches for one first brief (N9), a registered URL no tool ever
+returned (N1), a report delivered without review (N5), a brief sent before the research plan (P33) and a version
+saved without a QA loop (P36).
 """
 from datetime import datetime
 import json
@@ -24,7 +25,9 @@ SEARCHES = ['strawberry picking robot companies', 'autonomous strawberry harvest
             'strawberry harvest labor shortage California', 'Orrin Fieldworks robot', 'soft fruit robotics funding 2026',
             'strawberry robot unit cost $48,000', 'Plant City strawberry robot pilot', 'berry harvest automation',
             'agricultural robotics market size', 'strawberry growers adoption survey', 'harvest robot reliability study',
-            'farm labor cost per acre strawberries', 'robotic harvesting startups 2026']
+            'farm labor cost per acre strawberries', 'robotic harvesting startups 2026', 'harvest robot vision systems',
+            'berry farm automation grants', 'strawberry yield per acre 2025', 'agtech venture rounds 2026',
+            'soft robotic gripper fruit', 'harvest robot service contracts']
 
 
 def ms(iso: str) -> int:
@@ -86,8 +89,8 @@ def run_dir(tmp_path):
             {'id': 'S3', 'title': 'Soft-fruit robotics market report', 'source_type': 'industry data',
              'location': 'https://made-up.example/market-report', 'date': '2026', 'confidence': 'medium',
              'claims': 'market size'}],
-        'evidence_packets': [{'id': 'E1', 'topic': 'Orrin Fieldworks', 'source_ids': ['S1', 'S2']}],
-        'memo_drafts': [{'version': 1, 'rating': 'Wait', 'saved_at': t('04:00'), 'markdown': FINAL}],
+        'evidence': {}, 'workflow': {}, 'user_data_requests': [],
+        'memo_drafts': [{'version': 1, 'rating': 'Wait for milestone', 'saved_at': t('04:00'), 'files': {}}],
         'reviews': [],
         'deliveries': [{'memo_version': 1, 'file': 'memo_v1.md', 'delivered_at': t('05:00'),
                         'review_gate': {'reviewed': False, 'approved': False, 'review_id': None},
@@ -163,12 +166,15 @@ def test_rule_observations_catch_the_planted_breaks(run_dir):
     by_rule = {}
     for observation in observations:
         by_rule.setdefault(observation['rule'], []).append(observation['detail'])
-    assert sorted(by_rule) == ['N1', 'N3', 'N5', 'N7', 'N9']
+    assert sorted(by_rule) == ['N1', 'N3', 'N5', 'N7', 'N9', 'P33', 'P36']
     assert by_rule['N1'] == ['S3 (https://made-up.example/market-report) never appeared in a tool result in this run']
-    assert by_rule['N5'] == ['memo v1 was delivered, but that version was never reviewed']
+    assert by_rule['N5'] == ['report v1 was delivered, but that version was never reviewed']
     assert by_rule['N7'] == ['Market Analyst put confidential content in web_search: $48,000']
-    assert by_rule['N9'] == ['Market Analyst made 13 web_search calls for one first brief (limit 12)']
-    assert [o['rule'] for o in observations] == sorted((o['rule'] for o in observations), key=lambda r: int(r[1:]))
+    assert by_rule['N9'] == ['Market Analyst made 19 web_search calls for one first brief (limit 18)']
+    assert by_rule['P33'] == ['the Lead briefed the team before saving the research plan']
+    assert by_rule['P36'] == ['version 1 was saved without a QA loop since the previous version']
+    numbered = [o['rule'] for o in observations if o['rule'].startswith('N')]
+    assert numbered == sorted(numbered, key=lambda r: int(r[1:]))
 
 
 def test_a_run_resumed_after_an_approval_card_is_merged(run_dir):
@@ -240,9 +246,9 @@ def test_markdown_reads_as_a_timeline(run_dir):
     assert '### 2. Market Analyst, woken by a request from Lead Analyst, hop 1' in markdown
     assert '**Action:** `web_search` {"query": "strawberry robot unit cost $48,000"}' in markdown
     assert '**Message to Market Analyst** (request)' in markdown
-    assert '- Delivered memo v1 (never reviewed)' in markdown
+    assert '- Delivered report v1 (never reviewed; final check failed)' in markdown
     assert '## Rule observations' in markdown and '| N7 | Market Analyst put confidential content' in markdown
-    assert '## Final memo' in markdown
+    assert '## Final report' in markdown
 
 
 def test_the_checker_names_what_is_missing(run_dir):
@@ -294,59 +300,86 @@ def revision(number: int, author: str, saved_at: str, markdown: str = 'A short p
             'passed': False, 'findings': [], 'depth': ['too short'], 'saved_at': saved_at}
 
 
-def test_memo_parts_versions_and_depth_at_delivery_join_the_trace(run_dir):
+def test_sections_versions_reviews_and_the_final_check_join_the_trace(run_dir):
     case = json.loads((run_dir / 'case.json').read_text())
     case['scope'] = {'company': 'Orrin Fieldworks', 'ticker': None, 'type': 'private', 'decision': 'Series A',
-                     'set_by': 'Lead Analyst', 'set_at': '2026-10-26T10:00:05+00:00'}
-    case['memo_parts'] = {'business': [revision(1, 'Market Analyst', '2026-10-26T10:02:00+00:00')],
-                          'takeaways': [revision(1, 'Lead Analyst', '2026-10-26T10:03:30+00:00', '1. Picks 94% [S1].')]}
-    case['memo_drafts'][0].update(parts={'business': {'revision': 1, 'sha256': 'h', 'author': 'Market Analyst'},
-                                         'takeaways': {'revision': 1, 'sha256': 'h', 'author': 'Lead Analyst'}},
-                                  changed_parts=['business', 'takeaways'], passed=False)
+                     'language': 'en', 'set_by': 'Lead Analyst', 'set_at': '2026-10-26T10:00:05+00:00'}
+    case['memo_parts'] = {'competition': [dict(revision(1, 'Market Analyst', '2026-10-26T10:02:00+00:00'),
+                                               evidence_before_draft=True)],
+                          'scoring': [revision(1, 'Lead Analyst', '2026-10-26T10:03:30+00:00', '1. Picks 94% [S1].')]}
+    case['evidence'] = {'competition': [{'author': 'Market Analyst', 'queries': SEARCHES[:4], 'rows': [], 'gate': [],
+                                         'plan': {}, 'gate_passed': True, 'saved_at': '2026-10-26T10:01:30+00:00'}]}
+    report = run_dir / 'versions' / 'v1' / 'report.md'
+    report.parent.mkdir(parents=True)
+    report.write_text(FINAL)
+    case['memo_drafts'][0].update(parts={'competition': {'revision': 1, 'sha256': 'h', 'author': 'Market Analyst'},
+                                         'scoring': {'revision': 1, 'sha256': 'h', 'author': 'Lead Analyst'}},
+                                  changed_parts=['competition', 'scoring'], passed=False, composite_score='5.1',
+                                  files={'markdown': str(report)})
+    case['deliveries'][0]['final_check'] = {'passed': False, 'report': ['missing the timeline component'],
+                                            'depth': [], 'citations': [], 'output': []}
     (run_dir / 'case.json').write_text(json.dumps(case))
     trace = build_trace(run_dir)
     saved = trace['case_file']
-    assert saved['scope']['type'] == 'private'
-    assert saved['memo_parts']['business'] == [{'revision': 1, 'author': 'Market Analyst', 'chars': 18,
-                                                'passed': False, 'saved_at': '2026-10-26T10:02:00+00:00'}]
-    assert saved['memo_versions'][0]['parts'] == {'business': 1, 'takeaways': 1}
-    depth = trace['delivered_depth']
-    assert depth['version'] == 1 and not depth['passed'] and not depth['parts']['business']['passed']
-    assert depth['memo'][0].startswith('missing parts: Executive summary, Financials')
+    assert saved['scope']['type'] == 'private' and saved['evidence']['competition'][0]['gate_passed']
+    assert saved['memo_parts']['competition'][0]['evidence_before_draft'] is True
+    assert saved['memo_versions'][0]['parts'] == {'competition': 1, 'scoring': 1}
+    assert trace['delivered_check'] == {'version': 1, 'passed': False, 'report': ['missing the timeline component'],
+                                        'depth': [], 'citations': [], 'output': []}
+    assert any(o['rule'] == 'P40' and 'final check failing: 1 report' in o['detail'] for o in trace['observations'])
+    # The delivered report is re-checked from the file the server wrote for that version.
+    assert any(o['rule'] == 'N3' and o['detail'].startswith('delivered report v1') for o in trace['observations'])
     markdown = render_markdown(trace)
-    assert '| Business | Market Analyst | 1 (Market Analyst) | 18 | problems |' in markdown
-    assert '| Scenarios | Lead Analyst | none | | |' in markdown
-    assert '## Depth at delivery' in markdown and '| Business | no |' in markdown
+    assert '| 5 | 竞争格局 Competitive Landscape | Market Analyst | 1 (Market Analyst) | 18 | yes | problems |' in markdown
+    assert '| 4 | 市场与行业分析 Market & Industry Analysis | Market Analyst | none |' in markdown
+    assert '## Final check at delivery' in markdown and '| report | missing the timeline component |' in markdown
 
 
-def test_parts_saved_by_someone_else_and_extra_rounds_are_observed():
-    review = lambda n, at: {'id': f'R{n}', 'saved_at': at, 'verdict': 'revise'}
-    case = {'memo_parts': {
-        'financials': [revision(1, 'Fundamentals Analyst', '2026-10-26T10:01:00+00:00'),
-                       revision(2, 'Market Analyst', '2026-10-26T10:02:00+00:00'),
-                       revision(3, 'Lead Analyst', '2026-10-26T10:05:00+00:00')]},  # a fix before the final review
-        'reviews': [review(1, '2026-10-26T10:03:00+00:00'), review(2, '2026-10-26T10:04:00+00:00')]}
-    assert export_trace.observe_parts(case) == [{'rule': 'P32', 'detail': 'Market Analyst saved revision 2 of the '
-                                                                           'financials part, which the Fundamentals Analyst owns'}]
-    case['memo_parts']['financials'][2]['saved_at'] = '2026-10-26T10:03:30+00:00'  # between rounds 1 and 2
-    assert [o['detail'].split(' of ')[0] for o in export_trace.observe_parts(case)] == [
-        'Market Analyst saved revision 2', 'Lead Analyst saved revision 3']
+def test_sections_saved_by_someone_else_drafted_too_early_or_answered_without_evidence_are_observed():
+    review = lambda n, at, items=(): {'id': f'R{n}', 'round': n, 'verdict': 'revise', 'finished_at': at,
+                                      'items': list(items)}
+    critical = {'severity': 'Critical', 'sections': ['financials'], 'owners': ['Fundamentals Analyst'],
+                'issue': 'No debt maturities.'}
+    case = {'memo_parts': {'financials': [dict(revision(1, 'Fundamentals Analyst', '2026-10-26T10:01:00+00:00'),
+                                               evidence_before_draft=False),
+                                          revision(2, 'Market Analyst', '2026-10-26T10:02:00+00:00')]},
+            'sources': [], 'reviews': [review(1, '2026-10-26T10:03:00+00:00', [critical]),
+                                       review(2, '2026-10-26T10:04:00+00:00')]}
+    observations = export_trace.observe_sections(case)
+    assert [o['rule'] for o in observations] == ['P32', 'P34', 'N11']
+    assert observations[0]['detail'] == ('Market Analyst saved revision 2 of the financials section, which the '
+                                         'Fundamentals Analyst owns')
+    case['sources'] = [{'id': 'S9', 'registered_by': 'Fundamentals Analyst', 'registered_at': '2026-10-26T10:03:30+00:00'}]
+    assert 'N11' not in [o['rule'] for o in export_trace.observe_sections(case)]
     case['reviews'] += [review(3, '2026-10-26T10:06:00+00:00'), review(4, '2026-10-26T10:07:00+00:00')]
-    assert export_trace.observe_parts(case)[-1] == {'rule': 'P9', 'detail': '4 review rounds; the limit is 3'}
+    assert {'rule': 'P9', 'detail': '4 review rounds; the limit is 3'} in export_trace.observe_sections(case)
 
 
-def test_long_replies_and_overstated_searches_are_observed():
+def test_the_skills_order_of_work_is_observed():
+    at = lambda clock: f'2026-10-26T10:{clock}.000+00:00'
+    tool = lambda clock, name, agent: {'type': 'tool_call', 'tool': name, 'agent': agent, 'ts': at(clock)}
+    events = [tool('01:00', 'message_bot', 'Lead Analyst'), tool('02:00', 'save_research_plan', 'Lead Analyst'),
+              tool('05:00', 'start_review', 'IC Reviewer'), tool('06:00', 'save_red_team_review', 'Red Team Analyst'),
+              tool('03:00', 'run_qa_loop', 'Lead Analyst')]
+    case = {'memo_drafts': [{'version': 1, 'saved_at': '2026-10-26T10:04:00+00:00'},
+                            {'version': 2, 'saved_at': '2026-10-26T10:08:00+00:00'}]}
+    assert [(o['rule'], o['detail'].split(' was')[0]) for o in export_trace.observe_workflow(events, case)] == [
+        ('P33', 'the Lead briefed the team before saving the research plan'),
+        ('P35', 'the first review started before the red-team review'), ('P36', 'version 2')]
+
+
+def test_long_replies_and_overstated_queries_are_observed():
     run = {'rakazo_run_id': 'r1', 'agent': 'Market Analyst', 'started_at': '2026-10-26T10:00:00+00:00',
            'ended_at': '2026-10-26T10:10:00+00:00'}
     events = [{'type': 'tool_call', 'tool': 'web_search', 'agent': 'Market Analyst', 'rakazo_run_id': 'r1',
                'arguments': {'query': 'robots'}, 'seq': 1, 'ts': '2026-10-26T10:01:00.000+00:00'},
               {'type': 'assistant_text', 'agent': 'Market Analyst', 'rakazo_run_id': 'r1', 'text': 'x' * 1600}]
     case = {'deliveries': [], 'memo_drafts': [], 'sources': [], 'client_documents': [], 'reviews': [],
-            'evidence_packets': [{'id': 'E1', 'analyst': 'Market Analyst', 'saved_at': '2026-10-26T10:05:00+00:00',
-                                  'searches': ['robots', 'harvest market', 'labor costs']}]}
+            'evidence': {'market': [{'author': 'Market Analyst', 'saved_at': '2026-10-26T10:05:00+00:00',
+                                     'queries': ['robots', 'harvest market', 'labor costs', 'yields']}]}}
     details = {o['rule']: o['detail'] for o in export_trace.observe_rules(events, [run], case)}
     assert details['P21'] == 'Market Analyst replied with 1,600 characters (limit 1,500)'
-    assert details['N1'] == 'packet E1 lists 3 searches and filing reads, but Market Analyst had run 1'
+    assert details['N1'] == 'the market evidence block lists 4 queries, but Market Analyst had run 1'
 
 
 def test_a_next_line_character_inside_a_transcript_record_keeps_it_whole(tmp_path):
