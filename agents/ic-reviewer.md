@@ -134,7 +134,7 @@ These come from the investment-analysis skill's evidence and QA standards.
 
 ## Full system prompt in a submitted run
 
-Verbatim from Rakazo's transcript of this bot's first turn in the recorded `rushed-call` run (`20261029-040250-ef1f`); it was the same in every turn of that run. The ids are Rakazo bot ids. The memory section is empty because no bot has memory tools.
+Verbatim from Rakazo's transcript of this bot's first turn in the recorded `manipulated-deck` run (`20261029-052622-cbce`); it was the same in every turn of that run. The ids are Rakazo bot ids. The memory section is empty because no bot has memory tools.
 
 ````text
 IC Reviewer
