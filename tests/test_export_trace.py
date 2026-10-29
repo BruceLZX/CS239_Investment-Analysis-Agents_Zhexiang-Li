@@ -267,11 +267,13 @@ def test_messages_to_the_user_carry_no_early_rating_and_no_internal_material():
         ('45:22', 'The draft call under review is **Sell**.'),                   # N5
         ('46:00', 'Waiting for market research; the Buy/Sell call is in review.'),  # names the question only
         ('46:30', "I still can't give you a Buy or Sell until the review passes."),  # so does this
+        ('47:00', 'Status: ' + 'the team is still working. ' * 12),                # P8: longer than a status line
         ('48:38', 'Delivered: Sell. Version 3 cleared review R2 with no must-fix items.'))]  # after delivery; N6
     observations = export_trace.observe_user_messages(replies, case)
     assert [(o['rule'], o['detail'].split(':')[0]) for o in observations] == [
         ('N6', "the Lead's message to the user names internal material (evidence packets)"),
         ('N5', "before delivery, the Lead told the user the draft's rating (Sell)"),
+        ('P8', 'before delivery, the Lead sent the user 332 characters; a status note is at most 300'),
         ('N6', "the Lead's message to the user names internal material (R2, must-fix)")]
 
 
@@ -390,3 +392,16 @@ def test_a_next_line_character_inside_a_transcript_record_keeps_it_whole(tmp_pat
     path.write_text(text.replace('\\u0085', '\x85'))
     [(_, message)] = export_trace.read_transcript(path)['messages']
     assert message['content'][0]['text'] == 'Line one\x85line two'
+
+
+def test_calls_through_rakazos_tool_catalog_count_as_the_tool_they_ran():
+    # A bot past Rakazo's direct-tool limit calls each tool through connectors_execute_tool {id, arguments}.
+    run = {'run_id': 'run-x', 'model': 'deepseek-flash', 'messages': [
+        (ms('2026-10-29T20:00:01+00:00'), assistant(call('c1', 'connectors_load_tool', {'id': 'run_qa_loop'}))),
+        (ms('2026-10-29T20:00:02+00:00'), assistant(call('c2', 'connectors_execute_tool',
+                                                          {'id': 'run_qa_loop', 'arguments': {}}))),
+        (ms('2026-10-29T20:00:03+00:00'), tool_result('c2', 'connectors_execute_tool', '{"passed": true}'))]}
+    events, _ = export_trace.transcript_events(run, 'Lead Analyst')
+    assert [(e['type'], e['tool']) for e in events] == [('tool_call', 'connectors_load_tool'),
+                                                        ('tool_call', 'run_qa_loop'), ('tool_result', 'run_qa_loop')]
+    assert events[1]['arguments'] == {} and events[1]['tool_full_name'] == 'connectors_execute_tool'

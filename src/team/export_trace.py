@@ -31,6 +31,10 @@ FORMAT = 'cs239-agent-team-trace/1'
 EMAIL_RE = re.compile(r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+')
 FICTIONAL_DOMAINS = ('example.com', 'example.org', 'example.net')
 MCP_PREFIX_RE = re.compile(r'^mcp__[\w-]+?__')
+# A bot past Rakazo's direct-tool limit (team.profiles.DIRECT_TOOL_LIMIT) reaches its MCP tools through a catalog:
+# it searches and loads them, then calls each one as connectors_execute_tool {id, arguments}.
+CATALOG_EXECUTE = 'connectors_execute_tool'
+CATALOG_LOOKUPS = {'connectors_search_tools', 'connectors_load_tool'}
 MD_LIMITS = {'thought': 1500, 'tool_result': 800, 'assistant_text': 4000, 'run_prompt': 700,
              'platform_message': 400, 'arguments': 500, 'peer': 2500}
 # Distinctive content in a confidential document: dollar figures, percentages and bolded facts.
@@ -58,6 +62,7 @@ RED_TEAM_FIRST_BUDGET = {'web_search': 10, 'web_fetch': 8}
 LEAD_CASE_BUDGET = {'web_search': 8, 'web_fetch': 6}
 # Reply lengths from the role prompts (P21 for the analysts and the Red Team, P27 for the IC Reviewer).
 REPLY_LIMITS = {REVIEWER: ('P27', 1000), **{agent: ('P21', 1500) for agent in RESEARCHERS}}
+STATUS_LIMIT = 300  # P8: the Lead's status note to the user before delivery
 # What counts as research when an evidence block lists the queries it ran.
 RESEARCH_TOOLS = {'web_search', 'web_fetch', 'read_sec_filing', 'get_sec_financials', 'list_sec_filings',
                   'find_sec_company', 'get_price_history', 'get_valuation_snapshot', 'read_client_document',
@@ -135,6 +140,7 @@ def transcript_events(run: dict, agent: str) -> tuple[list[dict], dict]:
     events = []
     usage = {'input_tokens': 0, 'output_tokens': 0, 'cache_read_tokens': 0, 'cost_usd': 0.0, 'model_calls': 0}
     prompt_seen = False
+    catalog = {}  # call ID -> the tool a connectors_execute_tool call ran
     for ts, message in run['messages']:
         if message.get('rakazoHistory'):
             continue
@@ -151,9 +157,12 @@ def transcript_events(run: dict, agent: str) -> tuple[list[dict], dict]:
                 elif part.get('type') == 'text' and part.get('text', '').strip():
                     events.append({**base, 'type': 'assistant_text', 'text': part['text']})
                 elif part.get('type') == 'toolCall':
-                    events.append({**base, 'type': 'tool_call', 'tool': MCP_PREFIX_RE.sub('', part.get('name', '')),
-                                   'tool_full_name': part.get('name'), 'call_id': part.get('id'),
-                                   'arguments': part.get('arguments') or {}})
+                    tool, arguments = MCP_PREFIX_RE.sub('', part.get('name', '')), part.get('arguments') or {}
+                    if tool == CATALOG_EXECUTE and isinstance(arguments.get('id'), str):
+                        catalog[part.get('id')] = tool = arguments['id']  # the tool the catalog call ran
+                        arguments = arguments.get('arguments') or {}
+                    events.append({**base, 'type': 'tool_call', 'tool': tool, 'tool_full_name': part.get('name'),
+                                   'call_id': part.get('id'), 'arguments': arguments})
             spent = message.get('usage') or {}
             usage['input_tokens'] += spent.get('input', 0)
             usage['output_tokens'] += spent.get('output', 0)
@@ -166,9 +175,9 @@ def transcript_events(run: dict, agent: str) -> tuple[list[dict], dict]:
             if message.get('content') or spent.get('output'):  # An aborted turn records an empty message.
                 usage['model_calls'] += 1
         elif role == 'toolResult':
-            events.append({**base, 'type': 'tool_result', 'tool': MCP_PREFIX_RE.sub('', message.get('toolName', '')),
-                           'call_id': message.get('toolCallId'), 'is_error': bool(message.get('isError')),
-                           'text': _text_of(message.get('content'))})
+            tool = catalog.get(message.get('toolCallId')) or MCP_PREFIX_RE.sub('', message.get('toolName', ''))
+            events.append({**base, 'type': 'tool_result', 'tool': tool, 'call_id': message.get('toolCallId'),
+                           'is_error': bool(message.get('isError')), 'text': _text_of(message.get('content'))})
     return events, usage
 
 
@@ -254,13 +263,19 @@ def _rule_key(observation: dict):
 
 
 def observe_user_messages(replies: list[dict], case: dict) -> list[dict]:
-    """What the Lead told the user: a draft's rating before any version was delivered (N5),
-    and internal working material in any message (N6)."""
+    """What the Lead told the user: a draft's rating before any version was delivered (N5), a status note longer
+    than a status line (P8), and internal working material in any message (N6)."""
     observations = []
     delivered_ms = min((_ms(d['delivered_at']) for d in case['deliveries']), default=float('inf'))
+    # The message that the final review failed lists the open issues (P9), so it may run longer.
+    failed = case.get('reviews') and case_rules.final_review_failed(case)
+    failed_ms = _ms(case_rules.finished_reviews(case)[-1]['finished_at']) if failed else float('inf')
     for reply in replies:
         text = reply.get('text', '')
         quoted = _clip(' '.join(text.split()), 120)
+        if reply['ts_ms'] < min(delivered_ms, failed_ms) and len(text) > STATUS_LIMIT:
+            observations.append({'rule': 'P8', 'detail': f'before delivery, the Lead sent the user {len(text):,} '
+                                                          f'characters; a status note is at most {STATUS_LIMIT}'})
         if reply['ts_ms'] < delivered_ms:
             ratings = {d['rating'] for d in case['memo_drafts'] if _ms(d['saved_at']) <= reply['ts_ms']}
             answer_text = RATING_PAIR_RE.sub(' ', text)
@@ -320,7 +335,7 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: lis
     briefed: set[str] = set()
     for run in sorted(runs, key=lambda r: r.get('started_at') or ''):
         mine = [e for e in events if e.get('rakazo_run_id') == run['rakazo_run_id']]
-        calls = [e for e in mine if e['type'] == 'tool_call']
+        calls = [e for e in mine if e['type'] == 'tool_call' and e['tool'] not in CATALOG_LOOKUPS]
         researcher = run['agent'] in RESEARCHERS
         # A bot's first brief in the case gets the first-brief budget; later briefs are revisions.
         brief = 'revision' if researcher and run['agent'] in briefed else 'first'

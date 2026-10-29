@@ -19,6 +19,12 @@ def test_every_tool_a_bot_is_given_exists_on_the_server():
         assert set(profile.mcp_tools) <= names, profile.name
 
 
+def test_every_bot_calls_its_tools_directly():
+    # Past Rakazo's limit a bot's tools sit behind a search, load and execute catalog (profiles.DIRECT_TOOL_LIMIT).
+    for profile in profiles.team_profiles():
+        assert len(profile.mcp_tools) <= profiles.DIRECT_TOOL_LIMIT, (profile.name, len(profile.mcp_tools))
+
+
 def test_each_writer_gets_the_standards_for_exactly_its_own_sections():
     bots = by_name()
     for section in sections.ALL_SECTIONS:
