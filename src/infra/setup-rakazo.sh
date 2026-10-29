@@ -96,8 +96,9 @@ set_env RAKAZO_COMPUTER_IMAGE_TAG "sha-$RAKAZO_REVISION"
 set_env PI_SESSION_RECORDING true
 # Lets Rakazo reach the MCP server at http://host.docker.internal:8766.
 set_env MCP_ALLOW_PRIVATE_ENDPOINT true
-# Bot-to-bot messages one request may chain (Rakazo's default is 6). The team's longest path is 8: briefs,
-# evidence, review request, verdict, follow-up briefs, follow-up evidence, re-review request, verdict.
-set_env BOT_MESSAGE_MAX_HOPS 8
+# Bot-to-bot messages one request may chain (Rakazo's default is 6). Rakazo counts hops only on messages a bot
+# sends, not on the replies it returns, so the Lead's sends land on odd hops. The team's longest path ends with the
+# Lead's fifth send at hop 9: briefs, review request, revision briefs, re-review request, final review request.
+set_env BOT_MESSAGE_MAX_HOPS 9
 
 bash install-images.sh --local

@@ -229,3 +229,28 @@ def test_a_second_message_from_the_user_is_a_follow_up():
         user('m3', 'run-2', '2026-10-26T11:30:00Z', 'Why Hold?')]})
     assert [(entry['kind'], entry.get('intent')) for entry in entries] == [
         ('request', 'request'), ('reply', None), ('request', 'follow-up')]
+
+
+def test_memo_parts_and_whom_a_review_asks_reach_the_page(runs):
+    case = json.loads((runs / 'r1' / 'case.json').read_text())
+    case['memo_parts'] = {'business': [{'revision': 1, 'author': 'Market Analyst', 'markdown': 'x', 'chars': 1,
+                                        'sha256': 'h', 'passed': False, 'findings': ['N1'],
+                                        'depth': ['too short', 'no table'], 'saved_at': '2026-10-26T10:02:00+00:00'}]}
+    case['reviews'] = [{'id': 'R1', 'memo_version': 1, 'round': 1, 'verdict': 'revise', 'must_fix': ['business: x'],
+                        'revision_requests': {'Market Analyst': ['business']}, 'saved_at': '2026-10-26T10:04:30+00:00'}]
+    (runs / 'r1' / 'case.json').write_text(json.dumps(case))
+    view = server.snapshot(runs / 'r1')['case']
+    assert [part['key'] for part in view['part_list']][:2] == ['executive_summary', 'business']
+    assert view['parts'] == [{'part': 'business', 'revision': 1, 'author': 'Market Analyst', 'chars': 1,
+                              'passed': False, 'problems': 3, 'ts': ms('2026-10-26T10:02:00+00:00')}]
+    assert (view['reviews'][0]['round'], view['reviews'][0]['owners']) == (1, {'Market Analyst': ['business']})
+
+
+def test_the_new_tools_get_short_summaries():
+    assert server._summary('save_memo_part', {'part': 'financials', 'markdown': 'x' * 3200}) == 'financials (3,200 characters)'
+    assert server._summary('get_memo_parts', {'parts': ['business', 'competition'], 'version': 2}) == \
+        'business, competition in v2'
+    assert server._summary('read_sec_filing', {'ticker': 'AAPL', 'form': '10-K', 'item': '1A', 'keywords': ['China']}) == \
+        'AAPL 10-K item 1A · China'
+    assert server._summary('get_valuation_snapshot', {'ticker': 'AAPL', 'peers': ['MSFT', 'GOOGL']}) == 'AAPL vs MSFT, GOOGL'
+    assert server._summary('set_case_scope', {'company': 'Apple', 'company_type': 'listed'}) == 'Apple'

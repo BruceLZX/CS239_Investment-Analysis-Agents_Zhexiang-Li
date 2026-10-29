@@ -75,12 +75,13 @@ def test_data_tools_register_what_they_retrieved_and_give_the_ids_to_cite(runs_d
     with caller('Fundamentals Analyst'):
         text = call('get_sec_financials', {'ticker': 'AAPL'})
     assert text == ('| Revenue | 416,161M |\n\nSources registered for you (cite these IDs; do not register them again):\n'
-                    '- [S1] 10-K for FY2025')
+                    '- [S1] 10-K for FY2025, https://sec.example/10k')
     [registered] = case_file.read_case()['sources']
     assert (registered['registered_by'], registered['via'], registered['confidence']) == (
         'Fundamentals Analyst', 'get_sec_financials', 'high')
     monkeypatch.setattr(server.prices, 'price_summary', lambda ticker, period: Retrieved('AAPL 347.73', [PRICES]))
-    assert call('get_price_history', {'ticker': 'AAPL'}).endswith('- [S2] Yahoo chart for AAPL')
+    assert call('get_price_history', {'ticker': 'AAPL'}).endswith(
+        '- [S2] Yahoo chart for AAPL, https://finance.yahoo.com/quote/AAPL')
 
 
 def test_data_tools_still_answer_without_an_active_run(runs_dir, monkeypatch):

@@ -134,7 +134,9 @@ def _registered(retrieved: Retrieved, via: str) -> str:
     except RuntimeError:  # no active run, e.g. a tool tried by hand
         return retrieved.text + '\n\nSources (not registered: no active run):\n' + '\n'.join(
             f"- {s['label']}: {s['location']}" for s in retrieved.sources)
-    listed = dict.fromkeys(zip(ids, (s['label'] for s in retrieved.sources)))
+    # The location shows in the result too, as the record that the tool retrieved it.
+    listed = dict.fromkeys((source_id, s['label'] if s['location'] in s['label'] else f"{s['label']}, {s['location']}")
+                           for source_id, s in zip(ids, retrieved.sources))
     return (f'{retrieved.text}\n\nSources registered for you (cite these IDs; do not register them again):\n'
             + '\n'.join(f'- [{source_id}] {label}' for source_id, label in listed))
 

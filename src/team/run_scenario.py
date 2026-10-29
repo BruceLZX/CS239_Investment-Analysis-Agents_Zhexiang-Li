@@ -89,13 +89,13 @@ def narrate(app: Rakazo, bot_ids: dict[str, str], seen: set) -> None:
 
 
 def review_failed(case: dict) -> bool:
-    """The re-review did not approve. The Lead must then deliver nothing (P9), so the run is over."""
-    return len(case['reviews']) >= 2 and case['reviews'][-1]['verdict'] != 'approve'
+    """The final review round did not approve. The Lead must then deliver nothing (P9), so the run is over."""
+    return case_file.final_review_failed(case)
 
 
 def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet: float, cards: str,
                     narrated: set | None = None) -> str:
-    """Wait until the memo is delivered, or fails its re-review, and every bot is idle; or the team goes quiet."""
+    """Wait until the memo is delivered, or fails its final review, and every bot is idle; or the team goes quiet."""
     deadline = time.monotonic() + timeout
     idle_since, warned, last_busy = None, set(), None
     while time.monotonic() < deadline:
@@ -178,8 +178,8 @@ def main() -> None:
     parser.add_argument('--request', help='run a request of your own instead of a scenario (no attached documents)')
     parser.add_argument('--follow-up', metavar='QUESTION',
                         help='ask the Lead Analyst a follow-up question about the latest run, once it has finished')
-    parser.add_argument('--timeout', type=float, default=1800, help='seconds to wait for the whole run')
-    parser.add_argument('--quiet', type=float, default=150, help='seconds of idleness that count as stalled')
+    parser.add_argument('--timeout', type=float, default=5400, help='seconds to wait for the whole run')
+    parser.add_argument('--quiet', type=float, default=180, help='seconds of idleness that count as stalled')
     parser.add_argument('--approval-cards', choices=['deny', 'wait'], default='deny',
                         help="Rakazo approval cards (e.g. fetching a site the bot's search didn't return): "
                              'deny them for unattended runs (logged), or wait for someone to answer in the app')

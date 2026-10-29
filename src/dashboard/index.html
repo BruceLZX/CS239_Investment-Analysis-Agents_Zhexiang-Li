@@ -107,6 +107,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .list { list-style: none; margin: 0; padding: 0; overflow-y: auto; }
 #sources { max-height: 236px; }
 #versions { max-height: 250px; }
+#parts { max-height: 290px; }
+.part-check { font-weight: 700; }
+.part-check.ok { color: var(--ok); } .part-check.warn { color: var(--warn); }
 #tools { max-height: 210px; }
 .list li { padding: 5px 2px; border-bottom: 1px solid var(--line); font-size: 13.5px; display: flex; gap: 8px; align-items: baseline; min-width: 0; }
 .list li:last-child { border-bottom: 0; }
@@ -201,13 +204,14 @@ blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--lin
     </section>
     <aside class="side">
       <section class="panel"><h2>Source register <span class="count" id="source-count"></span></h2><ul id="sources" class="list"></ul></section>
+      <section class="panel"><h2>Memo parts <span class="count" id="parts-count"></span></h2><ul id="parts" class="list"></ul></section>
       <section class="panel"><h2>Memo versions and reviews</h2><ul id="versions" class="list"></ul></section>
       <section class="panel"><h2>Tool calls (MCP) <span class="count" id="tool-count"></span></h2><ul id="tools" class="list"></ul></section>
     </aside>
   </main>
 
   <section class="bottom">
-    <section class="panel"><h2><span id="memo-title">Memo</span> <span id="memo-chip"></span></h2><article id="memo" class="memo"><p class="empty">The memo appears here once the Lead saves a draft.</p></article></section>
+    <section class="panel"><h2><span id="memo-title">Memo</span> <span id="memo-chip"></span></h2><article id="memo" class="memo"><p class="empty">The memo appears here once the Lead saves a version.</p></article></section>
     <section class="panel rules">
       <h2>Rule observations</h2><div id="observations"></div>
       <h2 style="margin-top:16px">Cost by agent</h2><div id="costs"></div>
@@ -223,19 +227,22 @@ const BOTS = [LEAD, ...ANALYSTS, REVIEWER];
 const SHORT = {[LEAD]: 'lead', [FUNDAMENTALS]: 'fundamentals', [MARKET]: 'market', [REVIEWER]: 'reviewer', User: 'user'};
 const NODES = {
   User: {x: 110, y: 150, role: 'asks for the memo'},
-  [LEAD]: {x: 385, y: 150, role: 'plans · writes · delivers'},
-  [FUNDAMENTALS]: {x: 660, y: 40, role: 'filings · prices · valuation'},
-  [MARKET]: {x: 660, y: 150, role: 'business · competitors · market'},
-  [REVIEWER]: {x: 660, y: 260, role: 'investment-committee review'},
+  [LEAD]: {x: 385, y: 150, role: 'scopes · synthesizes · delivers'},
+  [FUNDAMENTALS]: {x: 660, y: 40, role: 'writes financials · valuation'},
+  [MARKET]: {x: 660, y: 150, role: 'writes business · competition'},
+  [REVIEWER]: {x: 660, y: 260, role: 'reviews part by part'},
 };
 const EDGES = [['User', LEAD], [LEAD, FUNDAMENTALS], [LEAD, MARKET], [LEAD, REVIEWER]];
 const TOOL_VERBS = {
   get_case_status: 'checking the case file', read_client_document: 'reading the client document',
   find_sec_company: 'looking up the company at SEC', get_sec_financials: 'pulling SEC financials',
-  list_sec_filings: 'listing SEC filings', get_price_history: 'getting the price history',
+  list_sec_filings: 'listing SEC filings', read_sec_filing: 'reading a filing',
+  get_price_history: 'getting the price history', get_valuation_snapshot: 'building a valuation snapshot',
   register_source: 'registering a source', list_sources: 'reading the source register',
+  set_case_scope: 'setting the case scope',
   save_evidence_packet: 'saving the evidence packet', get_evidence_packets: 'reading the evidence',
-  save_memo_draft: 'writing a memo draft', get_memo_draft: 'reading the memo draft',
+  save_memo_part: 'writing a memo part', get_memo_parts: 'reading memo parts',
+  save_memo_version: 'saving a memo version',
   get_memo_check: 'running the memo check', save_review: 'writing the review',
   get_latest_review: 'reading the review', deliver_memo: 'delivering the memo',
 };
@@ -420,7 +427,7 @@ function activity(snap, bot, t, tools, status) {
   return last ? (TOOL_VERBS[last.tool] || last.tool) : 'thinking…';
 }
 function steps(view) {
-  const {convo, sources, packets, drafts, reviews, deliveries, status, finished, outcome} = view;
+  const {convo, sources, packets, parts, drafts, reviews, deliveries, status, finished, outcome} = view;
   const sent = (from, to) => convo.some((e) => e.kind === 'message' && e.from === from && e.to === to);
   const briefed = ANALYSTS.filter((analyst) => sent(LEAD, analyst));
   const firstRound = packets.filter((p) => !p.follow_up_for);
@@ -428,9 +435,10 @@ function steps(view) {
   const draft = drafts[drafts.length - 1], review = reviews[reviews.length - 1], delivery = deliveries[deliveries.length - 1];
   const reviewState = status[REVIEWER] === 'working' ? 'active' : !review ? 'todo' : review.verdict === 'approve' ? 'done' : 'warn';
   // A finished run with no delivery says why, so it doesn't look stuck at the review.
-  const failedReview = reviews.length >= 2 && review.verdict !== 'approve';
+  const failedReview = reviews.length >= 3 && review.verdict !== 'approve';
   const undelivered = !finished || delivery ? ''
-    : failedReview ? 'not delivered: the re-review did not approve (P9)' : `not delivered${outcome ? ': ' + outcome : ''}`;
+    : failedReview ? 'not delivered: the final review did not approve (P9)' : `not delivered${outcome ? ': ' + outcome : ''}`;
+  const written = new Set(parts.map((p) => p.part)).size;
   // A review that asked for evidence, then the follow-up packets that answered it.
   const reviewDetail = reviews.map((r) => {
     const answered = packets.filter((p) => p.follow_up_for === r.id).map((p) => p.id);
@@ -443,8 +451,8 @@ function steps(view) {
     {label: 'Brief', state: briefed.length === ANALYSTS.length ? 'done' : convo.length ? 'active' : 'todo',
      detail: briefed.length ? 'Lead → ' + briefed.map((analyst) => analyst.split(' ')[0]).join(', ') : ''},
     {label: 'Research', state: researched ? 'done' : briefed.length ? 'active' : 'todo',
-     detail: sources.length ? `${sources.length} sources` + (firstRound.length ? ` · evidence ${firstRound.map((p) => p.id).join(', ')}` : '') : ''},
-    {label: 'Draft', state: draft ? 'done' : researched ? 'active' : 'todo', detail: draft ? `v${draft.version} · ${draft.rating}` : ''},
+     detail: sources.length ? `${sources.length} sources` + (written ? ` · ${written} of 9 parts` : '') : ''},
+    {label: 'Version', state: draft ? 'done' : researched ? 'active' : 'todo', detail: draft ? `v${draft.version} · ${draft.rating}` : ''},
     {label: 'Review', state: reviewState, detail: reviewDetail.join(' → ')},
     {label: 'Delivered', state: delivery ? (delivery.gate.approved ? 'done' : 'bad') : undelivered ? 'bad' : 'todo',
      detail: delivery ? `v${delivery.version} · ` + (delivery.gate.approved ? `approved by ${delivery.gate.review_id}` : 'no approving review (N5)') : undelivered},
@@ -454,10 +462,10 @@ function steps(view) {
 // ---------- rendering ----------
 function resetView(snap) {
   S.snap = snap;
-  S.view = {convo: [], sources: 0, versions: 0, tools: 0, memo: null, rules: null, request: null};
+  S.view = {convo: [], sources: 0, versions: 0, tools: 0, parts: null, memo: null, rules: null, request: null};
   S.anim = 0;
   S.quiet = true;  // Don't animate what was already there when the run was opened.
-  for (const id of ['conversation', 'sources', 'versions', 'tools']) $(id).textContent = '';
+  for (const id of ['conversation', 'sources', 'parts', 'versions', 'tools']) $(id).textContent = '';
   banner('');
 }
 function syncList(id, items, count, make, newestFirst) {
@@ -478,7 +486,7 @@ function render(t) {
   const c = snap.case;
   const view = {
     convo: snap.conversation.filter(at), tools: snap.tools.filter(at), sources: c.sources.filter(at),
-    packets: c.packets.filter(at), drafts: c.drafts.filter(at), reviews: c.reviews.filter(at),
+    packets: c.packets.filter(at), parts: (c.parts || []).filter(at), drafts: c.drafts.filter(at), reviews: c.reviews.filter(at),
     deliveries: c.deliveries.filter(at), usage: snap.usage.filter(at),
   };
   view.status = botStatus(snap, t, live);
@@ -491,6 +499,7 @@ function render(t) {
   renderConversation(snap, view.convo);
   $('source-count').textContent = view.sources.length ? `${view.sources.length}` + (view.packets.length ? ` · evidence ${view.packets.map((p) => p.id).join(', ')}` : '') : '';
   S.view.sources = syncList('sources', view.sources, S.view.sources, sourceItem);
+  renderParts(view);
   const versions = [...view.drafts.map((d) => ({...d, type: 'draft'})), ...view.reviews.map((r) => ({...r, type: 'review'})),
                     ...view.deliveries.map((d) => ({...d, type: 'delivery'}))].sort((x, y) => x.ts - y.ts);
   S.view.versions = syncList('versions', versions, S.view.versions, versionItem);
@@ -596,15 +605,17 @@ function sourceItem(source) {
 function versionItem(item) {
   const when = el('span', {class: 'time'}, '+' + fmt(item.ts - S.snap.started));
   if (item.type === 'draft') {
-    return el('li', {}, el('span', {class: 'chip'}, `v${item.version}`), el('span', {class: 'wrap-text'}, 'Draft saved ', el('span', {class: 'chip rating'}, item.rating)), when);
+    const changed = item.changed_parts && item.changed_parts.length ? el('div', {class: 'muted small'}, 'Parts changed: ' + item.changed_parts.join(', ')) : '';
+    return el('li', {}, el('span', {class: 'chip'}, `v${item.version}`), el('div', {class: 'wrap-text'}, 'Version saved ', el('span', {class: 'chip rating'}, item.rating), changed), when);
   }
   if (item.type === 'review') {
     const tone = item.verdict === 'approve' ? 'ok' : item.verdict === 'revise' ? 'warn' : 'bad';
     const fixes = (item.must_fix || []).slice(0, 2).map((fix) => el('li', {}, String(fix).length > 140 ? String(fix).slice(0, 140) + '…' : String(fix)));
     const asked = Object.keys(item.requests || {});
     return el('li', {}, el('span', {class: 'chip'}, item.id),
-              el('div', {class: 'wrap-text'}, `IC review of v${item.version} `, el('span', {class: 'chip ' + tone}, item.verdict),
+              el('div', {class: 'wrap-text'}, `IC review of v${item.version}` + (item.round ? ` (round ${item.round}) ` : ' '), el('span', {class: 'chip ' + tone}, item.verdict),
                  item.must_fix && item.must_fix.length ? el('span', {class: 'muted small'}, ` · ${item.must_fix.length} must-fix`) : '',
+                 Object.keys(item.owners || {}).length ? el('div', {class: 'muted small'}, 'For ' + Object.entries(item.owners).map(([owner, parts]) => `${owner.split(' ')[0]} (${parts.join(', ')})`).join(', ')) : '',
                  asked.length ? el('div', {class: 'muted small'}, 'Asks for evidence from ' + asked.join(' and ')) : '',
                  fixes.length ? el('ul', {class: 'fixes'}, ...fixes) : ''), when);
   }
@@ -614,6 +625,25 @@ function versionItem(item) {
   return el('li', {}, el('span', {class: 'chip'}, `v${item.version}`),
             el('div', {class: 'wrap-text'}, el('b', {}, 'Delivered '), gate,
                findings.length ? el('div', {class: 'small muted'}, 'Memo check at delivery:', el('ul', {class: 'fixes'}, ...findings)) : ''), when);
+}
+function renderParts(view) {
+  // Each part's latest revision so far; a replay shows them as they were saved.
+  const list = S.snap.case.part_list || [];
+  const key = `${S.snap.run_id}:${view.parts.length}`;
+  if (!list.length || S.view.parts === key) return;
+  S.view.parts = key;
+  const latest = {};
+  for (const r of view.parts) latest[r.part] = r;
+  $('parts-count').textContent = view.parts.length ? `${Object.keys(latest).length} of ${list.length}` : '';
+  $('parts').replaceChildren(...list.map((part) => {
+    const r = latest[part.key];
+    const check = !r ? '' : r.passed ? el('span', {class: 'part-check ok', title: 'check passed'}, '✓')
+      : el('span', {class: 'part-check warn', title: `${r.problems} problems at its last save`}, `${r.problems}`);
+    return el('li', {}, el('span', {class: 'bot-dot ' + (SHORT[part.owner] || ''), title: part.owner}),
+              el('span', {class: 'grow'}, part.heading,
+                 el('span', {class: 'muted small'}, r ? ` · rev ${r.revision}` + (r.author && r.author !== part.owner ? ` by ${r.author}` : '')
+                   + ` · ${(r.chars || 0).toLocaleString()} chars` : ' · not saved')), check);
+  }));
 }
 function toolItem(snap, call) {
   return el('li', {}, el('span', {class: 'time'}, '+' + fmt(call.ts - snap.started)),
@@ -629,10 +659,10 @@ function renderMemo(view) {
   if (!draft) {
     $('memo-title').textContent = 'Memo';
     $('memo-chip').replaceChildren();
-    $('memo').replaceChildren(el('p', {class: 'empty'}, 'The memo appears here once the Lead saves a draft.'));
+    $('memo').replaceChildren(el('p', {class: 'empty'}, 'The memo appears here once the Lead saves a version.'));
     return;
   }
-  $('memo-title').textContent = delivery ? `Delivered memo · v${draft.version}` : `Latest draft · v${draft.version}`;
+  $('memo-title').textContent = delivery ? `Delivered memo · v${draft.version}` : `Latest version · v${draft.version}`;
   const chip = delivery ? ['ok', 'delivered'] : view.finished ? ['bad', 'not delivered'] : ['warn', 'not delivered yet'];
   $('memo-chip').replaceChildren(el('span', {class: 'chip ' + chip[0]}, chip[1]));
   $('memo').innerHTML = md(draft.markdown, false);

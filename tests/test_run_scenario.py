@@ -46,11 +46,11 @@ def test_narration_prints_each_delivery_once_in_time_order(capsys):
     assert capsys.readouterr().out == ''
 
 
-def test_a_re_review_that_does_not_approve_ends_the_run_without_a_memo():
+def test_a_final_review_that_does_not_approve_ends_the_run_without_a_memo():
     revise, approve = {'verdict': 'revise'}, {'verdict': 'approve'}
-    assert run_scenario.review_failed({'reviews': [revise, revise]})
-    assert not run_scenario.review_failed({'reviews': [revise]})            # the first review: a revision is coming
-    assert not run_scenario.review_failed({'reviews': [revise, approve]})
+    assert run_scenario.review_failed({'reviews': [revise, revise, revise]})
+    assert not run_scenario.review_failed({'reviews': [revise, revise]})    # round 3 is still to come
+    assert not run_scenario.review_failed({'reviews': [revise, revise, approve]})
 
 
 def test_a_request_of_your_own_runs_like_a_scenario_without_documents():

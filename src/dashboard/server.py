@@ -31,7 +31,7 @@ from team.model_costs import call_cost
 from team.profiles import LEAD, team_profiles
 from team.rakazo_client import WAITING_STATUSES, Rakazo, RakazoError
 from team.run_scenario import CUSTOM, SCENARIOS
-from tools import case_file
+from tools import case_file, memo
 from tools.env import load_env
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -105,9 +105,22 @@ def _summary(tool: str, arguments: dict) -> str:
         return f"{arguments.get('title', '')} ({arguments.get('source_type', '')})"
     if tool == 'save_review':
         return f"v{arguments.get('memo_version')}: {arguments.get('verdict')}"
+    if tool == 'save_memo_part':
+        return f"{arguments.get('part', '')} ({len(arguments.get('markdown') or ''):,} characters)"
+    if tool == 'get_memo_parts':
+        parts = ', '.join(arguments.get('parts') or []) or 'list of parts'
+        return parts + (f" in v{arguments['version']}" if arguments.get('version') else '')
+    if tool == 'read_sec_filing':
+        searched = f" · {', '.join(arguments['keywords'])}" if arguments.get('keywords') else ''
+        return f"{arguments.get('ticker', '')} {arguments.get('form', '10-K')} item {arguments.get('item') or 'any'}{searched}"
+    if tool == 'get_valuation_snapshot':
+        peers = ', '.join(arguments.get('peers') or [])
+        return arguments.get('ticker', '') + (f' vs {peers}' if peers else '')
+    if tool == 'get_memo_check' and arguments.get('part'):
+        return arguments['part'] + (f" in v{arguments['version']}" if arguments.get('version') else '')
     if arguments.get('version'):
         return f"v{arguments['version']}"
-    return next((str(arguments[key]) for key in ('ticker', 'topic', 'name', 'rating') if arguments.get(key)), '')
+    return next((str(arguments[key]) for key in ('ticker', 'topic', 'company', 'name', 'rating') if arguments.get(key)), '')
 
 
 def tool_calls(run_dir: Path, entries: list[dict]) -> list[dict]:
@@ -143,10 +156,17 @@ def case_view(case: dict, started: int) -> dict:
         'packets': [{'id': p['id'], 'analyst': p.get('analyst'), 'follow_up_for': p.get('follow_up_for'),
                      'topic': p.get('topic'), 'source_ids': p.get('source_ids', []),
                      'ts': when(p, 'saved_at')} for p in case['evidence_packets']],
+        'part_list': [{'key': part.key, 'heading': part.heading, 'owner': part.owner} for part in memo.PARTS],
+        'parts': [{'part': key, 'revision': r['revision'], 'author': r.get('author'), 'chars': r.get('chars'),
+                   'passed': r.get('passed'), 'problems': len(r.get('depth') or []) + len(r.get('findings') or []),
+                   'ts': when(r, 'saved_at')}
+                  for key, revisions in (case.get('memo_parts') or {}).items() for r in revisions],
         'drafts': [{'version': d['version'], 'rating': d.get('rating'), 'markdown': d.get('markdown', ''),
+                    'changed_parts': d.get('changed_parts'), 'passed': d.get('passed'),
                     'ts': when(d, 'saved_at')} for d in case['memo_drafts']],
-        'reviews': [{'id': r['id'], 'version': r.get('memo_version'), 'verdict': r.get('verdict'),
-                     'must_fix': r.get('must_fix', []), 'requests': r.get('evidence_requests') or {},
+        'reviews': [{'id': r['id'], 'version': r.get('memo_version'), 'round': r.get('round'),
+                     'verdict': r.get('verdict'), 'must_fix': r.get('must_fix', []),
+                     'owners': r.get('revision_requests') or {}, 'requests': r.get('evidence_requests') or {},
                      'ts': when(r, 'saved_at')} for r in case['reviews']],
         'deliveries': [{'version': d['memo_version'], 'gate': d.get('review_gate') or {},
                         'findings': (d.get('memo_check') or {}).get('findings', []),

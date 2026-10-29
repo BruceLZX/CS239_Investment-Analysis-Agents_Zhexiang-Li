@@ -1,7 +1,7 @@
 """The exporter on a captured run that follows Rakazo's real formats (Pi format-4 JSONL + API threads).
 
 The run is a confidential-startup diligence with planted rule breaks: a web search containing a figure
-from the confidential deck (N7), seven searches for one brief (N9), a registered URL no tool ever
+from the confidential deck (N7), thirteen searches for one first brief (N9), a registered URL no tool ever
 returned (N1) and a memo delivered without review (N5).
 """
 from datetime import datetime
@@ -22,7 +22,9 @@ FINAL = ('Rating: Wait\nData as of 2026-10-26.\nThe robot picks 94% of ripe frui
 SYSTEM_PROMPT = 'Rakazo system prompt for the account owner'
 SEARCHES = ['strawberry picking robot companies', 'autonomous strawberry harvester pick rate',
             'strawberry harvest labor shortage California', 'Orrin Fieldworks robot', 'soft fruit robotics funding 2026',
-            'strawberry robot unit cost $48,000', 'Plant City strawberry robot pilot']
+            'strawberry robot unit cost $48,000', 'Plant City strawberry robot pilot', 'berry harvest automation',
+            'agricultural robotics market size', 'strawberry growers adoption survey', 'harvest robot reliability study',
+            'farm labor cost per acre strawberries', 'robotic harvesting startups 2026']
 
 
 def ms(iso: str) -> int:
@@ -165,7 +167,7 @@ def test_rule_observations_catch_the_planted_breaks(run_dir):
     assert by_rule['N1'] == ['S3 (https://made-up.example/market-report) never appeared in a tool result in this run']
     assert by_rule['N5'] == ['memo v1 was delivered, but that version was never reviewed']
     assert by_rule['N7'] == ['Market Analyst put confidential content in web_search: $48,000']
-    assert by_rule['N9'] == ['Market Analyst made 7 web_search calls for one brief (limit 6)']
+    assert by_rule['N9'] == ['Market Analyst made 13 web_search calls for one first brief (limit 12)']
     assert [o['rule'] for o in observations] == sorted((o['rule'] for o in observations), key=lambda r: int(r[1:]))
 
 
@@ -285,3 +287,63 @@ def test_a_follow_up_question_appears_in_the_timeline(run_dir):
     assert section.split(')', 1)[1].lstrip().startswith('**Follow-up from the user**')
     assert 'Why Wait and not Pass?' in section
     assert markdown.count('**Follow-up from the user**') == 1  # the first request keeps its own heading
+
+
+def revision(number: int, author: str, saved_at: str, markdown: str = 'A short part [S2].') -> dict:
+    return {'revision': number, 'author': author, 'markdown': markdown, 'chars': len(markdown), 'sha256': 'h',
+            'passed': False, 'findings': [], 'depth': ['too short'], 'saved_at': saved_at}
+
+
+def test_memo_parts_versions_and_depth_at_delivery_join_the_trace(run_dir):
+    case = json.loads((run_dir / 'case.json').read_text())
+    case['scope'] = {'company': 'Orrin Fieldworks', 'ticker': None, 'type': 'private', 'decision': 'Series A',
+                     'set_by': 'Lead Analyst', 'set_at': '2026-10-26T10:00:05+00:00'}
+    case['memo_parts'] = {'business': [revision(1, 'Market Analyst', '2026-10-26T10:02:00+00:00')],
+                          'takeaways': [revision(1, 'Lead Analyst', '2026-10-26T10:03:30+00:00', '1. Picks 94% [S1].')]}
+    case['memo_drafts'][0].update(parts={'business': {'revision': 1, 'sha256': 'h', 'author': 'Market Analyst'},
+                                         'takeaways': {'revision': 1, 'sha256': 'h', 'author': 'Lead Analyst'}},
+                                  changed_parts=['business', 'takeaways'], passed=False)
+    (run_dir / 'case.json').write_text(json.dumps(case))
+    trace = build_trace(run_dir)
+    saved = trace['case_file']
+    assert saved['scope']['type'] == 'private'
+    assert saved['memo_parts']['business'] == [{'revision': 1, 'author': 'Market Analyst', 'chars': 18,
+                                                'passed': False, 'saved_at': '2026-10-26T10:02:00+00:00'}]
+    assert saved['memo_versions'][0]['parts'] == {'business': 1, 'takeaways': 1}
+    depth = trace['delivered_depth']
+    assert depth['version'] == 1 and not depth['passed'] and not depth['parts']['business']['passed']
+    assert depth['memo'][0].startswith('missing parts: Executive summary, Financials')
+    markdown = render_markdown(trace)
+    assert '| Business | Market Analyst | 1 (Market Analyst) | 18 | problems |' in markdown
+    assert '| Scenarios | Lead Analyst | none | | |' in markdown
+    assert '## Depth at delivery' in markdown and '| Business | no |' in markdown
+
+
+def test_parts_saved_by_someone_else_and_extra_rounds_are_observed():
+    review = lambda n, at: {'id': f'R{n}', 'saved_at': at, 'verdict': 'revise'}
+    case = {'memo_parts': {
+        'financials': [revision(1, 'Fundamentals Analyst', '2026-10-26T10:01:00+00:00'),
+                       revision(2, 'Market Analyst', '2026-10-26T10:02:00+00:00'),
+                       revision(3, 'Lead Analyst', '2026-10-26T10:05:00+00:00')]},  # a fix before the final review
+        'reviews': [review(1, '2026-10-26T10:03:00+00:00'), review(2, '2026-10-26T10:04:00+00:00')]}
+    assert export_trace.observe_parts(case) == [{'rule': 'P32', 'detail': 'Market Analyst saved revision 2 of the '
+                                                                           'financials part, which the Fundamentals Analyst owns'}]
+    case['memo_parts']['financials'][2]['saved_at'] = '2026-10-26T10:03:30+00:00'  # between rounds 1 and 2
+    assert [o['detail'].split(' of ')[0] for o in export_trace.observe_parts(case)] == [
+        'Market Analyst saved revision 2', 'Lead Analyst saved revision 3']
+    case['reviews'] += [review(3, '2026-10-26T10:06:00+00:00'), review(4, '2026-10-26T10:07:00+00:00')]
+    assert export_trace.observe_parts(case)[-1] == {'rule': 'P9', 'detail': '4 review rounds; the limit is 3'}
+
+
+def test_long_replies_and_overstated_searches_are_observed():
+    run = {'rakazo_run_id': 'r1', 'agent': 'Market Analyst', 'started_at': '2026-10-26T10:00:00+00:00',
+           'ended_at': '2026-10-26T10:10:00+00:00'}
+    events = [{'type': 'tool_call', 'tool': 'web_search', 'agent': 'Market Analyst', 'rakazo_run_id': 'r1',
+               'arguments': {'query': 'robots'}, 'seq': 1},
+              {'type': 'assistant_text', 'agent': 'Market Analyst', 'rakazo_run_id': 'r1', 'text': 'x' * 1600}]
+    case = {'deliveries': [], 'memo_drafts': [], 'sources': [], 'client_documents': [], 'reviews': [],
+            'evidence_packets': [{'id': 'E1', 'analyst': 'Market Analyst', 'saved_at': '2026-10-26T10:05:00+00:00',
+                                  'searches': ['robots', 'harvest market', 'labor costs']}]}
+    details = {o['rule']: o['detail'] for o in export_trace.observe_rules(events, [run], case)}
+    assert details['P21'] == 'Market Analyst replied with 1,600 characters (limit 1,500)'
+    assert details['N1'] == 'packet E1 lists 3 searches and filing reads, but Market Analyst ran 1'
