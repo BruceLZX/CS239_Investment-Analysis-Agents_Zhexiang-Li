@@ -70,7 +70,7 @@ SECTIONS = (
                   r'(?:B\.?S\b|B\.?A\b|bachelor|M\.?S\b|MBA|master|Ph\.?D|doctor|本科|学士|硕士|博士)'
                   r'.{0,80}(?:universit|college|institute|school|大学|学院)'),
                  ('career history', r'previously|formerly|served as|joined|founded|worked at|曾任|此前|加入|创立|创办'),
-                 ('counted achievements', r'\d+\s*(?:patents?|papers?|publications?|years?|exits?|篇|项|年|次)')),
+                 ('counted achievements', r'\d+[\s-]*(?:patents?|papers?|publications?|years?|exits?|篇|项|年|次)')),
         playbooks=(('company_deep_dive_playbook.md', 'Section 2: Founding Team & Core Personnel — Complete CVs'),
                    ('section_deepening.md', 'Founders and Team'))),
     Section(

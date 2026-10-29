@@ -12,18 +12,22 @@ Fixed or added here:
 - The public-equity "valuation" group matched "pe" inside any English word; it needs P/E as a term.
 - SKILL.md requires sixteen visual components in every report but the script checked two; all are checked here,
   with the composite score in the meta tag and section 14 (which nothing checked).
+- The script allowed 60 inline source tags in a report while check_depth.py allows 6 a section, so fourteen
+  sections within their own limit failed the report's. The report's limit is 6 for each of its fifteen sections,
+  the executive summary included (90).
 """
 from pathlib import Path
 import re
 
-from .. import report as report_module
+from .. import report as report_module, sections
+from .check_depth import MAX_INLINE_TAGS
 from .terms import BOILERPLATE_LIMITS, FORBIDDEN_PATTERNS, missing_groups, strip_html
 
 EXEC_SUMMARY_RE = re.compile(r'<section[^>]+class="[^"]*exec-summary[^"]*"[\s\S]*?>(?P<body>[\s\S]*?)</section>')
 MIN_EXEC_CHARS = 900
 MIN_BRIEF_CARDS = 5
 MIN_SOURCE_MENTIONS = 30
-MAX_SOURCE_TAGS = 60
+MAX_SOURCE_TAGS = MAX_INLINE_TAGS * len(sections.ALL_SECTIONS)
 MIN_TABLES = 4
 MAX_KPI_DASHBOARDS = 6
 REQUIRED_TEXT = ('5分钟速读', '重要声明', '数据截至', '风险', '投资')
@@ -88,6 +92,10 @@ def executive_summary_failures(summary_html: str) -> list[str]:
     cards = _class_count(summary_html, 'brief-card')
     if cards < MIN_BRIEF_CARDS:
         failures.append(f'executive summary has {cards} briefing cards; needs {MIN_BRIEF_CARDS}')
+    tags = _class_count(summary_html, 'source-tag')
+    if tags > MAX_INLINE_TAGS:
+        failures.append(f'executive summary has {tags} inline source tags; at most {MAX_INLINE_TAGS} (cite per '
+                        "paragraph, and put row-level sources in a table's Source column)")
     return failures
 
 

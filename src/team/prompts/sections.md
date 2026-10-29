@@ -9,7 +9,7 @@ repository; no bot receives it.
 ## standard
 
 - **Shape** (analysis_core.md "Section Writing Contract"): open with the section plan's thesis sentence, a judgement about the company; then paragraphs that go claim, evidence [S#], interpretation, investor implication, confidence or open question. Cover judgement, evidence, mechanism, comparison (peers, benchmark, base rate or history), counter-evidence, investor implication, confidence and diligence questions, without showing those as labels: no "Economic mechanism:", "Investor implication:" or "{section} judgement" headings. Use content-specific micro-headings ("### Cash conversion is weaker than profit") only where they help.
-- **Depth floor:** at least 2,500 characters, 6 analytical paragraphs, 8 figures, 4 distinct source IDs and 6 mentions of sources (in words, tags or a Source column); at most 9,000 characters. Depth is evidence density, not length: one real judgement with its evidence, comparison and priced risk beats padding.
+- **Depth floor:** at least 2,500 characters, 6 analytical paragraphs, 8 figures, 4 distinct source IDs and 6 mentions of sources (in words, tags or a Source column). Write 7,000-8,500 characters: the server refuses a section over 9,000, the most one model call can write. Depth is evidence density, not length: one real judgement with its evidence, comparison and priced risk beats padding.
 - **Citations:** cite a paragraph once, with one tag at the end of it ([S3] or [S3, S7]); at most 6 inline tags a section. Every table of figures has a Source column. Every paragraph, list item or table row with a material figure carries a source ID (N2).
 - **Precision** (company_deep_dive_playbook.md "The Granularity Benchmark"): exact figures with unit, period and date; full names of people, institutions and products; dated events (YYYY-MM or YYYY-MM-DD, never "recently"). When data is missing, say exactly what is missing, how material it is and which source would settle it ("not disclosed"; 未披露), and ask the user for it when a registry needs a login.
 - **Claims:** a claim resting only on company material says so: verified, partially verified, unverified, contradicted or not publicly disclosed (N3).
@@ -18,10 +18,10 @@ repository; no bot receives it.
 
 ## components
 
-A component is a Markdown table or list inside a fence; the server renders it into the skill's template. Each one listed for your section is required. Any other Markdown table becomes a data table automatically, and every [S#] becomes a link to the source appendix.
+A component is a Markdown table or list inside a fence named after it (here a risk matrix); the server renders it into the skill's template. Each one listed for your section is required. Any other Markdown table becomes a data table automatically, and every [S#] becomes a link to the source appendix.
 
 ```
-::: kind
+::: risk-matrix
 | Column | Column | Source |
 |---|---|---|
 | ... | ... | S3 |
@@ -132,3 +132,4 @@ Where the app departs from the skill, and why:
 - **Review rounds are capped at three.** The skill loops until no Critical item remains; here a third failed review ends the case without delivery.
 - **Evidence hierarchies.** The playbooks give three slightly different orders; the app uses the regulatory lens's (court and regulatory records first, OCR last) for source types and confidence.
 - **Section numbering** follows the template's fourteen slots; the deep-dive playbook's own section numbers and benchmark codes differ, so headings are matched by name.
+- **Inline source tags.** check_depth.py allows 6 a section and check_report.py 60 a report, which fourteen sections within their own limit exceed. The app keeps 6 a section, applies it to the executive summary too, and allows 90 a report (6 for each of fifteen). N2 asks for a source ID in every paragraph, list item or table row with a figure, so a paragraph carries one tag and a table its Source column.

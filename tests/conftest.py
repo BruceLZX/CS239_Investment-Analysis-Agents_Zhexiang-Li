@@ -17,10 +17,11 @@ def sec_fetch():
     return lambda url: load_fixture(SEC_ROUTES[url])
 
 
-@pytest.fixture
-def runs_dir(tmp_path, monkeypatch):
-    """Point the case file at a temporary runs/ folder."""
-    runs = tmp_path / 'runs'
-    runs.mkdir()
+@pytest.fixture(autouse=True)
+def runs_dir(tmp_path_factory, monkeypatch):
+    """Point the case file at a temporary runs/ folder, in every test: a tool called with the real folder would
+    write its call into the tool log of whatever run is live. It is not inside tmp_path, which tests use as a
+    folder of their own."""
+    runs = tmp_path_factory.mktemp('runs')
     monkeypatch.setattr(case_file, 'RUNS', runs)
     return runs

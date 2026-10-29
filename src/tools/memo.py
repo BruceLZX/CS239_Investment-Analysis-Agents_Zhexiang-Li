@@ -23,6 +23,8 @@ FORM_RE = re.compile(r'\b(?:10-K|10-Q|8-K|20-F|S-1|DEF 14A|EX-\d+(?:\.\d+)?)(?:/
 SMALL_ORDINAL_RE = re.compile(r'^\d$')  # "3 risks", "step 2": too small to be a material figure
 LIST_MARKER_RE = re.compile(r'^(?:[-*+]|\d+[.)])\s+')
 FENCE_RE = re.compile(r'^:::')
+# The cover lines report.plain_report writes from the version's own record, which are not claims to source.
+COVER_LINE_RE = re.compile(r'^(?:Rating|Composite score|Data as of):')
 TABLE_SEPARATOR_RE = re.compile(r'^\|?\s*:?-{2,}:?\s*(?:\|\s*:?-{2,}:?\s*)+\|?$')
 VERIFICATION_RE = re.compile(r'company-provided|company-reported|not independently verified|partially verified|unverified|'
                              r'contradicted|not publicly disclosed|公司提供|公司自报|未独立验证|部分验证|已验证|未验证|矛盾|未披露',
@@ -44,11 +46,11 @@ MARKET_DATA_RE = re.compile(r'market data|price', re.I)
 
 
 def _statements(markdown: str):
-    """Paragraphs, list items and table rows, skipping headings, table separators and component fences."""
+    """Paragraphs, list items and table rows, skipping headings, table separators, component fences and the cover."""
     paragraph: list[str] = []
     for line in markdown.splitlines() + ['']:
         stripped = line.strip()
-        if not stripped or stripped.startswith('#') or FENCE_RE.match(stripped):
+        if not stripped or stripped.startswith('#') or FENCE_RE.match(stripped) or COVER_LINE_RE.match(stripped):
             if paragraph:
                 yield ' '.join(paragraph)
                 paragraph = []
