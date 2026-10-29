@@ -15,7 +15,7 @@
 Every step below is fixed in code. The runner never reads or judges what the bots write.
 
 1. **Load the scenario** from `src/scenarios/<name>.yaml`: the request, the attached client documents and their confidentiality labels. A request typed in the dashboard (`--request`) becomes a scenario named `custom` with no documents.
-2. **Configure the team.** Archive the bots that `src/team/profiles.py` lists as retired (the Research Analyst of the earlier three-bot team), then create or update the four bots from the same file:
+2. **Configure the team.** Archive the bots that `src/team/profiles.py` lists as retired (the Research Analyst of the earlier three-bot team), then create or update the nine bots from the same file:
    - instructions, model and thinking level;
    - each bot's own entry for the MCP server, whose `?agent=` key tells the server who is calling, and its tool allowlist;
    - the Rakazo built-in tools it switches off.
@@ -27,9 +27,9 @@ Every step below is fixed in code. The runner never reads or judges what the bot
 6. **Every 5 seconds**, read each bot's runs in progress and decide:
    - **A run waits on an approval card,** for example a `web_fetch` of a URL that the bot's own search did not return. With `--approval-cards deny` (the default) the runner denies the card and logs it to `runs/<run_id>/approval_cards.jsonl`. With `--approval-cards wait` it leaves the card for a person to answer in Rakazo and prints a notice once.
    - **Delivered:** the case file records a delivery and no bot has worked for 15 seconds.
-   - **Failed review:** the re-review did not approve, so nothing may be delivered (P9), and no bot has worked for 15 seconds.
-   - **Stalled:** no bot has worked for `--quiet` seconds (default 150) and nothing was delivered.
-   - **Timed out:** `--timeout` seconds (default 1800) have passed.
+   - **Failed review:** the third and final review did not approve, so nothing may be delivered (P9), and no bot has worked for 15 seconds.
+   - **Stalled:** no bot has worked for `--quiet` seconds (default 240) and nothing was delivered.
+   - **Timed out:** `--timeout` seconds (default 9000) have passed.
 7. **Capture the run:**
    - copy Rakazo's per-run transcripts, every bot's messages and the usage records into `runs/<run_id>/rakazo/`;
    - write `outcome.json` (delivered, failed review, stalled or timed out) last, which marks the capture complete for the trace exporter and the dashboard.
