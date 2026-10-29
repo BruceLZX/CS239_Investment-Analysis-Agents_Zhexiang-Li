@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime, timezone
 
 import pytest
@@ -120,3 +121,33 @@ def test_every_filing_and_price_used_is_a_source():
 def test_a_company_that_cannot_be_valued_says_why():
     with pytest.raises(ValueError, match='No valuation for ZZZ'):
         valuation.snapshot('ZZZ', [], fetch_json, lambda ticker, period: CHARTS[ticker])
+
+
+# Alpha with cash returned: dividends 5B and buybacks 10B in fiscal 2025, and more this year.
+PAYING = copy.deepcopy(ALPHA)
+PAYING['facts']['us-gaap'].update(gaap(PaymentsOfDividends=flows(4e9, 5e9, 3e9, 2.5e9),
+                                       PaymentsForRepurchaseOfCommonStock=flows(8e9, 10e9, 6e9, 4e9)))
+
+
+def paying_snapshot():
+    return valuation.snapshot('aaa', ['BBB'], lambda url: PAYING if 'CIK0000000001' in url else fetch_json(url),
+                              lambda ticker, period: CHARTS[ticker])
+
+
+def test_ev_to_ebit_price_to_fcf_and_shareholder_yields():
+    lines = paying_snapshot().text.splitlines()
+    start = lines.index('More multiples and cash returned to shareholders (trailing twelve months):')
+    assert lines[start + 1] == '| Company | EV/EBIT | P/FCF | Dividend yield | Buyback yield | Total shareholder yield |'
+    # TTM: EBIT 30 + 18 - 13 = 35B; FCF (30 + 17 - 14) - (6 + 4 - 3) = 26B; dividends 5.5B; buybacks 12B; cap 540B.
+    assert lines[start + 3] == (f'| AAA | {555 / 35:.1f}x | {540 / 26:.1f}x | {5.5 / 540 * 100:.1f}% | '
+                                f'{12 / 540 * 100:.1f}% | {17.5 / 540 * 100:.1f}% |')
+    # Beta tags no debt (so no EV) and no cash returned.
+    assert lines[start + 4] == '| BBB | n/m | 25.0x | n/m | n/m | n/m |'
+    assert lines[start + 5] == '| Peer median | n/m | 25.0x | n/m | n/m | n/m |'
+    assert lines[start + 6] == f'AAA against the peer median (premium + / discount -): P/FCF {(540 / 26 / 25 - 1) * 100:+.0f}%.'
+
+
+def test_the_first_table_is_unchanged_and_the_definitions_cover_the_new_measures():
+    text = paying_snapshot().text
+    assert '| AAA | 54.00 (2026-10-28T20:00+00:00) | 540.0B | 555.0B | 20.0x | 4.1x | 13.5x | 4.8% | 10.8x | 2026-06-30 |' in text
+    assert 'buyback yield = share repurchases paid (gross, not net of shares issued) / market cap' in text

@@ -1,5 +1,6 @@
 import copy
 
+import httpx
 import pytest
 
 from tools import prices
@@ -77,3 +78,26 @@ def test_a_benchmark_that_fails_to_load_is_left_out():
     result = prices.price_summary('AAPL', '1mo', lambda ticker, period: charts[ticker])
     assert result.text.endswith('Market backdrop: 10-year Treasury yield (^TNX) 5.00%, +1.00 points over 12 months.')
     assert len(result.sources) == 2
+
+
+def test_daily_rows_carry_volume_and_changes_are_numbers():
+    meta, rows = prices.daily('AAPL', '1mo', only(CHART))
+    assert meta['symbol'] == 'AAPL' and all(len(row) == 3 for row in rows)
+    assert rows[-1][2] == CHART['chart']['result'][0]['indicators']['quote'][0]['volume'][-1]
+    closes = [100.0] * 364 + [110.0]
+    _, points = prices.chart('AAPL', '1y', only(chart_for('AAPL', 120.0, closes)))
+    assert prices.change(points, 120.0, points[-1][0], 12) == pytest.approx(20.0)
+    assert prices.change(points[-10:], 120.0, points[-1][0], 12) is None  # the history does not reach back
+
+
+def test_charts_are_cached_and_fetched_without_personal_details(tmp_path, monkeypatch):
+    calls = []
+
+    def get(url, params, headers, timeout):
+        calls.append(headers)
+        return httpx.Response(200, json=CHART, request=httpx.Request('GET', url))
+    monkeypatch.setattr(prices, 'CACHE', tmp_path)
+    monkeypatch.setattr(prices.httpx, 'get', get)
+    assert prices.fetch_chart('^GSPC', '1y') == CHART and prices.fetch_chart('^GSPC', '1y') == CHART
+    assert calls == [{'User-Agent': 'Mozilla/5.0'}]
+    assert (tmp_path / '^GSPC_1y.json').exists()

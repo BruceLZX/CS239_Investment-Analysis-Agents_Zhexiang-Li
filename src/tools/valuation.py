@@ -19,9 +19,16 @@ HOW = ('How these are built: market cap = latest price x shares outstanding from
        'expenditure) are trailing twelve months from 10-K and 10-Q XBRL; P/B uses the latest stockholders\' equity. '
        'Year-end multiples use the closing price on or before the fiscal year end, that year\'s diluted EPS, and '
        'diluted shares as an approximation of shares outstanding. n/m = not meaningful (a negative or zero denominator) or not available (no debt figure, so no EV). '
+       'EV/EBIT takes operating income as EBIT; P/FCF = market cap / free cash flow; dividend yield = dividends paid / '
+       'market cap and buyback yield = share repurchases paid (gross, not net of shares issued) / market cap, both '
+       'trailing twelve months from the cash flow statement; total shareholder yield = the two added, n/m when the '
+       'company tags neither. '
        'XBRL company facts leave out figures tagged by segment or share class, so a company with a finance arm or '
        'several share classes can show too little debt or no share count; check its balance sheet (read_sec_filing, '
        '10-K item 8) before relying on its EV, and note the "Figures to" date.')
+# The second table: (column, kind), kind '%' for a yield, 'x' for a multiple.
+RETURNS = (('EV/EBIT', 'x'), ('P/FCF', 'x'), ('Dividend yield', '%'), ('Buyback yield', '%'),
+           ('Total shareholder yield', '%'))
 
 
 def _multiple(numerator, denominator) -> float | None:
@@ -61,6 +68,9 @@ def _company(ticker: str, fetch_json: sec_edgar.Fetch, fetch_chart: prices.Fetch
               if latest['Operating income'] is not None else None)
     fcf = (latest['Operating cash flow'] - latest['Capital expenditure']
            if latest['Operating cash flow'] is not None and latest['Capital expenditure'] is not None else None)
+    paid = {line: _multiple(latest[line], cap) if latest[line] is not None else None
+            for line in ('Dividends paid', 'Share buybacks')}
+    returned = [value for value in paid.values() if value is not None]
     row = {'company': company, 'meta': meta, 'price': price, 'debt': latest['Debt'],
            'debt_concepts': figures['debt_concepts'], 'time': datetime.fromtimestamp(meta['regularMarketTime'], timezone.utc).isoformat(timespec='minutes'),
            'cap': cap, 'ev': ev, 'shares_date': shares_date, 'approximate_shares': approximate,
@@ -68,6 +78,9 @@ def _company(ticker: str, fetch_json: sec_edgar.Fetch, fetch_chart: prices.Fetch
            'P/E': _multiple(price, latest['Diluted EPS']), 'EV/Sales': _multiple(ev, latest['Revenue']),
            'EV/EBITDA': _multiple(ev, ebitda), 'FCF yield': _multiple(fcf, cap) if fcf is not None else None,
            'P/B': _multiple(cap, latest["Stockholders' equity"]),
+           'EV/EBIT': _multiple(ev, latest['Operating income']), 'P/FCF': _multiple(cap, fcf),
+           'Dividend yield': paid['Dividends paid'], 'Buyback yield': paid['Share buybacks'],
+           'Total shareholder yield': sum(returned) if returned else None,
            'sources': [sec_edgar.filing_source(company, latest['entry']),
                        prices.chart_source(meta, 'price used for market cap and multiples')]}
     if history:
@@ -116,6 +129,19 @@ def snapshot(ticker: str, peers: list[str] | None = None, fetch_json: sec_edgar.
         lines.append('| Peer median | | | | ' + ' | '.join(_shown(medians[c], '%' if c == 'FCF yield' else 'x')
                                                        for c in columns) + ' | |')
         gaps = [f'{c} {(company[c] / medians[c] - 1) * 100:+.0f}%' for c in ('P/E', 'EV/Sales', 'EV/EBITDA')
+                if company[c] is not None and medians[c]]
+        if gaps:
+            lines.append(f"{company['company']['ticker']} against the peer median (premium + / discount -): "
+                         + ', '.join(gaps) + '.')
+    lines += ['', 'More multiples and cash returned to shareholders (trailing twelve months):',
+              '| Company | ' + ' | '.join(column for column, _ in RETURNS) + ' |', '|---|' + '---|' * len(RETURNS)]
+    for row in rows:
+        lines.append(f"| {row['company']['ticker']} | " + ' | '.join(_shown(row[c], kind) for c, kind in RETURNS) + ' |')
+    if peer_rows:
+        medians = {c: median(v for r in peer_rows if (v := r[c]) is not None)
+                   if any(r[c] is not None for r in peer_rows) else None for c, _ in RETURNS}
+        lines.append('| Peer median | ' + ' | '.join(_shown(medians[c], kind) for c, kind in RETURNS) + ' |')
+        gaps = [f'{c} {(company[c] / medians[c] - 1) * 100:+.0f}%' for c in ('EV/EBIT', 'P/FCF')
                 if company[c] is not None and medians[c]]
         if gaps:
             lines.append(f"{company['company']['ticker']} against the peer median (premium + / discount -): "

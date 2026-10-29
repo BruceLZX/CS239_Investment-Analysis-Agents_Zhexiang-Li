@@ -1,0 +1,64 @@
+{
+ "meta": {
+  "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+  "terms": "https://open.fda.gov/terms/",
+  "license": "https://open.fda.gov/license/",
+  "last_updated": "2026-10-24",
+  "results": {
+   "skip": 0,
+   "limit": 3,
+   "total": 91
+  }
+ },
+ "results": [
+  {
+   "cfres_id": "222434",
+   "product_res_number": "Z-0203-2027",
+   "event_date_initiated": "2026-09-11",
+   "event_date_posted": "2026-10-21",
+   "recall_status": "Open, Classified",
+   "res_event_number": "99765",
+   "product_code": "PHV",
+   "product_description": "CareLink Clinic, REF: MMT-7350",
+   "code_info": "UDI-DI: 0763000B00008748K.\n\nSoftware Versions: 4.4A\n\nSoftware Available:\nUS: Bet",
+   "firm_fei_number": "3003166194",
+   "recalling_firm": "Medtronic MiniMed, Inc.",
+   "address_1": "18000 Devonshire St",
+   "city": "Northridge",
+   "state": "CA",
+   "postal_code": "91325-1219",
+   "additional_info_contact": "Ashley Patterson\n800-646-4633",
+   "reason_for_recall": "CareLink Clinic software version 4.4A includes a software defect in the Settings Calculator feature in which the calculation logic fails to use custom values entered by healthcare professionals (HCPs) for Total Daily Dose (TDD) or Long-acting insulin when calculating the Carb Ratio, Insulin Sensitivity Factor (ISF), and Max Recommended value for Rapid-acting insulin. Instead, the calculator continues to use the system-recommended values, resulting in incorrect rapid-acting insulin parameters. If an HCP or patient inputs these incorrect setting values into the patient's MiniMed Go app, the patient could deliver higher or lower insulin doses compared to their insulin needs, potentially leading to over/under delivery of insulin with a severity ranging from Catastrophic (death from severe hypoglycemia) to Minor (self-treatable hypoglycemia/hyperglycemia).",
+   "root_cause_description": "Software design",
+   "action": "On 9/11/2026, correction notices were mailed to the health care professional, and customer asking them to do the following:\n\nThe Customer was asked to do the following:\nImmediately contact your Healthcare Provider (HCP) to confirm your insulin settings values.\n\nComplete and return the confirmation form by visiting https://info.medtronicdiabetes.com/FA1587 \n\nThe health care professional was asked to do the following: If you provided diabetes treatment recommendations to patients based on custom Total Daily Dose(TDD) or long-acting insulin values entered into the CareLin Clinic Settings Calculator between: June 04, 2026, to June 08, 2026, please revisit those recommendations utilizing patients' individual CareLink reports.\n\nContinue to follow up with those patients pursuant to your standard of care.\n\nIf you have further questions or need assistance, please call the firm's 24-Hour Technical Support line at 1-800-646-4633, option 1.",
+   "product_quantity": "1",
+   "distribution_pattern": "US Nationwide distribution in the state of KS."
+  },
+  {
+   "cfres_id": "222954",
+   "product_res_number": "Z-0265-2027",
+   "event_date_initiated": "2026-09-02",
+   "event_date_posted": "2026-10-22",
+   "recall_status": "Open, Classified",
+   "res_event_number": "99945",
+   "product_code": "NDC",
+   "k_numbers": [
+    "K253512"
+   ],
+   "product_description": "Generic Name: MiniMed Go App\r\nGeneric Name: MiniMed Go App\r\nModel/Catalog Number: MMT-8600 (iOS), MMT-8601 (Android)\r\nSoftware Version: Software version 1.2.1\r\nProduct Description: The MiniMed Go app for iOS or MiniMed Go app for Android is compatible with the following\r\ncomponents:\r\n\" Simplera sensor\r\n\" Instinct sensor\r\n\" InPen smart insulin pen\r\n\" Apple Watch [Optional]\r\n\r\nContinuous glucose monitoring (CGM) is a technology that allows you to continuously view\r\nglucose values. The app uses an inserted Simplera sensor CGM or Instinct sensor CGM with\r\nBluetooth wireless technology that converts small amounts of glucose from the interstitial fluid\r\nunder the skin into an electronic signal. The sensors use that signal to provide sensor glucose (SG)\r\nvalues to the MiniMed Go app on a compatible mobile device.\r\n\r\nThe app also provides alerts based on your SG levels and contains a user interface for entering data\r\nsuch as insulin, meals, exercise, blood glucose (BG) values, and uploading information to the\r\nCareLink\" Personal website.\r\nThe app is available to download from the Apple\"* App Store\"* or the Google Play\"* Store.\r\nComponent: No",
+   "code_info": "Lot Code: GTIN for MMT-8600, iOS: 00199150038978\rGTIN for  MMT-8601, Android: 00",
+   "firm_fei_number": "3003166194",
+   "recalling_firm": "Medtronic MiniMed, Inc.",
+   "address_1": "18000 Devonshire St",
+   "city": "Northridge",
+   "state": "CA",
+   "postal_code": "91325-1219",
+   "additional_info_contact": "Ashley Patterson\n+(1)-800-6464633",
+   "reason_for_recall": "A software defect in which existing users who had previously configured and enabled the long-acting dose reminder feature in version 1.2.0 or earlier experienced failure of the long-acting dose reminder after updating their app to version 1.2.1. The long-acting dose reminder is an optional feature that, when enabled, triggers a notification at the scheduled time to remind users to take their long-acting insulin dose. The issue was caused by a type cast exception during database migration that occurs upon app update to version 1.2.1 causing a silent failure that prevented the creation of new alerts. Failure to receive the long-acting dose reminder may result in missed or delayed insulin doses, potentially leading to hyperglycemia. Conversely, if users are uncertain whether they took their dose due to the missing reminder, inadvertent duplicate dosing may occur, potentially resulting in hypoglycemia.",
+   "root_cause_description": "Software design",
+   "action": "On 09/14/2026, customers were contacted via SMS, emailed or via an \"URGENT MEDICAL DEVICE CORRECTION\" Letter informing them that, an issue was identified with the MiniMed Go app in which the long-acting dose reminders were not being delivered after the app was updated to version 1.2.1.\n\nActions required:\nUsers of MiniMed Go app software versions 1.2.1 should update to version 1.2.2 or higher as soon as possible to resolve this issue. This update will ensure enabled long-acting reminders are delivered as expected.\nFor iOS Users:\nTo confirm the latest app version on your iOS device, follow the steps below:\n1. Open the App Store.\n2. Tap your profile icon at the top of the screen.\n3. Scroll to see pending updates.\n4. Tap Update next to the MiniMed Go app icon.\nFor Android Users:\n\nTo confirm the latest app version on your Android device, follow the steps below:\n1. Open the Google Play Store.\n2. Tap Menu, then select Manage apps & device.\n3. Apps with an update available are labeled  Update available.  You can also search for theMiniMed Go app.\n4. Tap Update next to the MiniMed Go app icon.\n\nFor Questions or assistance - call the Medtronic MiniMed 24-Hour Technical Support line at 1-800-646-4633, option 1.",
+   "product_quantity": "623",
+   "distribution_pattern": "Worldwide - U.S. Nationwide distribution in the states of AL, CA, CT, FL, LA, MA, MD, NY, OH, PA, and TX. The countries of Austria, Belgium, Denmark, Finland, Germany, Iceland, Italy, Norway, Spain, Sweden, Switzerland, United Kingdom."
+  }
+ ]
+}

@@ -1,0 +1,291 @@
+{
+ "meta": {
+  "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+  "terms": "https://open.fda.gov/terms/",
+  "license": "https://open.fda.gov/license/",
+  "last_updated": "2026-10-28",
+  "results": {
+   "skip": 0,
+   "limit": 3,
+   "total": 2
+  }
+ },
+ "results": [
+  {
+   "submissions": [
+    {
+     "submission_type": "SUPPL",
+     "submission_number": "29",
+     "submission_status": "AP",
+     "submission_status_date": "20251017",
+     "review_priority": "STANDARD",
+     "submission_class_code": "LABELING",
+     "submission_class_code_description": "Labeling"
+    },
+    {
+     "submission_type": "SUPPL",
+     "submission_number": "1",
+     "submission_status": "AP",
+     "submission_status_date": "20200116",
+     "review_priority": "STANDARD",
+     "submission_class_code": "LABELING",
+     "submission_class_code_description": "Labeling"
+    },
+    {
+     "submission_type": "SUPPL",
+     "submission_number": "23",
+     "submission_status": "AP",
+     "submission_status_date": "20241101",
+     "review_priority": "901 REQUIRED",
+     "submission_class_code": "LABELING",
+     "submission_class_code_description": "Labeling"
+    },
+    {
+     "submission_type": "SUPPL",
+     "submission_number": "21",
+     "submission_status": "AP",
+     "submission_status_date": "20241209",
+     "review_priority": "STANDARD",
+     "submission_class_code": "LABELING",
+     "submission_class_code_description": "Labeling"
+    },
+    {
+     "submission_type": "SUPPL",
+     "submission_number": "11",
+     "submission_status": "AP",
+     "submission_status_date": "20220610",
+     "review_priority": "901 REQUIRED",
+     "submission_class_code": "LABELING",
+     "submission_class_code_description": "Labeling"
+    },
+    {
+     "submission_type": "SUPPL",
+     "submission_number": "6",
+     "submission_status": "AP",
+     "submission_status_date": "20210430",
+     "review_priority": "N/A",
+     "submission_class_code": "MANUF (CMC)",
+     "submission_class_code_description": "Manufacturing (CMC)"
+    },
+    {
+     "submission_type": "SUPPL",
+     "submission_number": "28",
+     "submission_status": "AP",
+     "submission_status_date": "20251017",
+     "review_priority": "STANDARD",
+     "submission_class_code": "LABELING",
+     "submission_class_code_description": "Labeling"
+    },
+    {
+     "submission_type": "SUPPL",
+     "submission_number": "18",
+     "submission_status": "AP",
+     "submission_status_date": "20240124",
+     "review_priority": "STANDARD",
+     "submission_class_code": "LABELING",
+     "submission_class_code_description": "Labeling"
+    },
+    {
+     "submission_type": "ORIG",
+     "submission_number": "1",
+     "submission_status": "AP",
+     "submission_status_date": "20190920",
+     "review_priority": "PRIORITY",
+     "submission_class_code": "TYPE 3",
+     "submission_class_code_description": "Type 3 - New Dosage Form"
+    },
+    {
+     "submission_type": "SUPPL",
+     "submission_number": "24",
+     "submission_status": "AP",
+     "submission_status_date": "20251017",
+     "review_priority": "STANDARD",
+     "submission_class_code": "EFFICACY",
+     "submission_class_code_description": "Efficacy"
+    },
+    {
+     "submission_type": "SUPPL",
+     "submission_number": "30",
+     "submission_status": "AP",
+     "submission_status_date": "20260130",
+     "review_priority": "STANDARD",
+     "submission_class_code": "LABELING",
+     "submission_class_code_description": "Labeling"
+    },
+    {
+     "submission_type": "SUPPL",
+     "submission_number": "20",
+     "submission_status": "AP",
+     "submission_status_date": "20241209",
+     "review_priority": "STANDARD",
+     "submission_class_code": "EFFICACY",
+     "submission_class_code_description": "Efficacy"
+    },
+    {
+     "submission_type": "SUPPL",
+     "submission_number": "12",
+     "submission_status": "AP",
+     "submission_status_date": "20230112",
+     "review_priority": "STANDARD",
+     "submission_class_code": "LABELING",
+     "submission_class_code_description": "Labeling"
+    }
+   ],
+   "application_number": "NDA213051",
+   "sponsor_name": "NOVO",
+   "products": [
+    {
+     "product_number": "006",
+     "reference_drug": "Yes",
+     "brand_name": "OZEMPIC",
+     "active_ingredients": [
+      {
+       "name": "SEMAGLUTIDE",
+       "strength": "9MG"
+      }
+     ],
+     "reference_standard": "Yes",
+     "dosage_form": "TABLET",
+     "route": "ORAL",
+     "marketing_status": "Prescription"
+    },
+    {
+     "product_number": "004",
+     "reference_drug": "Yes",
+     "brand_name": "OZEMPIC",
+     "active_ingredients": [
+      {
+       "name": "SEMAGLUTIDE",
+       "strength": "1.5MG"
+      }
+     ],
+     "reference_standard": "Yes",
+     "dosage_form": "TABLET",
+     "route": "ORAL",
+     "marketing_status": "Prescription"
+    },
+    {
+     "product_number": "002",
+     "reference_drug": "Yes",
+     "brand_name": "RYBELSUS",
+     "active_ingredients": [
+      {
+       "name": "SEMAGLUTIDE",
+       "strength": "7MG"
+      }
+     ],
+     "reference_standard": "Yes",
+     "dosage_form": "TABLET",
+     "route": "ORAL",
+     "marketing_status": "Prescription"
+    },
+    {
+     "product_number": "005",
+     "reference_drug": "Yes",
+     "brand_name": "OZEMPIC",
+     "active_ingredients": [
+      {
+       "name": "SEMAGLUTIDE",
+       "strength": "4MG"
+      }
+     ],
+     "reference_standard": "Yes",
+     "dosage_form": "TABLET",
+     "route": "ORAL",
+     "marketing_status": "Prescription"
+    },
+    {
+     "product_number": "003",
+     "reference_drug": "Yes",
+     "brand_name": "RYBELSUS",
+     "active_ingredients": [
+      {
+       "name": "SEMAGLUTIDE",
+       "strength": "14MG"
+      }
+     ],
+     "reference_standard": "Yes",
+     "dosage_form": "TABLET",
+     "route": "ORAL",
+     "marketing_status": "Prescription"
+    },
+    {
+     "product_number": "001",
+     "reference_drug": "Yes",
+     "brand_name": "RYBELSUS",
+     "active_ingredients": [
+      {
+       "name": "SEMAGLUTIDE",
+       "strength": "3MG"
+      }
+     ],
+     "reference_standard": "Yes",
+     "dosage_form": "TABLET",
+     "route": "ORAL",
+     "marketing_status": "Prescription"
+    }
+   ]
+  },
+  {
+   "submissions": [
+    {
+     "submission_type": "ORIG",
+     "submission_number": "1",
+     "submission_status": "TA",
+     "submission_status_date": "20260407",
+     "review_priority": "STANDARD",
+     "submission_class_code": "UNKNOWN"
+    }
+   ],
+   "application_number": "ANDA220314",
+   "sponsor_name": "APOTEX INC",
+   "products": [
+    {
+     "product_number": "003",
+     "reference_drug": "No",
+     "brand_name": "SEMAGLUTIDE",
+     "active_ingredients": [
+      {
+       "name": "SEMAGLUTIDE",
+       "strength": "8MG/3ML"
+      }
+     ],
+     "reference_standard": "No",
+     "dosage_form": "INJECTION",
+     "route": "SOLUTION",
+     "marketing_status": "None (Tentative Approval)"
+    },
+    {
+     "product_number": "001",
+     "reference_drug": "No",
+     "brand_name": "SEMAGLUTIDE",
+     "active_ingredients": [
+      {
+       "name": "SEMAGLUTIDE",
+       "strength": "2MG/3ML"
+      }
+     ],
+     "reference_standard": "No",
+     "dosage_form": "INJECTION",
+     "route": "SOLUTION",
+     "marketing_status": "None (Tentative Approval)"
+    },
+    {
+     "product_number": "002",
+     "reference_drug": "No",
+     "brand_name": "SEMAGLUTIDE",
+     "active_ingredients": [
+      {
+       "name": "SEMAGLUTIDE",
+       "strength": "4MG/3ML"
+      }
+     ],
+     "reference_standard": "No",
+     "dosage_form": "INJECTION",
+     "route": "SOLUTION",
+     "marketing_status": "None (Tentative Approval)"
+    }
+   ]
+  }
+ ]
+}

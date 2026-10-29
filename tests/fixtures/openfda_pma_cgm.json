@@ -1,0 +1,117 @@
+{
+ "meta": {
+  "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+  "terms": "https://open.fda.gov/terms/",
+  "license": "https://open.fda.gov/license/",
+  "last_updated": "2026-10-19",
+  "results": {
+   "skip": 0,
+   "limit": 3,
+   "total": 181
+  }
+ },
+ "results": [
+  {
+   "pma_number": "P160048",
+   "supplement_number": "S031",
+   "applicant": "Senseonics, Incorporated",
+   "street_1": "20451 Seneca Meadows Pkwy.",
+   "street_2": "",
+   "city": "Germantown",
+   "state": "MD",
+   "zip": "20876",
+   "zip_ext": "",
+   "generic_name": "Continuous glucose monitor, implanted, adjunctive use",
+   "trade_name": "Eversense® Continuous Glucose Monitoring System",
+   "product_code": "QCD",
+   "advisory_committee": "CH",
+   "advisory_committee_description": "Clinical Chemistry",
+   "supplement_type": "Normal 180 Day Track No User Fee",
+   "supplement_reason": "Postapproval Study Protocol",
+   "expedited_review_flag": "N",
+   "date_received": "2026-02-23",
+   "decision_date": "2026-03-19",
+   "docket_number": "",
+   "decision_code": "APPR",
+   "ao_statement": "Approval of the revised protocol for the post-approval study (PAS) protocol.",
+   "openfda": {
+    "registration_number": [
+     "3012761544",
+     "9614698",
+     "3006371704",
+     "3009810261",
+     "3003335547",
+     "2135339",
+     "3004530184",
+     "2133810",
+     "2183744"
+    ],
+    "fei_number": [
+     "3012761544",
+     "3000203066",
+     "3006371704",
+     "3009810261",
+     "3007867940",
+     "3003335547",
+     "3004530184",
+     "3002808382",
+     "2183744"
+    ],
+    "device_name": "Continuous Glucose Monitor, Implanted, Adjunctive Use",
+    "medical_specialty_description": "Unknown",
+    "regulation_number": "",
+    "device_class": "3"
+   }
+  },
+  {
+   "pma_number": "P160048",
+   "supplement_number": "S029",
+   "applicant": "Senseonics, Incorporated",
+   "street_1": "20451 Seneca Meadows Pkwy.",
+   "street_2": "",
+   "city": "Germantown",
+   "state": "MD",
+   "zip": "20876",
+   "zip_ext": "",
+   "generic_name": "Sensor, glucose, implanted, non-adjunctive use",
+   "trade_name": "EVERSENSE CONTINUOUS GLUCOSE MONITORING SYSTEM",
+   "product_code": "QHJ",
+   "advisory_committee": "CH",
+   "advisory_committee_description": "Clinical Chemistry",
+   "supplement_type": "Normal 180 Day Track No User Fee",
+   "supplement_reason": "Postapproval Study Protocol",
+   "expedited_review_flag": "N",
+   "date_received": "2025-02-25",
+   "decision_date": "2025-03-27",
+   "docket_number": "",
+   "decision_code": "APPR",
+   "ao_statement": "Approval of the revised protocol for the post-approval study (PAS) protocol.",
+   "openfda": {
+    "registration_number": [
+     "3012761544",
+     "9614698",
+     "3006371704",
+     "3009810261",
+     "3003335547",
+     "3004530184",
+     "2133810",
+     "2183744"
+    ],
+    "fei_number": [
+     "3012761544",
+     "3000203066",
+     "3006371704",
+     "3009810261",
+     "3003335547",
+     "3004530184",
+     "3002808382",
+     "2183744"
+    ],
+    "device_name": "Sensor, Glucose, Implanted, Non-Adjunctive Use",
+    "medical_specialty_description": "Unknown",
+    "regulation_number": "",
+    "device_class": "3"
+   }
+  }
+ ]
+}

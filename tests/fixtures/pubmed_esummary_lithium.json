@@ -1,0 +1,206 @@
+{
+ "header": {
+  "type": "esummary",
+  "version": "0.3"
+ },
+ "result": {
+  "uids": [
+   "30977440",
+   "37420774",
+   "33477513"
+  ],
+  "30977440": {
+   "uid": "30977440",
+   "pubdate": "2018",
+   "source": "J Toxicol Environ Health B Crit Rev",
+   "authors": [
+    {
+     "name": "Park YJ",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Kim MK",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Kim HS",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Lee BM",
+     "authtype": "Author",
+     "clusterid": ""
+    }
+   ],
+   "title": "Risk assessment of lithium-ion battery explosion: chemical leakages.",
+   "fulljournalname": "Journal of toxicology and environmental health. Part B, Critical reviews",
+   "articleids": [
+    {
+     "idtype": "pubmed",
+     "idtypen": 1,
+     "value": "30977440"
+    },
+    {
+     "idtype": "doi",
+     "idtypen": 3,
+     "value": "10.1080/10937404.2019.1601815"
+    }
+   ]
+  },
+  "37420774": {
+   "uid": "37420774",
+   "pubdate": "2023 Jun 15",
+   "source": "Sensors (Basel)",
+   "authors": [
+    {
+     "name": "Chen D",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Zhao Q",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Zheng Y",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Xu Y",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Chen Y",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Ni J",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Zhao Y",
+     "authtype": "Author",
+     "clusterid": ""
+    }
+   ],
+   "title": "Recent Progress in Lithium-Ion Battery Safety Monitoring Based on Fiber Bragg Grating Sensors.",
+   "fulljournalname": "Sensors (Basel, Switzerland)",
+   "articleids": [
+    {
+     "idtype": "pubmed",
+     "idtypen": 1,
+     "value": "37420774"
+    },
+    {
+     "idtype": "pmc",
+     "idtypen": 8,
+     "value": "PMC10305618"
+    },
+    {
+     "idtype": "pmcid",
+     "idtypen": 5,
+     "value": "pmc-id: PMC10305618;"
+    },
+    {
+     "idtype": "doi",
+     "idtypen": 3,
+     "value": "10.3390/s23125609"
+    },
+    {
+     "idtype": "pii",
+     "idtypen": 4,
+     "value": "s23125609"
+    }
+   ]
+  },
+  "33477513": {
+   "uid": "33477513",
+   "pubdate": "2021 Jan 18",
+   "source": "Molecules",
+   "authors": [
+    {
+     "name": "Li A",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Yuen ACY",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Wang W",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "De Cachinho Cordeiro IM",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Wang C",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Chen TBY",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Zhang J",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Chan QN",
+     "authtype": "Author",
+     "clusterid": ""
+    },
+    {
+     "name": "Yeoh GH",
+     "authtype": "Author",
+     "clusterid": ""
+    }
+   ],
+   "title": "A Review on Lithium-Ion Battery Separators towards Enhanced Safety Performances and Modelling Approaches.",
+   "fulljournalname": "Molecules (Basel, Switzerland)",
+   "articleids": [
+    {
+     "idtype": "pubmed",
+     "idtypen": 1,
+     "value": "33477513"
+    },
+    {
+     "idtype": "pmc",
+     "idtypen": 8,
+     "value": "PMC7831081"
+    },
+    {
+     "idtype": "pmcid",
+     "idtypen": 5,
+     "value": "pmc-id: PMC7831081;"
+    },
+    {
+     "idtype": "doi",
+     "idtypen": 3,
+     "value": "10.3390/molecules26020478"
+    },
+    {
+     "idtype": "pii",
+     "idtypen": 4,
+     "value": "molecules26020478"
+    }
+   ]
+  }
+ }
+}

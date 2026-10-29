@@ -1,0 +1,41 @@
+{
+ "spending_level": "awards",
+ "limit": 2,
+ "results": [
+  {
+   "internal_id": 357311080,
+   "Award ID": "80KSC026F0004",
+   "Recipient Name": "TESLA LABORATORIES INC.",
+   "Start Date": "2026-05-04",
+   "End Date": "2030-09-30",
+   "Award Amount": 14056334.48,
+   "Awarding Agency": "National Aeronautics and Space Administration",
+   "Description": "PROVIDE ENGINEERING SUPPORT TO SPECIAL PROJECTS",
+   "generated_internal_id": "CONT_AWD_80KSC026F0004_8000_80KSC025A0010_8000",
+   "awarding_agency_id": 862,
+   "agency_slug": "national-aeronautics-and-space-administration"
+  },
+  {
+   "internal_id": 277581507,
+   "Award ID": "1305M218FNWWG0205",
+   "Recipient Name": "TESLA LABORATORIES INC.",
+   "Start Date": "2018-09-04",
+   "End Date": "2022-09-18",
+   "Award Amount": 7766507.32,
+   "Awarding Agency": "Department of Commerce",
+   "Description": "NWS ASOS SLEP SUPPORT",
+   "generated_internal_id": "CONT_AWD_1305M218FNWWG0205_1330_GS23F0208S_4730",
+   "awarding_agency_id": 183,
+   "agency_slug": "department-of-commerce"
+  }
+ ],
+ "page_metadata": {
+  "page": 1,
+  "hasNext": true,
+  "last_record_unique_id": 277581507,
+  "last_record_sort_value": "776650732"
+ },
+ "messages": [
+  "For searches, time period start and end dates are currently limited to an earliest date of 2007-10-01.  For data going back to 2000-10-01, use either the Custom Award Download feature on the website or one of our download or bulk_download API endpoints as listed on https://api.usaspending.gov/docs/endpoints. "
+ ]
+}

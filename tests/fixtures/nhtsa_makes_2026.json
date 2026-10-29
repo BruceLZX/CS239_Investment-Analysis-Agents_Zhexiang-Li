@@ -1,0 +1,22 @@
+{
+ "count": 158,
+ "message": "Results returned successfully",
+ "results": [
+  {
+   "modelYear": "2026",
+   "make": "FORD"
+  },
+  {
+   "modelYear": "2026",
+   "make": "LAND ROVER"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TESLA"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TOYOTA"
+  }
+ ]
+}

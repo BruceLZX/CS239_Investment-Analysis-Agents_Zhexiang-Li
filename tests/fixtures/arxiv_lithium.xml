@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/xgjyb1XJPWp/aXGkGTaT8rAGvfI</id>
+  <title>arXiv Query: search_query=all:"lithium battery"&amp;id_list=&amp;start=0&amp;max_results=3</title>
+  <updated>2026-10-29T19:59:51Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:%22lithium+battery%22&amp;start=0&amp;max_results=3&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>3</opensearch:itemsPerPage>
+  <opensearch:totalResults>106</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2404.07577v1</id>
+    <title>Generating Comprehensive Lithium Battery Charging Data with Generative AI</title>
+    <updated>2024-04-11T09:08:45Z</updated>
+    <link href="https://arxiv.org/abs/2404.07577v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2404.07577v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Abstract left out.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="eess.SP" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-04-11T09:08:45Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Lidang Jiang</name>
+    </author>
+    <author>
+      <name>Changyan Hu</name>
+    </author>
+    <author>
+      <name>Sibei Ji</name>
+    </author>
+    <author>
+      <name>Hang Zhao</name>
+    </author>
+    <author>
+      <name>Junxiong Chen</name>
+    </author>
+    <author>
+      <name>Ge He</name>
+    </author>
+    <arxiv:doi>10.1016/j.apenergy.2024.124604</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1016/j.apenergy.2024.124604" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2302.00069v1</id>
+    <title>Hybrid Cathode Lithium Battery Discharge Simulation for Implantable Cardioverter Defibrillators Using a Coupled Electro-Thermal Dynamic Model</title>
+    <updated>2023-01-31T20:06:17Z</updated>
+    <link href="https://arxiv.org/abs/2302.00069v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2302.00069v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Abstract left out.</summary>
+    <category term="eess.SY" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-01-31T20:06:17Z</published>
+    <arxiv:comment>6 pages, 7 figures</arxiv:comment>
+    <arxiv:primary_category term="eess.SY"/>
+    <author>
+      <name>Mahsa Doosthosseini</name>
+    </author>
+    <author>
+      <name>Mahdi Khajeh Talkhoncheh</name>
+    </author>
+    <author>
+      <name>Jeffrey L. Silberberg</name>
+    </author>
+    <author>
+      <name>Sandy Weininger</name>
+    </author>
+    <author>
+      <name>Hamed Ghods</name>
+    </author>
+  </entry>
+</feed>
