@@ -8,7 +8,8 @@ sentences said three or more times and paragraphs copied with small changes.
 Fixed here, with the skill's thresholds kept:
 - main() used `visible_text` without defining it, so the granularity and vague-phrase stage never ran; it runs here.
 - Numbers counted the digits of source IDs ("S12") and of URLs; they no longer do.
-- Repeated sentences were counted over the raw page, CSS and JavaScript included; only visible text is now.
+- Repeated sentences were counted over the raw page, CSS and JavaScript included; only visible text is now, and
+  not the source appendix, whose titles repeat by design.
 - Near-duplicate paragraphs kept whitespace (a raw-string slip, "\\s" inside a character class) and folded every
   English word into the same letter, so English paragraphs looked alike; words now survive normalisation.
 - The granularity markers named brain-computer-interface companies; they are generic here (sections.py) and cover
@@ -27,6 +28,7 @@ MIN_CHARS, MIN_NUMBERS, MIN_SOURCE_MENTIONS, MIN_SOURCE_IDS, MIN_PARAGRAPHS = 25
 MAX_INLINE_TAGS = 6
 MAX_TITLE_MENTIONS = 4
 SOURCE_TAG_RE = re.compile(r'class="[^"]*\bsource-tag\b[^"]*"')
+APPENDIX_RE = re.compile(r'<section[^>]*id="sources-appendix"[\s\S]*?</section>')
 SECTION_RE = re.compile(r'<section[^>]+class="[^"]*section-card[^"]*"[^>]+id="s(?P<num>\d+)"[\s\S]*?>'
                         r'(?P<body>[\s\S]*?)</section>', re.I)
 
@@ -144,13 +146,15 @@ def check_report_depth(report_html: str, section_markdown: dict[str, str], liste
     bodies = {int(m.group('num')): m.group('body') for m in SECTION_RE.finditer(report_html)}
     if len(bodies) != 14:
         failures.append(f'expected 14 analysis sections, found {len(bodies)}')
-    visible = strip_html(report_html)
     for pattern, most in BOILERPLATE_LIMITS:
         found = len(re.findall(pattern, report_html, re.I))
         if found > most:
             failures.append(f'"{pattern}" appears {found} times; at most {most}')
-    failures += [f'said three or more times: "{s[:100]}"' for s in repeated_sentences(visible)]
-    failures += [f'paragraph repeated with small changes: "{p[:100]}"' for p in near_duplicate_paragraphs(report_html)]
+    # Repetition is a writing fault; the server's source appendix repeats titles by design (several 8-Ks read for
+    # the same item share one), so it is left out.
+    writing = APPENDIX_RE.sub('', report_html)
+    failures += [f'said three or more times: "{s[:100]}"' for s in repeated_sentences(strip_html(writing))]
+    failures += [f'paragraph repeated with small changes: "{p[:100]}"' for p in near_duplicate_paragraphs(writing)]
     per_section = {}
     for section in sections.SECTIONS:
         markdown = section_markdown.get(section.key) or ''

@@ -80,6 +80,16 @@ def test_repeated_sentences_ignore_css():
     assert check_depth.repeated_sentences('<style>.a{}</style>' * 3) == []
 
 
+def test_the_source_appendix_may_repeat_a_title():
+    # Three 8-Ks read for the same item are three sources with one title; the first Apple run failed on it.
+    rows = '<tr><td>Apple Inc. 8-K, Item 5.02 (Departure or Election of Directors and Officers).</td></tr>' * 3
+    opening = '<section class="section-card" id="sources-appendix">'
+    html = full_report().replace(opening, f'{opening}<table>{rows}</table>', 1)
+    assert html.count('Item 5.02') == 3
+    failures = check_depth.check_report_depth(html, {}, True)['failures']
+    assert not any(f.startswith('said three or more times') for f in failures)
+
+
 # check_report
 
 def full_report(texts: dict | None = None) -> str:
