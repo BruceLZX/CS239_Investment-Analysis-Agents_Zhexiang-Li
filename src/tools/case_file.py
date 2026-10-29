@@ -6,15 +6,19 @@ the Lead see what has actually arrived, instead of relying on memory across Raka
 """
 from contextlib import contextmanager
 from datetime import datetime, timezone
+import hashlib
 import json
 from pathlib import Path
 import secrets
 import threading
 
-from .agents import ANALYSTS
+from . import memo
+from .agents import AGENTS, ANALYSTS
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / 'runs'  # Read at call time, so tests can point it at a temporary folder.
+# Review rounds per memo: the analysts revise after the first and second, the Lead alone after the second.
+MAX_REVIEW_ROUNDS = 3
 _lock = threading.RLock()
 
 
@@ -24,9 +28,10 @@ def now() -> str:
 
 def new_case(run_id: str, scenario: str, client_documents: list[dict], request: str | None = None) -> dict:
     return {
-        'run_id': run_id, 'scenario': scenario, 'request': request, 'started_at': now(),
+        'run_id': run_id, 'scenario': scenario, 'request': request, 'started_at': now(), 'scope': None,
         'client_documents': client_documents,
-        'sources': [], 'evidence_packets': [], 'memo_drafts': [],
+        # memo_parts holds each part's revisions; memo_drafts holds the versions, snapshots of the parts.
+        'sources': [], 'evidence_packets': [], 'memo_parts': {}, 'memo_drafts': [],
         'reviews': [], 'deliveries': [],
     }
 
@@ -74,18 +79,65 @@ def log_tool_call(entry: dict) -> None:
         log.write(json.dumps(entry) + '\n')
 
 
-def add_source(case: dict, title: str, source_type: str, location: str,
-               date: str, confidence: str, claims: str) -> str:
-    """Register a source and return its ID; re-registering the same location reuses the ID."""
+def add_source(case: dict, title: str, source_type: str, location: str, date: str, confidence: str, claims: str,
+               registered_by: str | None = None, via: str = 'register_source') -> str:
+    """Register a source and return its ID; re-registering the same location reuses the ID. registered_by is the
+    agent whose call registered it, and via the tool, since data tools register what they retrieve."""
     for source in case['sources']:
         if source['location'] == location and location:
             return source['id']
     source_id = f"S{len(case['sources']) + 1}"
     case['sources'].append({
         'id': source_id, 'title': title, 'source_type': source_type, 'location': location,
-        'date': date, 'confidence': confidence, 'claims': claims, 'registered_at': now(),
+        'date': date, 'confidence': confidence, 'claims': claims, 'registered_by': registered_by, 'via': via,
+        'registered_at': now(),
     })
     return source_id
+
+
+def save_part(case: dict, key: str, markdown: str, author: str | None, check: dict) -> dict:
+    """Append a revision of one memo part, with its check at the time it was saved."""
+    revisions = case['memo_parts'].setdefault(key, [])
+    revision = {'revision': len(revisions) + 1, 'author': author, 'markdown': markdown, 'chars': len(markdown),
+                'sha256': hashlib.sha256(markdown.encode()).hexdigest(), 'passed': check['passed'],
+                'findings': [finding['rule'] for finding in check['findings']], 'depth': check['depth'],
+                'saved_at': now()}
+    revisions.append(revision)
+    return revision
+
+
+def current_parts(case: dict) -> dict[str, dict]:
+    """The latest revision of each saved part, in memo order."""
+    saved = case.get('memo_parts') or {}
+    return {part.key: saved[part.key][-1] for part in memo.PARTS if saved.get(part.key)}
+
+
+def version_parts(case: dict, version: dict) -> dict[str, str]:
+    """The text of each part as a version snapshotted it."""
+    saved = case.get('memo_parts') or {}
+    return {key: saved[key][ref['revision'] - 1]['markdown'] for key, ref in version.get('parts', {}).items()}
+
+
+def add_version(case: dict, rating: str, data_as_of: str, markdown: str, check: dict) -> dict:
+    """Snapshot the latest revision of every part as a new memo version. A version never changes: an edit to any
+    part needs a new version, and a review approves one exact version."""
+    parts = {key: {'revision': r['revision'], 'sha256': r['sha256'], 'author': r['author']}
+             for key, r in current_parts(case).items()}
+    previous = case['memo_drafts'][-1]['parts'] if case['memo_drafts'] else {}
+    version = {
+        'version': len(case['memo_drafts']) + 1, 'rating': rating, 'data_as_of': data_as_of, 'parts': parts,
+        'changed_parts': [key for key, ref in parts.items() if previous.get(key, {}).get('sha256') != ref['sha256']],
+        'missing_parts': [part.key for part in memo.PARTS if part.key not in parts],
+        'markdown': markdown, 'passed': check['passed'], 'saved_at': now(),
+    }
+    case['memo_drafts'].append(version)
+    return version
+
+
+def final_review_failed(case: dict) -> bool:
+    """The last review round has ended without approval, so the memo will not be delivered (P9)."""
+    reviews = case['reviews']
+    return len(reviews) >= MAX_REVIEW_ROUNDS and reviews[-1]['verdict'] != 'approve'
 
 
 def review_gate(case: dict, version: int) -> dict:
@@ -101,29 +153,48 @@ def _packet_ids(case: dict, analyst: str, follow_up_for: str | None) -> list[str
             if p.get('analyst') == analyst and p.get('follow_up_for') == follow_up_for]
 
 
+def _revised_since(case: dict, review: dict) -> dict[str, list[str]]:
+    """For each owner the review asks for revisions, the parts it named that have a revision saved since."""
+    saved = case.get('memo_parts') or {}
+    return {owner: [key for key in keys if any(r['saved_at'] >= review['saved_at'] for r in saved.get(key, []))]
+            for owner, keys in (review.get('revision_requests') or {}).items()}
+
+
 def status_summary(case: dict) -> dict:
-    """What has arrived so far, without the bulky content: which analysts have saved evidence, and for the
-    latest review, which analysts it asks for more evidence and whether their follow-up packets are in."""
-    latest_draft = case['memo_drafts'][-1] if case['memo_drafts'] else None
+    """What has arrived so far, without the bulky content: the case's scope, which analysts have saved evidence,
+    each memo part's latest revision and check, and for the latest review, what it asks of whom and what has come in."""
+    latest_version = case['memo_drafts'][-1] if case['memo_drafts'] else None
     latest_review = case['reviews'][-1] if case['reviews'] else None
     requested = (latest_review or {}).get('evidence_requests') or {}
+    current = current_parts(case)
     return {
         'run_id': case['run_id'],
+        'scope': case.get('scope') and {k: case['scope'][k] for k in ('company', 'ticker', 'type', 'decision')},
         'client_documents': [{'name': d['name'], 'confidentiality': d['confidentiality']}
                              for d in case['client_documents']],
         'sources_registered': len(case['sources']),
         'evidence_packets': [{'id': p['id'], 'analyst': p.get('analyst'), 'follow_up_for': p.get('follow_up_for'),
-                              'topic': p['topic'], 'source_ids': p['source_ids'], 'saved_at': p['saved_at']}
+                              'topic': p['topic'], 'parts': p.get('parts') or [], 'saved_at': p['saved_at']}
                              for p in case['evidence_packets']],
         'first_round_packets': {analyst: _packet_ids(case, analyst, None) for analyst in ANALYSTS},
-        'latest_memo_draft': latest_draft and {'version': latest_draft['version'],
-                                               'rating': latest_draft['rating'],
-                                               'saved_at': latest_draft['saved_at']},
+        'memo_parts': [{'part': key, 'owner': memo.PART_BY_KEY[key].owner, 'revision': r['revision'],
+                        'author': r['author'], 'chars': r['chars'], 'check_passed': r['passed']}
+                       for key, r in current.items()],
+        'missing_parts': {owner: keys for owner in AGENTS.values()
+                          if (keys := [p.key for p in memo.PARTS if p.owner == owner and p.key not in current])},
+        'latest_version': latest_version and {'version': latest_version['version'],
+                                              'rating': latest_version['rating'],
+                                              'changed_parts': latest_version.get('changed_parts', []),
+                                              'check_passed': latest_version.get('passed'),
+                                              'saved_at': latest_version['saved_at']},
         'latest_review': latest_review and {
             'id': latest_review['id'], 'memo_version': latest_review['memo_version'],
-            'verdict': latest_review['verdict'], 'must_fix_count': len(latest_review['must_fix']),
+            'round': latest_review.get('round'), 'verdict': latest_review['verdict'],
+            'must_fix_count': len(latest_review['must_fix']),
+            'revisions_requested': latest_review.get('revision_requests') or {},
+            'revised_since': _revised_since(case, latest_review),
             'evidence_requested_from': list(requested),
             'follow_up_packets': {analyst: _packet_ids(case, analyst, latest_review['id']) for analyst in requested}},
-        'reviews_so_far': len(case['reviews']),
+        'review_rounds_left': max(0, MAX_REVIEW_ROUNDS - len(case['reviews'])),
         'delivered_versions': [d['memo_version'] for d in case['deliveries']],
     }

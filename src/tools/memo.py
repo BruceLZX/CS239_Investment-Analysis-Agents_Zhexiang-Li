@@ -524,8 +524,10 @@ def near_duplicate_paragraphs(markdown: str) -> list[str]:
     return found
 
 
-def check_version(markdown: str, parts: dict[str, str], rating: str, sources: list[dict], listed: bool = True) -> dict:
-    """A whole saved version: the assembled memo against the rules, each part's depth, and what spans parts."""
+def check_version(markdown: str, parts: dict[str, str], rating: str | None, sources: list[dict],
+                  listed: bool = True) -> dict:
+    """A whole version: the assembled memo against the rules, each part's depth, and what spans parts.
+    rating is None for parts not yet saved as a version."""
     report = check_memo(markdown, sources)
     report['parts'] = {}
     for part in PARTS:
@@ -538,7 +540,7 @@ def check_version(markdown: str, parts: dict[str, str], rating: str, sources: li
     if missing:
         depth.append('missing parts: ' + ', '.join(missing))
     summary = parts.get('executive_summary')
-    if summary and not re.search(r'\b' + re.escape(rating) + r'\b', summary, re.I):
+    if summary and rating and not re.search(r'\b' + re.escape(rating) + r'\b', summary, re.I):
         depth.append(f'the executive summary does not state the rating "{rating}"')
     depth += [f'said three or more times: "{s[:100]}"' for s in repeated_sentences(markdown)]
     depth += [f'paragraph repeated with small changes: "{p[:100]}"' for p in near_duplicate_paragraphs(markdown)]

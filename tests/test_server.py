@@ -1,59 +1,80 @@
+from contextlib import contextmanager
 import json
 
 from starlette.testclient import TestClient
 
-from tools import case_file, server
+from tools import case_file, memo, server
 
 from .helpers import call_tool, list_tools, result_text
 
-MEMO = 'Rating: Watchlist\nRevenue grew 6% [S1].\nData as of 2026-10-23. For research purposes only; not investment advice.'
-DRAFT = {'markdown': MEMO, 'rating': 'Watchlist', 'data_as_of': '2026-10-23'}
 SOURCE = {'title': 'Apple 10-K FY2025', 'source_type': 'primary filing', 'location': 'https://sec.example/10k',
           'date': '2025-10-31', 'confidence': 'high', 'claims': 'FY2025 revenue'}
 RAKAZO_TEXT_LIMIT = 12_000  # what Rakazo passes on of one tool result's text
+VERSION = {'rating': 'Watchlist', 'data_as_of': '2026-10-28'}
 
 
-def memo_of(length: int) -> str:
-    return (MEMO + '\n' + 'More analysis. ' * length)[:length]
+@contextmanager
+def caller(agent: str):
+    token = server.CALLER.set(agent)
+    try:
+        yield
+    finally:
+        server.CALLER.reset(token)
 
 
-def memo_room() -> int:
-    """How much memo fits in one get_memo_draft result after its header line."""
-    return server.MAX_RESULT - len(server._memo_text({'version': 1, **DRAFT, 'markdown': ''}))
+def call(name: str, arguments: dict | None = None):
+    result = call_tool(server.server, name, arguments)
+    assert not result.is_error, result_text(result)
+    text = result_text(result)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return text
+
+
+def save_part(part: str, markdown: str, agent: str | None = None) -> dict:
+    with caller(agent or memo.PART_BY_KEY[part].owner):
+        return call('save_memo_part', {'part': part, 'markdown': markdown})
 
 
 def test_every_tool_is_listed_with_text_only_results():
     tools = list_tools(server.server)
-    names = {t.name for t in tools}
-    assert len(tools) == 16
-    assert {'register_source', 'get_case_status', 'get_memo_check', 'deliver_memo'} <= names
-    assert 'share_memo' not in names
+    assert {t.name for t in tools} == {
+        'find_sec_company', 'get_sec_financials', 'list_sec_filings', 'get_price_history', 'register_source',
+        'list_sources', 'get_case_status', 'set_case_scope', 'read_client_document', 'save_evidence_packet',
+        'get_evidence_packets', 'save_memo_part', 'get_memo_parts', 'save_memo_version', 'get_memo_check',
+        'save_review', 'get_latest_review', 'deliver_memo'}
     assert all(t.output_schema is None for t in tools)
+    review = next(t for t in tools if t.name == 'save_review').input_schema
+    item = review['$defs']['ReviewItem']['properties']
+    assert set(item) == {'part', 'issue', 'fix', 'evidence_from'}
 
 
 def test_calls_are_logged_to_the_active_run(runs_dir):
     case_file.start_run('demo')
-    result = call_tool(server.server, 'register_source', SOURCE)
-    assert json.loads(result_text(result)) == {'id': 'S1', 'cite_as': '[S1]'}
+    with caller('Fundamentals Analyst'):
+        assert call('register_source', SOURCE) == {'id': 'S1', 'cite_as': '[S1]'}
     entry = json.loads((case_file.active_run_dir() / 'tool_log.jsonl').read_text().splitlines()[0])
     assert entry['tool'] == 'register_source' and entry['arguments']['title'] == 'Apple 10-K FY2025'
+    registered = case_file.read_case()['sources'][0]
+    assert (registered['registered_by'], registered['via']) == ('Fundamentals Analyst', 'register_source')
 
 
 def test_error_messages_reach_the_model(runs_dir):
     case_file.start_run('demo')
-    result = call_tool(server.server, 'save_memo_draft', {**DRAFT, 'rating': 'Strong buy'})
+    result = call_tool(server.server, 'save_memo_version', {**VERSION, 'rating': 'Strong buy'})
     assert result.is_error
     assert 'rating must be one of' in result_text(result)
 
 
 def test_private_company_ratings_are_accepted(runs_dir):
     case_file.start_run('demo')
-    assert not call_tool(server.server, 'save_memo_draft', {**DRAFT, 'rating': 'Invest'}).is_error
+    assert call('save_memo_version', {**VERSION, 'rating': 'Invest'})['version'] == 1
 
 
 def test_reviews_need_a_known_verdict(runs_dir):
     case_file.start_run('demo')
-    call_tool(server.server, 'save_memo_draft', DRAFT)
+    call('save_memo_version', VERSION)
     result = call_tool(server.server, 'save_review', {'memo_version': 1, 'verdict': 'looks fine',
                                                        'must_fix': [], 'should_fix': []})
     assert result.is_error and 'verdict must be' in result_text(result)
@@ -63,45 +84,129 @@ def test_client_documents_carry_their_confidentiality_label(runs_dir, tmp_path, 
     (tmp_path / 'deck.md').write_text('ARR $3.2M')
     monkeypatch.setattr(case_file, 'ROOT', tmp_path)
     case_file.start_run('demo', [{'name': 'Deck', 'file': 'deck.md', 'confidentiality': 'client-confidential'}])
-    assert result_text(call_tool(server.server, 'read_client_document', {'name': 'deck'})) == \
-        '[CLIENT-CONFIDENTIAL: Deck]\nARR $3.2M'
+    assert call('read_client_document', {'name': 'deck'}) == '[CLIENT-CONFIDENTIAL: Deck]\nARR $3.2M'
 
 
-def test_memo_check_reports_rule_findings(runs_dir):
+def test_the_scope_sets_the_header_and_each_parts_standard(runs_dir):
     case_file.start_run('demo')
-    call_tool(server.server, 'save_memo_draft', {**DRAFT, 'markdown': MEMO + ' [S7]'})
-    report = json.loads(result_text(call_tool(server.server, 'get_memo_check', {})))
-    assert [f['rule'] for f in report['findings']] == ['N1']
+    with caller('Lead Analyst'):
+        scope = call('set_case_scope', {'company': 'Orrin Fieldworks', 'ticker': 'private',
+                                        'company_type': 'private', 'decision': 'Series A: invest or pass'})
+    assert scope == {'company': 'Orrin Fieldworks', 'ticker': None, 'type': 'private',
+                     'decision': 'Series A: invest or pass'}
+    check = save_part('valuation', 'The round values the company at $40M post-money [S1].')['check']
+    assert 'does not cover dilution' in check['depth'] and 'does not cover trading snapshot' not in check['depth']
+    version = call('save_memo_version', {**VERSION, 'rating': 'Wait'})
+    assert case_file.read_case()['memo_drafts'][0]['markdown'].startswith('# Orrin Fieldworks (private): investment memo')
+    assert version['missing_parts'] == [p.key for p in memo.PARTS if p.key != 'valuation']
+    call('set_case_scope', {'company': 'Orrin', 'ticker': '', 'company_type': 'listed', 'decision': 'x'})
+    assert case_file.read_case()['scope_changes'][0]['company'] == 'Orrin Fieldworks'
+
+
+def test_a_saved_part_comes_back_with_its_check_and_author(runs_dir):
+    case_file.start_run('demo')
+    first = save_part('competition', '## Competition and market\nApple held 19.4% of shipments [S9].')
+    assert (first['part'], first['revision'], first['owner'], first['saved_by']) == (
+        'competition', 1, 'Market Analyst', 'Market Analyst')
+    assert first['check']['findings'][0]['rule'] == 'N1' and not first['check']['passed']
+    assert any('the floor is 2,500' in problem for problem in first['check']['depth'])
+    assert 'no scope yet' in first['note']
+    second = save_part('competition', 'Revised.', agent='Lead Analyst')
+    assert (second['revision'], second['saved_by']) == (2, 'Lead Analyst')
+    revisions = case_file.read_case()['memo_parts']['competition']
+    assert [r['markdown'] for r in revisions] == ['Apple held 19.4% of shipments [S9].', 'Revised.']
+
+
+def test_unknown_and_oversized_parts_are_refused(runs_dir):
+    case_file.start_run('demo')
+    unknown = call_tool(server.server, 'save_memo_part', {'part': 'summary', 'markdown': 'x'})
+    assert unknown.is_error and 'executive_summary, business' in result_text(unknown)
+    too_long = call_tool(server.server, 'save_memo_part', {'part': 'business', 'markdown': 'x' * 9_001})
+    assert too_long.is_error and 'at most 9,000' in result_text(too_long)
+    assert case_file.read_case()['memo_parts'] == {}
+
+
+def test_parts_come_back_whole_or_the_reader_is_asked_for_fewer(runs_dir):
+    case_file.start_run('demo')
+    for part in ('business', 'financials', 'valuation'):
+        save_part(part, f'{part} ' + 'analysis ' * 600)
+    two = call('get_memo_parts', {'parts': ['business', 'financials']})
+    assert two.count('## ') == 2 and two.endswith('financials ' + ('analysis ' * 600).strip())
+    assert len(two) <= server.MAX_READ
+    three = call_tool(server.server, 'get_memo_parts', {'parts': ['business', 'financials', 'valuation']})
+    assert three.is_error and 'Ask for fewer parts' in result_text(three)
+    index = call('get_memo_parts', {})
+    assert '| Business | business | Market Analyst | revision 1 by Market Analyst | 5,408 | problems |' in index
+    assert '| Scenarios | scenarios | Lead Analyst | not saved | | |' in index
+
+
+def test_a_version_is_a_snapshot_that_never_changes(runs_dir):
+    case_file.start_run('demo')
+    save_part('business', 'Apple sells phones.')
+    save_part('takeaways', '1. Services grew 13% [S1].')
+    first = call('save_memo_version', VERSION)
+    assert (first['version'], first['changed_parts']) == (1, ['business', 'takeaways'])
+    save_part('business', 'Apple sells phones and services.')
+    assert call('get_memo_parts', {'parts': ['business'], 'version': 1}).endswith('\nApple sells phones.')
+    assert call('get_memo_parts', {'parts': ['business']}).endswith('\nApple sells phones and services.')
+    second = call('save_memo_version', VERSION)
+    assert (second['version'], second['changed_parts']) == (2, ['business'])
+    versions = case_file.read_case()['memo_drafts']
+    assert 'Apple sells phones.\n' in versions[0]['markdown'] and 'and services' in versions[1]['markdown']
+    assert versions[0]['parts']['business']['revision'] == 1 and versions[1]['parts']['business']['revision'] == 2
+
+
+def test_the_memo_check_covers_one_part_or_the_whole_memo(runs_dir):
+    case_file.start_run('demo')
+    save_part('business', 'Apple sells phones to 1.5 billion users [S7].')
+    part = call('get_memo_check', {'part': 'business'})
+    assert part['checked'] == 'business, parts as saved now' and part['findings'][0]['rule'] == 'N1'
+    now = call('get_memo_check', {})
+    assert now['part_rule_findings'] == {'business': ['N1']}
+    assert now['memo_depth'][0].startswith('missing parts: Executive summary, Financials')
+    call('save_memo_version', VERSION)
+    assert call('get_memo_check', {'version': 1})['checked'] == 'version 1'
 
 
 def test_delivery_records_the_review_gate_but_never_blocks(runs_dir):
     case_file.start_run('demo')
-    call_tool(server.server, 'save_memo_draft', DRAFT)
-    unreviewed = json.loads(result_text(call_tool(server.server, 'deliver_memo', {})))
+    call('save_memo_version', VERSION)
+    unreviewed = call('deliver_memo', {})
     assert unreviewed['delivered_version'] == 1
     assert unreviewed['review_gate'] == {'reviewed': False, 'approved': False, 'review_id': None}
-    call_tool(server.server, 'save_review', {'memo_version': 1, 'verdict': 'approve', 'must_fix': [], 'should_fix': []})
-    approved = json.loads(result_text(call_tool(server.server, 'deliver_memo', {'version': 1})))
+    call('save_review', {'memo_version': 1, 'verdict': 'approve', 'must_fix': [], 'should_fix': []})
+    approved = call('deliver_memo', {'version': 1})
     assert approved['review_gate'] == {'reviewed': True, 'approved': True, 'review_id': 'R1'}
-    assert (case_file.active_run_dir() / 'memo_v1.md').exists()
+    delivered = (case_file.active_run_dir() / 'memo_v1.md').read_text()
+    assert delivered == case_file.read_case()['memo_drafts'][0]['markdown']
+    assert delivered.rstrip().endswith(memo.DISCLAIMER)
     assert len(case_file.read_case()['deliveries']) == 2
 
 
-def test_a_memo_that_fits_one_tool_result_comes_back_whole(runs_dir):
-    # Phase 1 cut every result at 6,000 characters, so the IC Reviewer read each 6,000-10,000-character memo cut off.
+def test_review_items_go_to_each_parts_owner(runs_dir):
     case_file.start_run('demo')
-    markdown = memo_of(memo_room())
-    assert len(markdown) > 10_064  # the longest memo in the Phase 1 traces
-    assert not call_tool(server.server, 'save_memo_draft', {**DRAFT, 'markdown': markdown}).is_error
-    text = result_text(call_tool(server.server, 'get_memo_draft', {}))
-    assert text.endswith(markdown) and len(text) <= RAKAZO_TEXT_LIMIT
-
-
-def test_a_memo_too_long_to_read_whole_is_refused(runs_dir):
-    case_file.start_run('demo')
-    result = call_tool(server.server, 'save_memo_draft', {**DRAFT, 'markdown': memo_of(memo_room() + 1)})
-    assert result.is_error and 'could not read it whole' in result_text(result)
-    assert case_file.read_case()['memo_drafts'] == []
+    call('save_memo_version', VERSION)
+    review = call('save_review', {'memo_version': 1, 'verdict': 'revise', 'should_fix': ['Shorter summary'], 'must_fix': [
+        {'part': 'business', 'issue': 'No segment split.', 'fix': 'Add the 10-K segment table.'},
+        {'part': 'valuation', 'issue': 'No peer multiples.', 'fix': 'Compare with three peers.',
+         'evidence_from': 'fundamentals'},
+        {'part': 'risks', 'issue': 'China risk is unranked.', 'fix': 'Rank it.', 'evidence_from': 'market'}]})
+    assert review == {'id': 'R1', 'round': 1,
+                      'revisions_requested_from': ['Market Analyst', 'Fundamentals Analyst', 'Lead Analyst'],
+                      'evidence_requested_from': ['Fundamentals Analyst', 'Market Analyst']}
+    text = call('get_latest_review', {})
+    assert text.startswith('Review R1 of memo version 1 (round 1 of 3): verdict revise\n'
+                           'Must fix, for the Lead Analyst:\n- [risks] China risk is unranked. Fix: Rank it. '
+                           '(new evidence from the Market Analyst)\n'
+                           'Must fix, for the Fundamentals Analyst:\n- [valuation] No peer multiples.')
+    assert 'Should fix:\n- Shorter summary' in text
+    status = call('get_case_status', {})['latest_review']
+    assert status['revisions_requested']['Market Analyst'] == ['business'] and status['revised_since']['Market Analyst'] == []
+    save_part('business', 'Apple sells phones.')
+    assert call('get_case_status', {})['latest_review']['revised_since']['Market Analyst'] == ['business']
+    bad = call_tool(server.server, 'save_review', {'memo_version': 1, 'verdict': 'revise', 'should_fix': [],
+                                                    'must_fix': [{'part': 'outlook', 'issue': 'x', 'fix': 'y'}]})
+    assert bad.is_error and 'No memo part' in result_text(bad)
 
 
 PACKET = {'topic': 'BYD vs Tesla', 'summary': 'BEV volumes', 'findings': ['BYD sold 2.26M BEVs in 2025 [S1]'],
@@ -126,35 +231,52 @@ def test_each_call_is_credited_to_the_agent_whose_endpoint_it_came_in_on(runs_di
 
 def test_a_packet_saved_after_a_review_answers_its_evidence_requests(runs_dir):
     case_file.start_run('demo')
-    token = server.CALLER.set('Market Analyst')
-    try:
-        call_tool(server.server, 'save_evidence_packet', PACKET)
-        call_tool(server.server, 'save_memo_draft', DRAFT)
-        review = call_tool(server.server, 'save_review', {
-            'memo_version': 1, 'verdict': 'revise', 'must_fix': ['Compare BEVs with BEVs'], 'should_fix': [],
-            'market_requests': ["BYD's 2025 BEV-only sales"]})
-        follow_up = call_tool(server.server, 'save_evidence_packet', PACKET)
-    finally:
-        server.CALLER.reset(token)
-    assert json.loads(result_text(review)) == {'id': 'R1', 'evidence_requested_from': ['Market Analyst']}
-    assert json.loads(result_text(follow_up))['follow_up_for'] == 'R1'
-    assert result_text(call_tool(server.server, 'get_latest_review', {})).endswith(
-        "Evidence requests:\n- Market Analyst: BYD's 2025 BEV-only sales")
-    packets = result_text(call_tool(server.server, 'get_evidence_packets', {}))
-    assert '## E1 (Market Analyst): BYD vs Tesla' in packets
+    with caller('Market Analyst'):
+        call('save_evidence_packet', {**PACKET, 'parts': ['competition'], 'risks': ['Price war in China [S1]']})
+        call('save_memo_version', VERSION)
+        call('save_review', {'memo_version': 1, 'verdict': 'revise', 'should_fix': [], 'must_fix': [
+            {'part': 'competition', 'issue': 'Compare BEVs with BEVs.', 'fix': "Use BYD's BEV-only sales.",
+             'evidence_from': 'market'}]})
+        follow_up = call('save_evidence_packet', PACKET)
+    assert follow_up['follow_up_for'] == 'R1'
+    assert call('get_latest_review', {}).endswith(
+        "Evidence requests:\n- Market Analyst: Compare BEVs with BEVs. Use BYD's BEV-only sales.")
+    packets = call('get_evidence_packets', {})
+    assert '## E1 (Market Analyst): BYD vs Tesla\nBEV volumes\nParts: competition' in packets
+    assert 'Risks:\n- Price war in China [S1]' in packets
     assert '## E2 (Market Analyst, follow-up for review R1): BYD vs Tesla' in packets
 
 
-def test_a_review_without_evidence_requests_says_so(runs_dir):
+def test_a_review_without_items_says_so(runs_dir):
     case_file.start_run('demo')
-    call_tool(server.server, 'save_memo_draft', DRAFT)
-    call_tool(server.server, 'save_review', {'memo_version': 1, 'verdict': 'approve', 'must_fix': [], 'should_fix': []})
-    assert result_text(call_tool(server.server, 'get_latest_review', {})).endswith('Evidence requests: none')
+    call('save_memo_version', VERSION)
+    call('save_review', {'memo_version': 1, 'verdict': 'approve', 'must_fix': [], 'should_fix': []})
+    text = call('get_latest_review', {})
+    assert 'Must fix: none' in text and text.endswith('Should fix: none\nEvidence requests: none')
 
 
-def test_longer_results_are_cut_where_rakazo_would_cut_them(runs_dir):
+def test_packets_too_long_for_one_result_come_back_as_a_list(runs_dir):
     case_file.start_run('demo')
-    call_tool(server.server, 'save_evidence_packet', {'topic': 'Long', 'summary': 'x' * 20_000, 'findings': [],
-                                                       'source_ids': [], 'counter_evidence': '', 'gaps': []})
-    text = result_text(call_tool(server.server, 'get_evidence_packets', {}))
+    for topic in ('Margins', 'Debt', 'Peers'):
+        call('save_evidence_packet', {**PACKET, 'topic': topic, 'summary': 'x' * 5_000})
+    listing = call('get_evidence_packets', {})
+    assert listing.startswith('These packets add up to') and '| E3 | None |  | Peers |' in listing
+    one = call('get_evidence_packets', {'packet_ids': ['e2']})
+    assert one.startswith('## E2 (unknown analyst): Debt') and 'x' * 5_000 in one
+
+
+def test_sources_are_listed_a_page_at_a_time(runs_dir):
+    case_file.start_run('demo')
+    for n in range(45):
+        call('register_source', {**SOURCE, 'location': f'https://sec.example/{n}'})
+    first, second = call('list_sources', {}), call('list_sources', {'page': 2})
+    assert first.startswith('Page 1 of 2 (45 sources).') and first.count('\n| S') == 40
+    assert second.count('\n| S') == 5 and '| S45 |' in second
+
+
+def test_longer_results_are_cut_where_rakazo_would_cut_them(runs_dir, tmp_path, monkeypatch):
+    (tmp_path / 'deck.md').write_text('x' * 20_000)
+    monkeypatch.setattr(case_file, 'ROOT', tmp_path)
+    case_file.start_run('demo', [{'name': 'Deck', 'file': 'deck.md', 'confidentiality': 'client-confidential'}])
+    text = call('read_client_document', {'name': 'Deck'})
     assert len(text) == RAKAZO_TEXT_LIMIT and text.endswith('\n[truncated]')
