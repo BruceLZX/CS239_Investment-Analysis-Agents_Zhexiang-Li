@@ -21,10 +21,11 @@ from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 import uvicorn
 
-from . import case_file, memo, prices, sec_edgar
+from . import case_file, filings, memo, prices, sec_edgar, valuation
 from .agents import AGENTS, ANALYSTS
 from .case_file import now, open_case, read_case
 from .env import load_env
+from .retrieved import Retrieved
 
 server = MCPServer('Investment research',
                    instructions='Research tools, a shared source register and the case file for one investment memo.')
@@ -124,7 +125,21 @@ def _check_summary(check: dict, per_part: int = 4) -> dict:
             'part_depth': failing, 'memo_depth': check['depth']}
 
 
-# Research (Fundamentals Analyst)
+def _registered(retrieved: Retrieved, via: str) -> str:
+    """A data tool's result with its sources registered for the calling agent, and the IDs to cite them by."""
+    try:
+        with open_case() as case:
+            ids = [case_file.add_source(case, s['title'], s['source_type'], s['location'], s['date'], s['confidence'],
+                                        s['claims'], registered_by=CALLER.get(), via=via) for s in retrieved.sources]
+    except RuntimeError:  # no active run, e.g. a tool tried by hand
+        return retrieved.text + '\n\nSources (not registered: no active run):\n' + '\n'.join(
+            f"- {s['label']}: {s['location']}" for s in retrieved.sources)
+    listed = dict.fromkeys(zip(ids, (s['label'] for s in retrieved.sources)))
+    return (f'{retrieved.text}\n\nSources registered for you (cite these IDs; do not register them again):\n'
+            + '\n'.join(f'- [{source_id}] {label}' for source_id, label in listed))
+
+
+# Research (Fundamentals Analyst; the Market Analyst also reads filings)
 
 @tool(READ_WEB)
 def find_sec_company(ticker: str) -> dict:
@@ -134,9 +149,11 @@ def find_sec_company(ticker: str) -> dict:
 
 @tool(READ_WEB)
 def get_sec_financials(ticker: str, years: int = 3) -> str:
-    """Annual figures from the company's 10-K XBRL filings: revenue, net income, diluted EPS, operating
-    cash flow, capex, cash, assets, liabilities and equity, with the 10-K accession numbers to cite. years: 1-5."""
-    return sec_edgar.annual_financials(ticker, years)
+    """Financial statements from the company's 10-K and 10-Q XBRL filings: about 28 income statement, cash flow
+    and balance sheet lines for up to five fiscal years (years: 1-5), with growth, margins, free cash flow, debt and
+    net cash worked out, and the latest quarter, year to date and trailing twelve months. The filings are registered
+    as sources, and the result lists the IDs to cite. XBRL has no segment split; read it with read_sec_filing."""
+    return _registered(sec_edgar.statements(ticker, years), 'get_sec_financials')
 
 
 @tool(READ_WEB)
@@ -146,10 +163,33 @@ def list_sec_filings(ticker: str, forms: list[str] | None = None, limit: int = 8
 
 
 @tool(READ_WEB)
+def read_sec_filing(ticker: str, form: str = '10-K', item: str = '7', page: int = 1,
+                    keywords: list[str] | None = None, accession: str | None = None) -> str:
+    """Read the text of the company's latest 10-K or 10-Q, one item a page (about 9,000 characters) at a time.
+    10-K items: 1 business and segments, 1A risk factors, 7 management's discussion and analysis, 7A market risk,
+    8 financial statements and notes. 10-Q items: 1 financial statements, 2 management's discussion, 1A risk
+    factors. keywords: return only the paragraphs mentioning any of them, within the item or, with item empty, the
+    whole filing; the search runs on this server. accession: a specific filing instead of the latest. The filing
+    is registered as a source, and the result gives the ID to cite."""
+    return _registered(filings.read_filing(ticker, form, item, page, keywords, accession), 'read_sec_filing')
+
+
+@tool(READ_WEB)
 def get_price_history(ticker: str, period: str = '1y') -> str:
-    """Latest price and the range of daily closes over a period (1mo, 3mo, 6mo, 1y, 2y or 5y),
-    with exchange, currency and timestamp."""
-    return prices.price_summary(ticker, period)
+    """Latest price and the range of daily closes over a period (1mo, 3mo, 6mo, 1y, 2y or 5y), with exchange,
+    currency and timestamp, the 52-week range, the price change over 1, 3, 6 and 12 months, and the market's
+    backdrop (S&P 500, VIX, 10-year Treasury yield). The price data is registered as a source."""
+    return _registered(prices.price_summary(ticker, period), 'get_price_history')
+
+
+@tool(READ_WEB)
+def get_valuation_snapshot(ticker: str, peers: list[str] | None = None) -> str:
+    """Price, market cap, enterprise value and multiples (P/E, EV/Sales, EV/EBITDA, FCF yield, P/B, trailing twelve
+    months) for the company and up to four peers, worked out from SEC XBRL filings and Yahoo prices; the company's
+    P/E and EV/Sales at its last five fiscal year ends; the peer median and the company's premium or discount to it.
+    Peers that do not file US GAAP statements with the SEC show as n/a. Every filing and price used is registered as
+    a source, and the result lists the IDs to cite."""
+    return _registered(valuation.snapshot(ticker, peers), 'get_valuation_snapshot')
 
 
 # Shared source register and case file

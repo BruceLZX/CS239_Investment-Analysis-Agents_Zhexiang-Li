@@ -4,6 +4,7 @@ import json
 from starlette.testclient import TestClient
 
 from tools import case_file, memo, server
+from tools.retrieved import Retrieved, source
 
 from .helpers import call_tool, list_tools, result_text
 
@@ -40,7 +41,8 @@ def save_part(part: str, markdown: str, agent: str | None = None) -> dict:
 def test_every_tool_is_listed_with_text_only_results():
     tools = list_tools(server.server)
     assert {t.name for t in tools} == {
-        'find_sec_company', 'get_sec_financials', 'list_sec_filings', 'get_price_history', 'register_source',
+        'find_sec_company', 'get_sec_financials', 'list_sec_filings', 'read_sec_filing', 'get_price_history',
+        'get_valuation_snapshot', 'register_source',
         'list_sources', 'get_case_status', 'set_case_scope', 'read_client_document', 'save_evidence_packet',
         'get_evidence_packets', 'save_memo_part', 'get_memo_parts', 'save_memo_version', 'get_memo_check',
         'save_review', 'get_latest_review', 'deliver_memo'}
@@ -58,6 +60,33 @@ def test_calls_are_logged_to_the_active_run(runs_dir):
     assert entry['tool'] == 'register_source' and entry['arguments']['title'] == 'Apple 10-K FY2025'
     registered = case_file.read_case()['sources'][0]
     assert (registered['registered_by'], registered['via']) == ('Fundamentals Analyst', 'register_source')
+
+
+FILING = source('Apple 10-K FY2025', 'primary filing', 'https://sec.example/10k', '2025-10-31', 'statements',
+                '10-K for FY2025')
+PRICES = source('Yahoo AAPL', 'market data', 'https://finance.yahoo.com/quote/AAPL', '2026-10-28', 'price',
+                'Yahoo chart for AAPL', confidence='medium')
+
+
+def test_data_tools_register_what_they_retrieved_and_give_the_ids_to_cite(runs_dir, monkeypatch):
+    case_file.start_run('demo')
+    monkeypatch.setattr(server.sec_edgar, 'statements',
+                        lambda ticker, years: Retrieved('| Revenue | 416,161M |', [FILING, FILING]))
+    with caller('Fundamentals Analyst'):
+        text = call('get_sec_financials', {'ticker': 'AAPL'})
+    assert text == ('| Revenue | 416,161M |\n\nSources registered for you (cite these IDs; do not register them again):\n'
+                    '- [S1] 10-K for FY2025')
+    [registered] = case_file.read_case()['sources']
+    assert (registered['registered_by'], registered['via'], registered['confidence']) == (
+        'Fundamentals Analyst', 'get_sec_financials', 'high')
+    monkeypatch.setattr(server.prices, 'price_summary', lambda ticker, period: Retrieved('AAPL 347.73', [PRICES]))
+    assert call('get_price_history', {'ticker': 'AAPL'}).endswith('- [S2] Yahoo chart for AAPL')
+
+
+def test_data_tools_still_answer_without_an_active_run(runs_dir, monkeypatch):
+    monkeypatch.setattr(server.sec_edgar, 'statements', lambda ticker, years: Retrieved('table', [FILING]))
+    assert call('get_sec_financials', {'ticker': 'AAPL'}).endswith(
+        'Sources (not registered: no active run):\n- 10-K for FY2025: https://sec.example/10k')
 
 
 def test_error_messages_reach_the_model(runs_dir):
