@@ -427,7 +427,7 @@ function activity(snap, bot, t, tools, status) {
   return last ? (TOOL_VERBS[last.tool] || last.tool) : 'thinking…';
 }
 function steps(view) {
-  const {convo, sources, packets, parts, drafts, reviews, deliveries, status, finished, outcome} = view;
+  const {convo, sources, packets, parts = [], drafts, reviews, deliveries, status, finished, outcome} = view;
   const sent = (from, to) => convo.some((e) => e.kind === 'message' && e.from === from && e.to === to);
   const briefed = ANALYSTS.filter((analyst) => sent(LEAD, analyst));
   const firstRound = packets.filter((p) => !p.follow_up_for);
@@ -918,7 +918,7 @@ $('skip').addEventListener('click', () => {
 $('speed').addEventListener('change', () => { if (S.mode === 'replay') render(S.t); });
 setInterval(() => { if (S.mode === 'live' && S.snap) $('elapsed').textContent = fmt(Date.now() - S.snap.started); }, 1000);
 buildDiagram();
-renderSteps({convo: [], sources: [], packets: [], drafts: [], reviews: [], deliveries: [], status: {}});
+renderSteps({convo: [], sources: [], packets: [], parts: [], drafts: [], reviews: [], deliveries: [], status: {}});
 $('observations').replaceChildren(el('p', {class: 'empty'}, 'Shown when a run finishes: the exporter scans it for possible rule breaks.'));
 renderIdle('Start a live run, or replay a recorded one.');
 pollState();
