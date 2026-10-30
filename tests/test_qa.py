@@ -1,5 +1,6 @@
 """The skill's QA scripts as ported to the team, each held to the script's thresholds, with its bugs fixed."""
 from pathlib import Path
+import re
 
 from tools import report, sections
 from tools.qa import (check_citations, check_depth, check_evidence, check_report, check_source_register,
@@ -55,6 +56,11 @@ def test_granularity_markers_run_and_are_generic():
     # check_depth.py's NameError meant these never ran; and its competition marker named BCI companies only.
     no_year = FINANCIALS.replace('FY20', 'fiscal ').replace('2029', 'later')
     assert 'granularity: no a fiscal year' in section_check(no_year)['failures']
+    # A split by region counts as a table with a region column or a region with its share, not only "<region> market".
+    geographic = dict(sections.BY_KEY['market'].markers)['a geographic split']
+    for text in ('| Region | Share | Source |', 'Revenue is 100% United States and 0% EU', 'The China market grew 4%'):
+        assert re.search(geographic, text, re.I), text
+    assert not re.search(geographic, 'Demand comes from rural clinics.', re.I)
 
 
 def test_numbers_do_not_count_source_ids_or_urls():

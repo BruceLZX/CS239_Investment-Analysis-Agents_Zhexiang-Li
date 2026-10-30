@@ -100,8 +100,11 @@ SECTIONS = (
                   r'(?:\bTAM\b|\bSAM\b|\bSOM\b|market size|market (?:is|was) (?:worth|valued|sized)|市场规模).{0,60}\d'),
                  ('a CAGR', r'CAGR.{0,30}\d+(?:\.\d+)?\s*%|\d+(?:\.\d+)?\s*%\s*CAGR|复合增长率'),
                  ('policy with a year', r'(?:policy|regulat|\bact\b|\blaw\b|guideline|tariff|政策|法规|监管).{0,100}(?:19|20)\d{2}'),
+                 # A region followed by its market or its share, or a table with a region column; the first port
+                 # needed "market" within 50 characters and missed a split table with a Region column.
                  ('a geographic split', r'(?:United States|\bUS\b|U\.S\.|China|Europe|\bEU\b|Japan|India|Southeast Asia|'
-                                        r'global|美国|中国|欧洲|日本|全球).{0,50}(?:market|市场)')),
+                                        r'global|美国|中国|欧洲|日本|全球).{0,50}(?:market|市场|\d+(?:\.\d+)?\s*%)'
+                                        r'|\|\s*(?:Region|Geography|Country|地区|区域|国家)\s*\|')),
         playbooks=(('company_deep_dive_playbook.md', 'Section 5: Market — Domestic + International Bifurcation'),
                    ('geo_market_context_lens.md', ''), ('section_deepening.md', 'Market and Industry'))),
     Section(
