@@ -15,6 +15,8 @@ Fixed or added here:
 - The script allowed 60 inline source tags in a report while check_depth.py allows 6 a section, so fourteen
   sections within their own limit failed the report's. The report's limit is 6 for each of its fifteen sections,
   the executive summary included (90).
+- A KPI signal counted only good and warning cards, so a company whose every KPI was critical, as in a Pass,
+  had none; the template's critical card counts too.
 """
 from pathlib import Path
 import re
@@ -63,7 +65,7 @@ SOURCE_WORDS_RE = re.compile(r'来源|Source|source|公告|年报|招股书|专�
 # The sixteen components SKILL.md requires in every report, by the class (or classes) that show each is there.
 REQUIRED_COMPONENTS = {
     'verdict strip': ('verdict-strip',), 'briefing grid': ('briefing-grid', 'brief-card'),
-    'KPI dashboard': ('kpi-dashboard', 'kpi-card'), 'KPI signal': ('kpi-good', 'kpi-warn'),
+    'KPI dashboard': ('kpi-dashboard', 'kpi-card'), 'KPI signal': ('kpi-good', 'kpi-warn', 'kpi-critical'),
     'efficiency strip': ('efficiency-strip', 'eff-card'), 'one question': ('one-question',),
     'three takeaways': ('takeaway-strip', 'takeaway-item'), 'scenario table': ('scenario-table',),
     'scenario rows': ('bull', 'base', 'bear'), 'sensitivity table': ('sensitivity-table',),

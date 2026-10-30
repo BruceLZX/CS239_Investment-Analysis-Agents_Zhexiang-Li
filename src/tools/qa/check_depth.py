@@ -94,7 +94,10 @@ def check_section(section: sections.Section, markdown: str, body_html: str, list
         failures.append('empty phrases: ' + ', '.join(shallow))
     failures += [f'filler: "{phrase}"' for phrase in SECTION_FILLER if phrase in text]
 
-    failures += [f'granularity: no {name}' for name, pattern in section.markers if not re.search(pattern, text, re.I)]
+    # The markers read the Markdown too: a table's rows lose their cells' separators in the visible text.
+    marker_text = text + '\n' + markdown
+    failures += [f'granularity: no {name}' for name, pattern in section.markers
+                 if not re.search(pattern, marker_text, re.I)]
     vague = [m.group() for pattern in VAGUE_PATTERNS for m in re.finditer(pattern, text, re.I)]
     if len(vague) > MAX_VAGUE:
         failures.append(f'{len(vague)} vague phrasings such as "{vague[0]}"; give the exact figure or name')

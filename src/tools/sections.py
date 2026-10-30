@@ -81,13 +81,16 @@ SECTIONS = (
                 Table('moat table', ('barrier', '壁垒')),
                 Table('patent table', ('patent', '专利')),
                 Table('product inventory', ('product', '产品'))),
-        markers=(('patent numbers', r'\b(?:US|CN|EP|WO|JP|KR)\s?\d{5,}|patent (?:no\.?|number)|专利号'),
+        # Patent and application numbers as written: US 10,912,502, US 17/662,019, WO 2023/123456, CN202310123456.
+        markers=(('patent numbers', r'\b(?:US|CN|EP|WO|JP|KR)\s?\d[\d,/]{4,}\d|patent (?:no\.?|number)|专利号'),
                  ('an exact date', DATE),
                  ('a performance metric with a figure',
                   r'(?:accuracy|latency|throughput|efficiency|resolution|capacity|range|speed|power|yield|'
                   r'sensitivity|specificity|density|cycles?|精度|延迟|效率|分辨率|容量|功率|速度|良率|灵敏度).{0,30}\d'),
+                 # In words, or in the technology comparison table: Dimension | the company | a rival.
                  ('a comparison with a named rival',
-                  r'(?:\bvs\.?|versus|compared (?:with|to)|relative to|相比|相较|优于|对比).{0,80}[A-Z][A-Za-z]+')),
+                  r'(?:\bvs\.?|versus|compared (?:with|to)|relative to|相比|相较|优于|对比).{0,80}[A-Z][A-Za-z]+'
+                  r'|(?:^|\n)\|\s*(?:Dimension|维度)\s*\|[^|\n]+\|[^|\n]+\|')),
         playbooks=(('company_deep_dive_playbook.md', 'Section 3: Technology & IP — Patent-Level Detail'),
                    ('company_deep_dive_playbook.md', 'Section 4: Products — Per-Product Forensic Detail'),
                    ('section_deepening.md', 'Technology and Product'))),

@@ -61,6 +61,24 @@ def test_granularity_markers_run_and_are_generic():
     for text in ('| Region | Share | Source |', 'Revenue is 100% United States and 0% EU', 'The China market grew 4%'):
         assert re.search(geographic, text, re.I), text
     assert not re.search(geographic, 'Demand comes from rural clinics.', re.I)
+    # Patent numbers as they are written, and a comparison table naming a rival; the manipulated-deck run had both.
+    technology = dict(sections.BY_KEY['technology_product'].markers)
+    for text in ('US 10,912,502 B2', 'application US 17/662,019', 'WO 2023/123456', 'CN202310123456'):
+        assert re.search(technology['patent numbers'], text, re.I), text
+    assert not re.search(technology['patent numbers'], 'US 2026 revenue', re.I)
+    table = '| Dimension | Vantelle Q5 | Abbott i-STAT | Source |\n|---|---|---|---|\n| Panels | 5 | 1 | S3 |'
+    assert re.search(technology['a comparison with a named rival'], '\n' + table, re.I)
+    assert not re.search(technology['a comparison with a named rival'], '\n| Metric | Value | Source |', re.I)
+
+
+def test_a_section_s_markers_read_its_tables():
+    # The visible text loses a table's cell separators, so the markers also read the Markdown.
+    section = sections.BY_KEY['technology_product']
+    table = '\n\n| Dimension | Northwind X1 | Contoso Edge | Source |\n|---|---|---|---|\n| Battery | 18 h | 12 h | S1 |\n'
+    markdown = FINANCIALS + table
+    html = report.render_section(markdown, SOURCES, 'en')
+    assert 'granularity: no a comparison with a named rival' not in check_depth.check_section(
+        section, markdown, html)['failures']
 
 
 def test_numbers_do_not_count_source_ids_or_urls():
@@ -125,6 +143,12 @@ def test_the_report_check_names_each_missing_component():
     assert 'missing the risk matrix component' in failures and 'missing the timeline component' in failures
     assert 'missing the verdict strip component' not in failures
     assert not any('template version' in f or 'placeholders' in f for f in failures)
+    # Every KPI critical, as in the Pass on the manipulated deck, is still a KPI signal.
+    kpis = report.render_section('::: kpi\n| Metric | Value | Benchmark | Signal | Source |\n|---|---|---|---|---|\n'
+                                 '| Runway | 6 months | 18 months | critical | S1 |\n:::', SOURCES)
+    assert 'class="kpi-card kpi-critical"' in kpis
+    all_critical = check_report.check_report(full_report().replace('</main>', kpis + '</main>', 1), listed=True)
+    assert 'missing the KPI signal component' not in all_critical['failures']
 
 
 def test_chinese_scenario_labels_count_and_pe_needs_the_term():
