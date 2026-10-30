@@ -360,7 +360,7 @@ def test_sections_saved_by_someone_else_drafted_too_early_or_answered_without_ev
     assert {'rule': 'P9', 'detail': '4 review rounds; the limit is 3'} in export_trace.observe_sections(case)
 
 
-def test_the_skills_order_of_work_is_observed():
+def test_the_order_of_work_is_observed():
     at = lambda clock: f'2026-10-26T10:{clock}.000+00:00'
     tool = lambda clock, name, agent: {'type': 'tool_call', 'tool': name, 'agent': agent, 'ts': at(clock)}
     events = [tool('01:00', 'message_bot', 'Lead Analyst'), tool('02:00', 'save_research_plan', 'Lead Analyst'),

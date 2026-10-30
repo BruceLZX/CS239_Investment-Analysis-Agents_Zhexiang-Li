@@ -208,7 +208,7 @@ def team_profiles() -> list[BotProfile]:
         mcp_tools=WRITER_TOOLS + ('save_red_team_review', 'list_sec_filings', 'read_sec_filing'),
         disabled_builtin_tools=_disabled('web_search', 'web_fetch')))
     profiles.append(BotProfile(
-        REVIEWER, 'Reviews each report version like a skeptical investment committee partner, in the skill\'s five '
+        REVIEWER, 'Reviews each report version like a skeptical investment committee partner, in five '
                   'passes, and approves it or returns Critical and Important items to each section\'s owner.',
         _reviewer_instructions(), reviewer_model, mcp_connection(REVIEWER),
         mcp_tools=('read_playbook', 'get_memo_parts', 'get_memo_check', 'list_sources', 'get_evidence_matrix',

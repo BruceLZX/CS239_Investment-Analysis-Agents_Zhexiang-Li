@@ -1,4 +1,4 @@
-"""The report as the investment-analysis skill delivers it: its HTML template filled in, a PDF printed from it, and a
+"""The report: its HTML template filled in, a PDF printed from it, and a
 delivery folder holding only sources/, the HTML and the PDF.
 
 Bots write each section in Markdown. A visual component is a fenced block holding a Markdown table or list:
@@ -9,10 +9,10 @@ Bots write each section in Markdown. A visual component is a fenced block holdin
     | FY2025 revenue | $416.2B | +6.4% YoY | good | S3 |
     :::
 
-render_section turns a section into the template's markup: components into the classes SKILL.md requires, every
+render_section turns a section into the template's markup: components into the template's classes, every
 other table into .table-wrap > .data-table, and citations into links to the source appendix. In prose a citation
 is a .source-tag pill with its source's confidence; inside a table it is a plain link, so tables with a Source
-column on every row stay within the skill's limit on inline tags (six per section, sixty per report).
+column on every row stay within the limit on inline tags (six per section).
 """
 from dataclasses import dataclass
 from datetime import date
@@ -35,13 +35,13 @@ MD = MarkdownIt('commonmark', {'html': False}).enable(['table', 'strikethrough']
 FENCE_OPEN_RE = re.compile(r'^:::\s*([a-z][a-z-]*)(?:\s+([a-z-]+))?\s*$')
 FENCE_CLOSE_RE = re.compile(r'^:::\s*$')
 # A citation group in prose: [S1], [S1, S3] or [S1][S3]. Python's \b treats Chinese characters as word characters,
-# so lookarounds stand in for it (the skill's \bS\d+\b misses "来源S1").
+# so lookarounds stand in for it (a plain \bS\d+\b misses "来源S1").
 CITE_GROUP_RE = re.compile(r'(?:\[\s*S\d+(?:\s*[,;，、]\s*S\d+)*\s*\])+')
 SOURCE_ID_RE = re.compile(r'(?<![A-Za-z0-9])S\d+(?!\d)')
 TABLE_RE = re.compile(r'<table\b.*?</table>', re.S)
 TAG_RE = re.compile(r'(<[^>]+>)')
 
-# The component kinds a section may hold, and the class each renders to (SKILL.md "Mandatory visual components").
+# The component kinds a section may hold, and the class each renders to.
 # Source tags and data tables are rendered automatically.
 COMPONENTS = {
     'verdict': 'verdict-strip', 'briefing': 'briefing-grid', 'kpi': 'kpi-dashboard', 'efficiency': 'efficiency-strip',
@@ -104,7 +104,7 @@ class Cover:
 
 
 def language_of(text: str) -> str:
-    """'zh' when the text is mostly Chinese, else 'en' (the skill matches the report to the user's language)."""
+    """'zh' when the text is mostly Chinese, else 'en' (the report matches the user's language)."""
     cjk = len(re.findall(r'[一-鿿]', text or ''))
     return 'zh' if cjk >= max(4, len(re.findall(r'[A-Za-z]{2,}', text or '')) // 4) else 'en'
 
@@ -435,7 +435,7 @@ def components_in(markdown: str) -> list[str]:
 
 def source_appendix(sources: list[dict], cited: set[str], language: str, requests: list[dict] | None = None,
                     further: list[str] | None = None) -> str:
-    """The skill's appendix rows for every cited source, then any user data requests and open diligence items."""
+    """The appendix rows for every cited source, then any user data requests and open diligence items."""
     labels = LABELS.get(language, LABELS['en'])
     rows = []
     for source in sources:
@@ -478,7 +478,7 @@ def cited_ids(markdowns) -> set[str]:
 def render_report(section_markdown: dict[str, str], sources: list[dict], cover: Cover, data_as_of: str,
                   composite_score: str, language: str = 'en', requests: list[dict] | None = None,
                   further: list[str] | None = None, report_date: str | None = None) -> str:
-    """The full HTML report: the skill's template with every placeholder filled. A section missing from the
+    """The full HTML report: the template with every placeholder filled. A section missing from the
     version says so in its place."""
     labels = LABELS.get(language, LABELS['en'])
     text = TEMPLATE.read_text()
@@ -548,7 +548,7 @@ def _library_paths() -> str:
 
 
 def write_pdf(html_path: Path, pdf_path: Path, timeout: int = 180) -> dict:
-    """Print the HTML to PDF with WeasyPrint, in a child process (as the skill runs generate_pdf.py) so the library
+    """Print the HTML to PDF with WeasyPrint, in a child process so the library
     path WeasyPrint needs is set before it loads. Returns {'pdf': path} or {'error': reason}."""
     env = dict(os.environ, DYLD_FALLBACK_LIBRARY_PATH=_library_paths())
     try:
@@ -562,7 +562,7 @@ def write_pdf(html_path: Path, pdf_path: Path, timeout: int = 180) -> dict:
 
 
 def folder_name(company: str, summary: str) -> str:
-    """The skill's [CompanyName]_[BusinessSummary] folder name, safe for any file system."""
+    """The [CompanyName]_[BusinessSummary] folder name, safe for any file system."""
     def clean(text: str) -> str:
         return re.sub(r'[^\w一-鿿-]+', '', re.sub(r'\s+', '', text.title() if text.isascii() else text))[:40]
     return '_'.join(filter(None, (clean(company), clean(summary)))) or 'Report'
@@ -574,7 +574,7 @@ def report_file_name(company: str, language: str) -> str:
 
 
 def write_delivery(folder: Path, report_html: str, file_stem: str, documents: list[Path]) -> dict:
-    """The delivery folder as the skill's output contract has it: sources/ (the client's original documents), the
+    """The delivery folder: sources/ (the client's original documents), the
     HTML report and its PDF, and nothing else."""
     if folder.exists():
         shutil.rmtree(folder)

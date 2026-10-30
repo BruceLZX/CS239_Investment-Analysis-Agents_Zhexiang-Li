@@ -1,8 +1,8 @@
-"""The report's sections as the investment-analysis skill's template lays them out: a five-minute executive summary,
+"""The report's sections as the template lays them out: a five-minute executive summary,
 fourteen numbered sections and a generated source appendix.
 
-Each section has an owner (the bot that researches and writes it), the visual components SKILL.md requires in it,
-the tables its playbooks ask for, and the granularity markers scripts/check_depth.py was written to enforce. The
+Each section has an owner (the bot that researches and writes it), the visual components required in it,
+the tables its playbooks ask for, and the granularity markers tools/qa/check_depth.py enforces. The
 checks, the renderer, the prompts and the dashboard all read SECTIONS, so the standard lives in one place.
 """
 from dataclasses import dataclass
@@ -223,7 +223,7 @@ OWNED = {owner: tuple(s.key for s in ALL_SECTIONS if s.owner == owner) for owner
 # reasoning included. It also keeps a section inside one 12,000-character tool result.
 MAX_SECTION_CHARS = 9_000
 
-# The skill's ratings (public_equity_financials_lens.md "Rating labels" plus the analysis_core fallback "Hold off")
+# The ratings (public_equity_financials_lens.md "Rating labels" plus the analysis_core fallback "Hold off")
 # and its primary-market decisions (section_deepening.md "Investment Thesis").
 LISTED_RATINGS = ('Buy', 'Add', 'Hold', 'Watchlist', 'Hold off', 'Reduce', 'Sell', 'Avoid')
 PRIVATE_RATINGS = ('Invest now', 'Invest with conditions', 'Wait for milestone', 'Pass')
@@ -232,7 +232,7 @@ LISTED_DIRECTIONAL = ('Buy', 'Add', 'Reduce', 'Sell', 'Avoid')
 # Committing capital to a private company needs at least one independent source behind the case (N4).
 PRIVATE_COMMITTING = ('Invest now', 'Invest with conditions')
 
-# The skill asks for a "weighted score table with specific rationale per dimension" but defines no dimensions or
+# The report standard asks for a "weighted score table with specific rationale per dimension" but defines no dimensions or
 # weights, so these are the app's own, one set per company type (percent, summing to 100).
 SCORE_WEIGHTS = {
     'listed': {'Business quality and moat': 15, 'Growth and market': 10, 'Competitive position': 10,

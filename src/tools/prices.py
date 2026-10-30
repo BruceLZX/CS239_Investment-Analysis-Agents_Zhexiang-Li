@@ -1,6 +1,6 @@
 """Daily price context from Yahoo Finance's public chart endpoint (no key, unofficial).
 
-The skill's evidence rules require market data to state exchange, currency and timestamp,
+The evidence rules require market data to state exchange, currency and timestamp,
 so the summary always carries all three, along with the market's backdrop: the S&P 500, the VIX and the
 10-year Treasury yield. Charts are cached for 15 minutes beside the SEC responses, since the market regime and a
 stock's trading snapshot read the same charts.

@@ -3,17 +3,17 @@
 N1 (cited sources are registered), N2 (material numbers carry a source), N3 (company-only claims say how far they are
 verified) and N6 (no internal working material) apply to every section as it is saved and to the whole report; N4
 (the rating's evidence gate) applies to a version. Rule numbers refer to requirements.md. The depth and completeness
-standard is the skill's QA, in tools/qa/.
+standard is in tools/qa/.
 
-N2 is judged per paragraph, list item or table row rather than per sentence: the skill limits a section to six
-inline source tags (scripts/check_depth.py), so a paragraph is cited once and a table carries a Source column.
+N2 is judged per paragraph, list item or table row rather than per sentence: a section is limited to six
+inline source tags (tools/qa/check_depth.py), so a paragraph is cited once and a table carries a Source column.
 """
 import re
 
 from . import sections
 from .agents import AGENTS
 
-# SOURCE_ID_RE as in the skill's scripts/check_citations.py, with lookarounds for IDs next to Chinese text.
+# SOURCE_ID_RE as in the original scripts/check_citations.py, with lookarounds for IDs next to Chinese text.
 SOURCE_ID_RE = re.compile(r'(?<![A-Za-z0-9])S\d+(?!\d)')
 NUMBER_RE = re.compile(r'(?<![\w.])[$¥€]?\d[\d,]*(?:\.\d+)?\s?(?:%|x|×|bn|billion|million|mn|[MBK]\b|亿|万|倍)?')
 ISO_DATE_RE = re.compile(r'\b\d{4}-\d{2}(?:-\d{2})?\b|\d{4}\s*年(?:\s*\d{1,2}\s*月(?:\s*\d{1,2}\s*日)?)?')
@@ -29,7 +29,7 @@ TABLE_SEPARATOR_RE = re.compile(r'^\|?\s*:?-{2,}:?\s*(?:\|\s*:?-{2,}:?\s*)+\|?$'
 VERIFICATION_RE = re.compile(r'company-provided|company-reported|not independently verified|partially verified|unverified|'
                              r'contradicted|not publicly disclosed|公司提供|公司自报|未独立验证|部分验证|已验证|未验证|矛盾|未披露',
                              re.I)
-# Working material the skill keeps out of delivered reports ("mandatory cleanliness").
+# Working material kept out of delivered reports ("mandatory cleanliness").
 INTERNAL_PHRASES_RE = re.compile(
     r'\bmust[- ]fix\b|\bshould[- ]fix\b|\bevidence (?:block|matrix|packet)\b|\bcase file\b|\bsource register\b'
     r'|\brewrite plan\b|\bred[- ]team review\b|\bsection gate\b|\bCritical item\b'

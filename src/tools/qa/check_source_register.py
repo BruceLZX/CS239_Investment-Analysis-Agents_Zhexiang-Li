@@ -1,4 +1,4 @@
-"""The source register, ported from the skill's scripts/check_source_register.py: at least 8 usable sources, 4 of
+"""The source register, ported from scripts/check_source_register.py: at least 8 usable sources, 4 of
 them independent and 1 primary or near-primary.
 
 A usable source has a title, a type, a link or file reference, a date, the claims it supports and a confidence of

@@ -201,7 +201,7 @@ blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--lin
   <header class="top">
     <div>
       <h1>Investment research team</h1>
-      <p class="sub">Nine DeepSeek agents on Rakazo write the investment-analysis skill's fourteen-section report, rendered with its own template. The rules are prompt instructions only; nothing enforces them yet.</p>
+      <p class="sub">Nine DeepSeek agents on Rakazo write a fourteen-section investment report, rendered to HTML and PDF. The rules are prompt instructions only; nothing enforces them yet.</p>
     </div>
     <div class="controls">
       <div class="control-group"><span>Live</span><select id="scenario" aria-label="Scenario"></select><button id="start" class="primary">Start live run</button></div>
@@ -912,7 +912,7 @@ function renderMemo(view) {
   $('memo-chip').replaceChildren(el('span', {class: 'chip ' + chip[0]}, chip[1]),
     draft.report ? el('a', {href: base + '.html', target: '_blank', class: 'small'}, ' open HTML') : '',
     draft.pdf ? el('a', {href: base + '.pdf', target: '_blank', class: 'small'}, ' · PDF') : '');
-  // The version as the server rendered it with the skill's template; the Markdown when no HTML was kept.
+  // The version as the server rendered it; the Markdown when no HTML was kept.
   if (draft.report) $('memo').replaceChildren(el('iframe', {class: 'report-frame', src: base + '.html', title: 'Report'}));
   else $('memo').innerHTML = md(draft.markdown, false);
 }

@@ -1,4 +1,4 @@
-"""The delivery folder's contract, ported from the skill's scripts/clean_output.py: sources/ with the client's
+"""The delivery folder's contract, ported from scripts/clean_output.py: sources/ with the client's
 original documents, exactly one HTML report and one PDF, and nothing else. The server writes the folder itself, so
 this checks it rather than deleting anything.
 """

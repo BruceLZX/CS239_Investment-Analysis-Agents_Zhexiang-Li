@@ -1,6 +1,6 @@
 # Phase 1 traces
 
-The Phase 2 baseline, from the nine-bot team that works to the investment-analysis skill in full, is in [`phase2-baseline/`](phase2-baseline/README.md). This page covers the Phase 1 traces in [`phase1/`](phase1/).
+The Phase 2 baseline, from the nine-bot team, is in [`phase2-baseline/`](phase2-baseline/README.md). This page covers the Phase 1 traces in [`phase1/`](phase1/).
 
 Each scenario in [`../src/scenarios/`](../src/scenarios/) ran on the pinned Rakazo build with DeepSeek (`deepseek-v4-pro`, thinking high) and the four-agent team: the Lead Analyst, the Fundamentals Analyst, the Market Analyst and the IC Reviewer. Each run is exported in two forms:
 
@@ -194,7 +194,7 @@ The structural policies held in all four traces:
   - Confidential material (P20) and hidden instructions in documents (P29).
   - The review gate (P7) and its limits (P9): two runs ended with no memo rather than an unapproved one.
   - The new coordination: briefs to both analysts at once (P2), waiting for both packets (P6), and routing each evidence request to the analyst whose area it is (P26).
-- **Where the review caught the team's own mistakes:** a tariff claim cited to the wrong source, unlabelled company claims, a capex figure the two analysts disagreed on, and a figure a revision doubled. This is the skill's red-team pass and QA loop, working across agents.
+- **Where the review caught the team's own mistakes:** a tariff claim cited to the wrong source, unlabelled company claims, a capex figure the two analysts disagreed on, and a figure a revision doubled. This is a red-team pass and a QA loop, working across agents.
 - **Where they broke:** the policies that need a fine-grained check.
   - Fetching URLs that the bot's own searches hadn't returned (P19), in three of four runs. Rakazo's guard stopped every one, but in public-equity-memo the blocked attempt became a "10-Ks never fetched" note that cost the memo its approval.
   - The research budget (P17), in two runs.

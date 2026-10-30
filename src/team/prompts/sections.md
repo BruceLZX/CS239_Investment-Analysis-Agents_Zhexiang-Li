@@ -1,9 +1,9 @@
 # The report's sections
 
-Each "##" section below is one report section's standard, condensed from the investment-analysis skill's playbooks
+Each "##" section below is one report section's standard, condensed from the playbooks
 (src/team/playbooks). team/profiles.py gives each bot the standards for the sections it writes, with the floors,
 components and tables from tools/sections.py, which the checks use too. "## standard" is the writing standard for every
-section and "## components" the syntax of the visual components. "## Deviations from the skill" is for readers of this
+section and "## components" the syntax of the visual components. "## Departures from the playbooks" is for readers of this
 repository; no bot receives it.
 
 ## standard
@@ -18,7 +18,7 @@ repository; no bot receives it.
 
 ## components
 
-A component is a Markdown table or list inside a fence named after it (here a risk matrix); the server renders it into the skill's template. Each one listed for your section is required. Any other Markdown table becomes a data table automatically, and every [S#] becomes a link to the source appendix.
+A component is a Markdown table or list inside a fence named after it (here a risk matrix); the server renders it into the report template. Each one listed for your section is required. Any other Markdown table becomes a data table automatically, and every [S#] becomes a link to the source appendix.
 
 ```
 ::: risk-matrix
@@ -59,7 +59,7 @@ A component is a Markdown table or list inside a fence named after it (here a ri
 
 ## market
 - Size the market two ways, top-down and bottom-up (population x price), as TAM, SAM and SOM with the near-term obtainable revenue, each figure with its source and year; growth (CAGR) and why now.
-- Domestic versus international: a regional table (Region | Market size (year) | Growth | Company's position: entered, planned or blocked | Barriers | Key competitors | Source), and the eight market systems where material (home, revenue, expansion, supplier, comparable, capital, exit markets and the investor's perspective); or the skill's sentence that geography is not material.
+- Domestic versus international: a regional table (Region | Market size (year) | Growth | Company's position: entered, planned or blocked | Barriers | Key competitors | Source), and the eight market systems where material (home, revenue, expansion, supplier, comparable, capital, exit markets and the investor's perspective); or the playbook's sentence that geography is not material.
 - Budget owner, procurement cycle, willingness to pay; whether demand is organic or created by policy or subsidy, with the policy documents and dates.
 - Component: evidence.
 
@@ -98,7 +98,7 @@ A component is a Markdown table or list inside a fence named after it (here a ri
 - Components: risk-matrix (Risk | Probability | Impact | Level | Timing | Signpost | Mitigation | Source; Level critical, high, medium or low), info (danger) for the risk that would break the thesis.
 
 ## thesis
-- The thesis in the skill's form: if the need is real, and the capability is defensible, and the economics scale, then the outcome is attractive at this price or these terms, unless the killer risks materialize.
+- The thesis in this form: if the need is real, and the capability is defensible, and the economics scale, then the outcome is attractive at this price or these terms, unless the killer risks materialize.
 - Consensus versus our view, with the evidence for any difference; bull, base and bear cases with probabilities that add up to 100%, their drivers and their outcome (price, return or MOIC; milestone scenarios for early-stage or data-poor cases); the 3-5 key assumptions, ranked (Assumption | Confidence | What would disprove it | Impact if wrong | Early warning | Source).
 - Historical analogs close enough to teach a decision rule (or say there is none); the price or terms at which the case turns attractive or unattractive; the decision tree: invest now, wait for a milestone, pass, or invest with conditions.
 - Components: scenarios (Scenario | Probability | Drivers | Outcome | Signposts | Source with Bull, Base and Bear rows), analogs (Analog | Kind best or cautionary | Period | Lesson | Source).
@@ -111,7 +111,7 @@ A component is a Markdown table or list inside a fence named after it (here a ri
 ## esg
 - Only the financially material issues: governance (board, control, dual-class voting, related parties, disclosure quality, information rights), privacy and data security, labor, environment, product safety and compliance culture (ESG issue | Why material | Evidence | Rating impact | Source).
 - The regulatory record from the industry's registries and the courts: licenses, approvals, recalls, enforcement and litigation (Regulator or registry | Record | Date | Status | Source); what could not be checked and the user data requests filed for it.
-- The policy and geopolitics impact matrix where material (Factor | Exposure | Probability | Impact on company | Mitigant | Source), with the jurisdictions mapped; or the skill's sentence that policy is not material.
+- The policy and geopolitics impact matrix where material (Factor | Exposure | Probability | Impact on company | Mitigant | Source), with the jurisdictions mapped; or the playbook's sentence that policy is not material.
 
 ## scoring
 - A weighted score table (Dimension | Weight | Score (1-10) | Rationale | Source) with the dimensions and weights below for the company type; the composite is the weighted average to one decimal, stated in the text. A dimension without a peer or benchmark comparison scores 7 at most.
@@ -120,17 +120,17 @@ A component is a Markdown table or list inside a fence named after it (here a ri
 - The next diligence actions and the conditions for investing.
 - Components: sensitivity (Rank | Assumption | Base | What would disprove it | Impact on value | Impact level | Early warning | Source; Impact level high, medium or low), takeaways (three numbered decision statements).
 
-## Deviations from the skill
+## Departures from the playbooks
 
-Where the app departs from the skill, and why:
-- **One analyst becomes nine bots.** The skill is one agent working through every lens; here each lens has an owner, and the playbooks are read with `read_playbook`, since together they exceed Rakazo's 20,000-character limit on a bot's instructions.
+Where the app departs from the playbooks, and why:
+- **One analyst becomes nine bots.** The playbooks address one analyst working through every lens; here each lens has an owner, and the playbooks are read with `read_playbook`, since together they exceed Rakazo's 20,000-character limit on a bot's instructions.
 - **Workflow files are case-file records.** `_work/*.md` become typed tool arguments, so the checks read fields instead of parsing Markdown tables.
-- **Sections are written in Markdown, not HTML.** The server renders them into the skill's template, so the template's markup and its version marker cannot drift.
-- **Checks report and never block.** The skill's harness refuses to go on; here the Phase 2 policy framework decides what to enforce, and the trace records every check.
-- **Bugs in the skill's scripts are fixed** (see each module in src/tools/qa/), and English word lists sit beside the Chinese ones.
-- **Scoring weights** are the app's own (tools/sections.py), since the skill asks for a weighted score but defines none.
-- **Review rounds are capped at three.** The skill loops until no Critical item remains; here a third failed review ends the case without delivery.
+- **Sections are written in Markdown, not HTML.** The server renders them into the report template, so the template's markup and its version marker cannot drift.
+- **Checks report and never block.** The Phase 2 policy framework decides what to enforce, and the trace records every check.
+- **Bugs in the original check scripts are fixed** (see each module in src/tools/qa/), and English word lists sit beside the Chinese ones.
+- **Scoring weights** are the app's own (tools/sections.py), since the report standard asks for a weighted score but defines none.
+- **Review rounds are capped at three.** The playbooks loop until no Critical item remains; here a third failed review ends the case without delivery.
 - **Evidence hierarchies.** The playbooks give three slightly different orders; the app uses the regulatory lens's (court and regulatory records first, OCR last) for source types and confidence.
 - **Section numbering** follows the template's fourteen slots; the deep-dive playbook's own section numbers and benchmark codes differ, so headings are matched by name.
 - **Reports in English.** The template's chrome is Chinese with bilingual section titles; a report in English adds English to the cover's labels, the briefing's subtitle and the disclaimers, keeping the Chinese that check_report.py requires.
-- **Inline source tags.** check_depth.py allows 6 a section and check_report.py 60 a report, which fourteen sections within their own limit exceed. The app keeps 6 a section, applies it to the executive summary too, and allows 90 a report (6 for each of fifteen). N2 asks for a source ID in every paragraph, list item or table row with a figure, so a paragraph carries one tag and a table its Source column.
+- **Inline source tags.** The original scripts allow 6 a section and 60 a report, which fourteen sections within their own limit exceed. The app keeps 6 a section, applies it to the executive summary too, and allows 90 a report (6 for each of fifteen). N2 asks for a source ID in every paragraph, list item or table row with a figure, so a paragraph carries one tag and a table its Source column.

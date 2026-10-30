@@ -3,8 +3,8 @@
 One scenario runs at a time. team.run_scenario writes runs/active.json; every tool call
 loads the active run's case.json, changes it and saves it back. The case file also lets
 the Lead see what has actually arrived, instead of relying on memory across Rakazo runs.
-It holds the skill's workflow records too (research plan, evidence matrix, thesis table, scenario
-analysis, red-team and investor reviews), which the skill keeps as _work/ files.
+It holds the workflow records too (research plan, evidence matrix, thesis table, scenario
+analysis, red-team and investor reviews), which the playbooks call _work/ files.
 """
 from contextlib import contextmanager
 from datetime import datetime, timezone

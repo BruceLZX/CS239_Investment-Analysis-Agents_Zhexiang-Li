@@ -1,4 +1,4 @@
-"""Report completeness, ported from the skill's scripts/check_report.py.
+"""Report completeness, ported from scripts/check_report.py.
 
 The rendered report keeps the template (its version marker, no old overlay TOC, no unfilled placeholder); its
 executive summary is a real briefing (900+ characters, every element, a verdict strip and five briefing cards);
@@ -10,7 +10,7 @@ Fixed or added here:
 - The scenario rule counted only English "bull case"-style labels; Chinese labels and scenario-table rows count too.
 - The assumption rule matched almost any text (".*" across the whole report); it needs the words themselves.
 - The public-equity "valuation" group matched "pe" inside any English word; it needs P/E as a term.
-- SKILL.md requires sixteen visual components in every report but the script checked two; all are checked here,
+- Every report needs sixteen visual components but the script checked two; all are checked here,
   with the composite score in the meta tag and section 14 (which nothing checked).
 - The script allowed 60 inline source tags in a report while check_depth.py allows 6 a section, so fourteen
   sections within their own limit failed the report's. The report's limit is 6 for each of its fifteen sections,
@@ -62,7 +62,7 @@ GEOGRAPHY_RE = re.compile(r'地理|市场体系|国内|国际|海外|本土|全�
                           r'customer market|supplier market|capital market|exit market|geographic|domestic|international|'
                           r'overseas|region|cross-border', re.I)
 SOURCE_WORDS_RE = re.compile(r'来源|Source|source|公告|年报|招股书|专利|监管|filing|10-K|10-Q|annual report|disclosed')
-# The sixteen components SKILL.md requires in every report, by the class (or classes) that show each is there.
+# The sixteen components every report needs, by the class (or classes) that show each is there.
 REQUIRED_COMPONENTS = {
     'verdict strip': ('verdict-strip',), 'briefing grid': ('briefing-grid', 'brief-card'),
     'KPI dashboard': ('kpi-dashboard', 'kpi-card'), 'KPI signal': ('kpi-good', 'kpi-warn', 'kpi-critical'),

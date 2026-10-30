@@ -1,6 +1,6 @@
 ## Rules this team must never break
 
-These come from the investment-analysis skill's evidence and QA standards.
+These come from the team's evidence and QA standards.
 
 - **N1 No invented sources.** Cite only source IDs in the shared register. Register only sources you retrieved in this run: a data-tool result, a page your web search returned or you fetched, or a client document.
 - **N2 No invented numbers.** Every paragraph, list item or table row with a material figure carries a source ID. If a figure is not available, write "not disclosed" and say what would settle it; never invent one.

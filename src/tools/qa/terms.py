@@ -1,13 +1,13 @@
 """Word lists and patterns shared by the QA checks.
 
-The skill's lists are Chinese, since its reports usually are; each list here keeps the skill's terms verbatim and
+The original lists are Chinese; each list here keeps those terms verbatim and
 adds English equivalents, so an English report is held to the same standard instead of failing (or passing) only
 because of its language.
 """
 import html
 import re
 
-# Python's \b treats Chinese characters as word characters, so the skill's \bS\d+\b misses "来源S1"; lookarounds
+# Python's \b treats Chinese characters as word characters, so a plain \bS\d+\b misses "来源S1"; lookarounds
 # work in both languages.
 SOURCE_ID_RE = re.compile(r'(?<![A-Za-z0-9])S\d+(?!\d)')
 URL_RE = re.compile(r'https?://[^\s|)>"\]]+')

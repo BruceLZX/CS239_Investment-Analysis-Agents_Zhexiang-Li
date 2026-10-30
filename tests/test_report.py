@@ -126,7 +126,7 @@ def test_the_pdf_prints_from_the_html(tmp_path: Path):
     assert result['bytes'] > 10_000 and (tmp_path / 'report.pdf').read_bytes()[:4] == b'%PDF'
 
 
-def test_names_follow_the_skills_output_contract():
+def test_names_follow_the_output_contract():
     assert report.folder_name('Northwind Devices', 'consumer electronics') == 'NorthwindDevices_ConsumerElectronics'
     assert report.report_file_name('Northwind Devices', 'en') == 'NorthwindDevices_Investment_Report'
     assert report.report_file_name('北风科技', 'zh') == '北风科技_投资分析报告'
@@ -142,7 +142,7 @@ def test_a_report_in_english_has_its_labels_and_disclaimers_in_english_too():
     assert all(chinese in template for chinese, _ in report.ENGLISH_CHROME)
     english, chinese = full_report(), full_report('zh')
     assert 'Report date' in english and 'it is not investment advice' in english
-    assert all(text in english for text in check_report.REQUIRED_TEXT)  # the Chinese the skill's check needs
+    assert all(text in english for text in check_report.REQUIRED_TEXT)  # the Chinese the check needs
     assert 'Report date' not in chinese and 'not investment advice' not in chinese
 
 

@@ -247,7 +247,7 @@ def search_literature(source: str, query: str, limit: int = 10) -> str:
     return _registered(records.search_literature(source, query, limit), 'search_literature')
 
 
-# The skill's playbooks
+# The playbooks
 
 def _playbook_file(name: str) -> Path:
     stem = Path(name.strip()).stem
@@ -276,7 +276,7 @@ def _heading_end(headings: list[tuple[int, int, str]], start: int, level: int, t
 
 @tool(READ)
 def read_playbook(name: str, heading: str = '', page: int = 1) -> str:
-    """Read the investment-analysis skill's playbooks, the standard the team works to. name: a playbook file, e.g.
+    """Read the playbooks, the standard the team works to. name: a playbook file, e.g.
     company_deep_dive_playbook.md. heading: a heading in it (as listed); the text runs to the next heading of the
     same level. With no heading you get the whole file if it fits in one result, or its list of headings."""
     path = _playbook_file(name)
@@ -308,7 +308,7 @@ def read_playbook(name: str, heading: str = '', page: int = 1) -> str:
 # Shared source register and case file
 
 def _source_type(source_type: str) -> str:
-    """One of the skill's source types, from what the caller wrote."""
+    """One of the fixed source types, from what the caller wrote."""
     text = source_type.strip().lower()
     if 'ocr' in text:
         return 'OCR'
@@ -444,7 +444,7 @@ def request_user_data(database: str, query: str, why: str, how: str, section: st
 @tool(WRITE)
 def save_evidence_block(section: str, queries: list[str], rows: list[EvidenceRow], gate_done: list[int],
                         plan: SectionPlan) -> dict:
-    """Save a section's evidence before drafting it: the skill's evidence-matrix block. queries: the targeted
+    """Save a section's evidence before drafting it: its evidence-matrix block. queries: the targeted
     searches and filing reads you ran for this section (at least 4). rows: the Deep Evidence Table (at least 4 rows,
     each cell argued). gate_done: the numbers of the section-gate items you have met: 1 two independent sources
     opened, 2 a primary or near-primary source checked, 3 two numeric facts or a missing-data note, 4 source IDs in
@@ -507,7 +507,7 @@ def get_evidence_matrix(sections_wanted: list[str] | None = None) -> str:
 
 @tool(READ)
 def get_gate(sections_wanted: list[str] | None = None) -> dict:
-    """The pre-draft gate (the skill's harness gate): for each section, whether its evidence block passes; then the
+    """The pre-draft gate (the playbooks' harness gate): for each section, whether its evidence block passes; then the
     source register and the research plan. sections_wanted: section keys; empty for your own sections (all of them
     for the Lead and the IC Reviewer). Reports only."""
     case = read_case()
@@ -536,10 +536,10 @@ def _save_workflow(kind: str, record: dict) -> None:
 @tool(WRITE)
 def save_research_plan(spines: list[Spine], industry_map: str, geo_lens: str, policy_lens: str,
                        regulatory_databases: list[str], gates_done: list[int], hypothesis: str) -> dict:
-    """Save the research plan (the skill's _work/research_plan.md); save again as the case moves on. spines: 1-3
+    """Save the research plan (the playbooks' _work/research_plan.md); save again as the case moves on. spines: 1-3
     analysis spines from report_strategy_playbook.md, each with the question it must answer. industry_map: the value
     chain, the decisive bottleneck and the company's place in it. geo_lens and policy_lens: whether each lens is
-    material and, if so, the market systems or jurisdictions to map (or the skill's "not material" sentence).
+    material and, if so, the market systems or jurisdictions to map (or the playbook's "not material" sentence).
     regulatory_databases: the registries that matter for this industry. gates_done: the numbers (1-13) of the
     research-plan gates met so far. hypothesis: the current invest / wait / pass view."""
     record = {'spines': [s.model_dump() for s in spines], 'industry_map': industry_map, 'geo_lens': geo_lens,
@@ -554,7 +554,7 @@ def save_research_plan(spines: list[Spine], industry_map: str, geo_lens: str, po
 
 @tool(WRITE)
 def save_profile_requirements(items_done: list[int], evidence: str) -> dict:
-    """Save the profile requirements (the skill's _work/profile_requirements.md): items_done, the numbers of the
+    """Save the profile requirements (the playbooks' _work/profile_requirements.md): items_done, the numbers of the
     profile items met (see the result for the list); evidence, what was done for each, with source IDs (240+
     characters)."""
     record = {'items': [check_workflow_docs.PROFILE_ITEMS[n - 1] for n in dict.fromkeys(items_done)
@@ -686,7 +686,7 @@ def save_memo_part(section: str, markdown: str) -> dict:
                                                   'depth': _short(check['depth'], 12), 'counts': check['counts']}}
     notes = [] if scoped else ['The case has no scope yet, so the section was checked as a listed company.']
     if key != sections.EXECUTIVE_SUMMARY.key and not revision['evidence_before_draft']:
-        notes.append('This section has no passing evidence block yet: the skill drafts only from a completed one.')
+        notes.append('This section has no passing evidence block yet: draft only from a completed one.')
     if saves >= SAVES_BEFORE_NOTE and not check['passed']:
         notes.append(f'This is your save {saves} of this section since the last review. Rather than saving again, '
                      'state what is still open as a limitation in the section.')
@@ -788,7 +788,7 @@ def composite_score(scoring_markdown: str) -> tuple[str | None, list[str]]:
 
 def _run_checks(case: dict, texts: dict[str, str], html_text: str, pdf_path: Path | None, rating: str | None,
                 composite: str | None) -> dict:
-    """Every QA check on a set of sections and their rendered report: the skill's loop plus the rules."""
+    """Every QA check on a set of sections and their rendered report: the QA loop plus the rules."""
     listed = case_file.is_listed(case)
     per_section = {key: check_section_text(key, text, case) for key, text in texts.items()}
     plain = report.plain_report(texts, case['sources'], report.Cover((case.get('scope') or {}).get('company', '')),
@@ -827,7 +827,7 @@ def _cover(case: dict, tagline: str, business_summary: str, industry: str, headq
 
 
 def _further_diligence(case: dict) -> list[str]:
-    """Important review items still open, which the skill lists in the appendix as areas for further diligence."""
+    """Important review items still open, which the appendix lists as areas for further diligence."""
     review = case_file.finished_reviews(case)[-1] if case_file.finished_reviews(case) else None
     return [f"{', '.join(i['sections'])}: {i['issue']}" for i in (review or {}).get('items') or []
             if i['severity'] == 'Important']
@@ -841,7 +841,7 @@ def _render(case: dict, texts: dict[str, str], cover: dict, data_as_of: str, com
 
 @tool(WRITE)
 def run_qa_loop() -> dict:
-    """The skill's QA loop on the sections as saved now: render the report, run every check (rules, depth,
+    """The QA loop on the sections as saved now: render the report, run every check (rules, depth,
     citations, report completeness, evidence, register, workflow records) and, when it fails, write the rewrite plan:
     one item per failing section for its owner and one per report-level problem for you. Logged as an iteration."""
     with open_case() as case:
@@ -877,7 +877,7 @@ def _version_dir(version: int) -> Path:
 def save_memo_version(rating: str, data_as_of: str, tagline: str, business_summary: str, industry: str,
                       headquarters: str, stage: str) -> dict:
     """Save the sections as they are now as a new version for review; a version never changes. The server renders it
-    with the skill's template to HTML and PDF, with the source appendix, the user data requests and the composite
+    with the report template to HTML and PDF, with the source appendix, the user data requests and the composite
     score (worked out from section 14's weighted score table), and runs every QA check. rating: Buy, Add, Hold,
     Watchlist, Hold off, Reduce, Sell or Avoid (listed); Invest now, Invest with conditions, Wait for milestone or
     Pass (private). data_as_of: YYYY-MM-DD. tagline, business_summary, industry, headquarters, stage: the report's
@@ -923,7 +923,7 @@ def save_memo_version(rating: str, data_as_of: str, tagline: str, business_summa
 
 @tool(READ)
 def get_memo_check(version: int | None = None, section: str | None = None) -> dict:
-    """Check the report against the team's rules and the skill's QA, without recording anything. section: one
+    """Check the report against the team's rules and the QA checks, without recording anything. section: one
     section's key for its check alone, or empty for the whole report. version: a saved version's number, 0 for the
     latest, or empty for the sections as saved now. A saved version's check is the one made when it was saved."""
     case = read_case()
@@ -957,7 +957,7 @@ def _review(case: dict, review_id: str) -> dict:
 
 @tool(WRITE)
 def start_review(memo_version: int) -> dict:
-    """Open the investor-committee review of one report version. You then save the skill's five review passes one
+    """Open the investor-committee review of one report version. You then save the five review passes one
     at a time with save_review_pass, and close it with finish_review. Starting again on a version you already
     reviewed reopens that review: the same round, its passes cleared."""
     with open_case() as case:
@@ -980,7 +980,7 @@ def start_review(memo_version: int) -> dict:
 
 @tool(WRITE)
 def save_review_pass(review_id: str, pass_number: int, items: list[ReviewItem], notes: str = '') -> dict:
-    """Save one of the skill's five review passes: 1 completeness sweep, 2 claim verification, 3 missing competitors,
+    """Save one of the five review passes: 1 completeness sweep, 2 claim verification, 3 missing competitors,
     4 product/market fit, 5 number stress-test. items: what the pass found, each Critical, Important or Minor, with
     the sections it concerns, the issue, the fix and any evidence request. notes: the pass's other output (e.g. the
     product/market-fit questions, or the stress-test arithmetic). Saving a pass again replaces it."""
@@ -1073,7 +1073,7 @@ def get_latest_review() -> str:
 
 @tool(WRITE)
 def deliver_memo(version: int = 0) -> dict:
-    """Deliver a report version to the user: run the skill's final check (report QA, citations, the delivery
+    """Deliver a report version to the user: run the final check (report QA, citations, the delivery
     folder's contract) and write the delivery folder: sources/ with the client's documents, the HTML report and its
     PDF. version 0 means the latest. Returns the delivery record: the review gate for that exact version and the
     final check. Report only: delivery is never blocked."""

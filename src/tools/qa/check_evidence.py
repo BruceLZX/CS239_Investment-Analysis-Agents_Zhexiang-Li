@@ -1,4 +1,4 @@
-"""The evidence matrix, ported from the skill's scripts/check_evidence.py: the pre-draft gate for each section.
+"""The evidence matrix, ported from scripts/check_evidence.py: the pre-draft gate for each section.
 
 Every numbered section needs an evidence block before it is drafted:
 - at least 4 targeted search queries;
@@ -10,7 +10,7 @@ Every numbered section needs an evidence block before it is drafted:
 - no internal writing rubric, and no cell that repeats another section's.
 
 For a listed company the matrix also needs rows on market data, the income statement, cash flow, the balance sheet
-and debt, valuation, consensus and guidance, and capital allocation (SKILL.md step 14).
+and debt, valuation, consensus and guidance, and capital allocation.
 
 Fixed here:
 - The script counted every bullet in a block as a search query, the section plan's own lines included; only the
@@ -57,7 +57,7 @@ ROW_FIELDS = {  # cell: (label, minimum characters)
 CONFIDENCE_RE = re.compile(r'high|medium|low|高|中|低', re.I)
 PRIMARY_TYPES_RE = re.compile(r'\bprimary\b|near-primary|filing|regulat|official|registry|patent|company page|'
                               r'press release|公告|年报|财报|招股书|官网|监管|专利|工商', re.I)
-# SKILL.md step 14: dedicated evidence rows for a listed company.
+# Dedicated evidence rows for a listed company.
 PUBLIC_EQUITY_ROWS = {
     'market data': ('market data', 'share price', 'market cap', '股价', '市值'),
     'income statement': ('income statement', 'revenue', 'margin', '利润表', '收入'),

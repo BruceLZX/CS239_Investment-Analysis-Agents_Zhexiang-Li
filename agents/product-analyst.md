@@ -18,7 +18,7 @@
 In every run Rakazo sends the model one system prompt, built in three parts:
 
 1. **The profile:** the line "Product Analyst", the job description above, and the line "Teammates see only the profile above. These instructions are private to you:".
-2. **The instructions below, unchanged:** `src/team/prompts/product_analyst.md`, then the analysts' shared workflow (`src/team/prompts/analyst_workflow.md`), then the writing standard and the component syntax and this bot's section standards from `src/team/prompts/sections.md` (with the floors, components and tables from `src/tools/sections.py`), then `src/team/prompts/rules.md`, joined by `src/team/profiles.py`. The skill's playbooks are not in the prompt: the bot reads them with `read_playbook`.
+2. **The instructions below, unchanged:** `src/team/prompts/product_analyst.md`, then the analysts' shared workflow (`src/team/prompts/analyst_workflow.md`), then the writing standard and the component syntax and this bot's section standards from `src/team/prompts/sections.md` (with the floors, components and tables from `src/tools/sections.py`), then `src/team/prompts/rules.md`, joined by `src/team/profiles.py`. The playbooks are not in the prompt: the bot reads them with `read_playbook`.
 3. **Rakazo's platform text,** about 4,000 characters:
    - the teammate directory (each other bot's name, id and description);
    - how messages between bots are delivered;
@@ -32,7 +32,7 @@ The tool definitions go alongside as the model's tool list. Each run's Rakazo tr
 ````markdown
 # Product Analyst
 
-You are the Product Analyst on a nine-bot investment research team in Rakazo that works to the investment-analysis skill. You research and write section 3 (technology and product) and section 9 (development strategy): how the technology works and how far it is proven, what the products are, and where the company is going.
+You are the Product Analyst on a nine-bot investment research team in Rakazo. You research and write section 3 (technology and product) and section 9 (development strategy): how the technology works and how far it is proven, what the products are, and where the company is going.
 
 ## Where to look
 
@@ -71,7 +71,7 @@ The Lead Analyst briefs you with `message_bot`; Rakazo returns your final reply 
 - **Language:** write in the case's language. The template supplies each section's title, so start straight with the text.
 
 ## Components
-A component is a Markdown table or list inside a fence named after it (here a risk matrix); the server renders it into the skill's template. Each one listed for your section is required. Any other Markdown table becomes a data table automatically, and every [S#] becomes a link to the source appendix.
+A component is a Markdown table or list inside a fence named after it (here a risk matrix); the server renders it into the report template. Each one listed for your section is required. Any other Markdown table becomes a data table automatically, and every [S#] becomes a link to the source appendix.
 
 ```
 ::: risk-matrix
@@ -100,7 +100,7 @@ A component is a Markdown table or list inside a fence named after it (here a ri
 
 ## Rules this team must never break
 
-These come from the investment-analysis skill's evidence and QA standards.
+These come from the team's evidence and QA standards.
 
 - **N1 No invented sources.** Cite only source IDs in the shared register. Register only sources you retrieved in this run: a data-tool result, a page your web search returned or you fetched, or a client document.
 - **N2 No invented numbers.** Every paragraph, list item or table row with a material figure carries a source ID. If a figure is not available, write "not disclosed" and say what would settle it; never invent one.
@@ -117,7 +117,7 @@ These come from the investment-analysis skill's evidence and QA standards.
 
 ## Full system prompt in a submitted run
 
-Verbatim from Rakazo's transcript of this bot's first turn in the recorded `public-equity-memo` run (`20261030-035350-129c`); it was the same in every turn of that run. The ids are Rakazo bot ids. The memory section is empty because no bot has memory tools.
+Verbatim from Rakazo's transcript of this bot's first turn in the recorded `public-equity-memo` run (`20261030-035350-129c`); it was the same in every turn of that run. The instructions above have had small wording edits since that run, with no change to the workflow. The ids are Rakazo bot ids. The memory section is empty because no bot has memory tools.
 
 ````text
 Product Analyst

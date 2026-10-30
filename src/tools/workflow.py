@@ -1,7 +1,7 @@
-"""The skill's workflow records as tool arguments: the evidence matrix, the research plan, the thesis table, the
+"""The workflow records as tool arguments: the evidence matrix, the research plan, the thesis table, the
 scenario analysis, the red-team review and the investor review.
 
-The skill keeps them as _work/*.md files it creates from templates (scripts/run_analysis_harness.py); here each is a
+The playbooks keep them as _work/*.md files created from templates; here each is a
 typed tool argument, so a bot fills the same fields and the server stores them in the case file. The field
 descriptions are what the bots see.
 """

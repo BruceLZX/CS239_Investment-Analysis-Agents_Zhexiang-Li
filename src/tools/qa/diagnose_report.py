@@ -1,7 +1,7 @@
-"""The rewrite plan, ported from the skill's scripts/diagnose_report.py: after a failed QA loop, what each section's
+"""The rewrite plan, ported from scripts/diagnose_report.py: after a failed QA loop, what each section's
 owner must rewrite, and the report-level root causes.
 
-The skill writes _work/rewrite_plan.md with unchecked boxes that block the next gate until ticked. Here the plan is a
+The original writes _work/rewrite_plan.md with unchecked boxes that block the next gate until ticked. Here the plan is a
 case-file record, and an item is resolved by the work itself rather than by ticking a box: a section item when its
 section is saved again (still_failing says whether that revision passes its check), a report item when a later QA
 loop or version checks the whole report again, which reports the problem afresh if it is still there. An open plan

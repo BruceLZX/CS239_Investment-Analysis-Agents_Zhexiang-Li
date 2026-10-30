@@ -336,7 +336,7 @@ def page(request):
 
 
 def version_report(request):
-    """A saved version's HTML report or PDF, as the server rendered it with the skill's template."""
+    """A saved version's HTML report or PDF, as the server rendered it."""
     run_id, version, kind = (request.path_params['run_id'], request.path_params['version'],
                              request.path_params['kind'])
     path = case_file.RUNS / run_id / 'versions' / f'v{version}' / f'report.{kind}'

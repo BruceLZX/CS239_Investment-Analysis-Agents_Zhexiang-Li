@@ -1,11 +1,11 @@
-"""Section depth, ported from the skill's scripts/check_depth.py.
+"""Section depth, ported from scripts/check_depth.py.
 
 Per section: at least 2,500 characters, 8 numeric facts, 6 source mentions, 4 distinct source IDs and 6 analytical
 paragraphs; at most 6 inline source tags; every analytical-coverage group; no shallow, vague, filler or
 writing-about-writing phrases; and the section's granularity markers. Across the report: boilerplate limits,
 sentences said three or more times and paragraphs copied with small changes.
 
-Fixed here, with the skill's thresholds kept:
+Fixed here, with the script's thresholds kept:
 - main() used `visible_text` without defining it, so the granularity and vague-phrase stage never ran; it runs here.
 - Numbers counted the digits of source IDs ("S12") and of URLs; they no longer do.
 - Repeated sentences were counted over the raw page, CSS and JavaScript included; only visible text is now, and
@@ -15,7 +15,7 @@ Fixed here, with the skill's thresholds kept:
   English word into the same letter, so English paragraphs looked alike; words now survive normalisation.
 - The granularity markers named brain-computer-interface companies; they are generic here (sections.py) and cover
   section 13, which had none.
-Also added, from SKILL.md and the playbooks rather than the script: the components and tables each section needs.
+Also added, from the report standard and the playbooks rather than the script: the components and tables each section needs.
 """
 from difflib import SequenceMatcher
 import re
@@ -30,7 +30,7 @@ MAX_INLINE_TAGS = 6
 MAX_TITLE_MENTIONS = 4
 SOURCE_TAG_RE = re.compile(r'class="[^"]*\bsource-tag\b[^"]*"')
 APPENDIX_RE = re.compile(r'<section[^>]*id="sources-appendix"[\s\S]*?</section>')
-# The skill counts sentences of 28 non-space characters, a real sentence in Chinese but five English words, so an
+# The script counts sentences of 28 non-space characters, a real sentence in Chinese but five English words, so an
 # English verification label repeated as N3 asks counted as copied text; English sentences need 60.
 MIN_REPEATED_CHARS, MIN_REPEATED_LATIN_CHARS = 28, 60
 CJK_RE = re.compile(r'[\u4e00-\u9fff]')

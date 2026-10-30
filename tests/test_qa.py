@@ -1,4 +1,4 @@
-"""The skill's QA scripts as ported to the team, each held to the script's thresholds, with its bugs fixed."""
+"""The QA checks, each held to the original script's thresholds, with its bugs fixed."""
 from pathlib import Path
 import re
 
@@ -23,7 +23,7 @@ def test_a_section_written_to_the_standard_passes_every_depth_rule():
     assert result['counts']['inline_tags'] == 6 and result['counts']['paragraphs'] == 7
 
 
-def test_depth_floors_are_the_skills():
+def test_depth_floors_are_the_scripts():
     short = FINANCIALS.split('| Measure |')[0]
     failures = section_check(short)['failures']
     assert any('needs 2,500' in f for f in failures) and any('analytical paragraphs; needs 6' in f for f in failures)
@@ -105,7 +105,7 @@ def test_repeated_sentences_ignore_css():
 
 
 def test_a_verification_label_with_its_citation_is_not_a_repeated_sentence():
-    # N3 asks for the label on each company claim; with "[S1] medium" it reached the skill's 28 characters.
+    # N3 asks for the label on each company claim; with "[S1] medium" it reached the script's 28 characters.
     label = '<p>The deck claims a 94% pick rate. Company-reported, unverified <a class="source-tag">[S1]</a>' \
             '<span class="source-confidence conf-medium">medium</span>.</p>'
     failures = check_depth.check_report_depth(full_report().replace('</main>', label * 3 + '</main>', 1), {},

@@ -1,21 +1,21 @@
-"""The workflow records, ported from the skill's scripts/check_workflow_docs.py: the research plan, the profile
+"""The workflow records, ported from scripts/check_workflow_docs.py: the research plan, the profile
 requirements, the thesis table, the scenario analysis, the red-team review and any open rewrite plan.
 
-The skill keeps these as _work/*.md files; here they are case-file records the Lead and the Red Team write with
-tools, and the constants below are the skill's templates (scripts/run_analysis_harness.py).
+The original keeps these as _work/*.md files; here they are case-file records the Lead and the Red Team write with
+tools, and the constants below are its templates (scripts/run_analysis_harness.py).
 
 Fixed here:
 - The thesis table failed a Confidence cell of "High" (8-character minimum on every cell); confidence needs a level.
 - The scenario table skipped any row that mentioned the word "scenario", and a bare "30%" probability failed the
   length rule; probabilities are read as numbers and must add up to 100%.
 - "## The One Question" passed on the unfilled template; the question itself is checked now.
-- The profile checklist passed with 4 of codex's 9 items done; SKILL.md says to complete it, so every item counts.
+- The profile checklist passed with 4 of codex's 9 items done; it is meant to be completed, so every item counts.
 """
 import re
 
 from .terms import has_placeholder
 
-# run_analysis_harness.py's research-plan gates, with the skill's file names replaced by the app's tools.
+# run_analysis_harness.py's research-plan gates, with its file names replaced by the app's tools.
 RESEARCH_GATES = (
     'Confirm company identity, legal entity, geography, stage, and business model.',
     'Choose 1-3 report spines from report_strategy_playbook.md.',
@@ -33,7 +33,7 @@ RESEARCH_GATES = (
     'Run final QA, print the PDF, and verify the delivery folder.',
 )
 MIN_GATES = 8
-# The app's profile: run_analysis_harness.py's codex requirements (the skill's default profile) plus its
+# The app's profile: run_analysis_harness.py's codex requirements (its default profile) plus its
 # claude-code-deepseek-ocr requirements, since the team runs on DeepSeek and may read scanned decks.
 PROFILE_ITEMS = (
     'Use web and data tools for fresh facts whenever a company, market, price, policy, filing, funding, or executive '

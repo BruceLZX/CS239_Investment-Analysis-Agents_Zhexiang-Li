@@ -414,7 +414,7 @@ def observe_sections(case: dict) -> list[dict]:
 
 
 def observe_workflow(events: list[dict], case: dict) -> list[dict]:
-    """The skill's order of work: the research plan before the first brief (P33), the red-team review before the
+    """The order of work: the research plan before the first brief (P33), the red-team review before the
     first review (P35), the QA loop before each version (P36)."""
     observations = []
     calls = [e for e in events if e['type'] == 'tool_call']
@@ -700,7 +700,7 @@ def render_markdown(trace: dict) -> str:
         lines.append('None found.')
     final = trace.get('delivered_check')
     if final:
-        lines += ['', '## Final check at delivery', '', f"Report v{final['version']} against the skill's final check "
+        lines += ['', '## Final check at delivery', '', f"Report v{final['version']} against the final check "
                   '(reported, never blocking).', '', '| Check | Problems |', '|---|---|']
         for name in ('report', 'depth', 'citations', 'output'):
             found = final.get(name) or []

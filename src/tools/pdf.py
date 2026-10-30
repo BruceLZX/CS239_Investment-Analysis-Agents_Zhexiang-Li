@@ -1,4 +1,4 @@
-"""Print an HTML report to PDF with WeasyPrint, as the skill's scripts/generate_pdf.py does.
+"""Print an HTML report to PDF with WeasyPrint.
 
 report.write_pdf runs this in a child process with the library path WeasyPrint needs:
 

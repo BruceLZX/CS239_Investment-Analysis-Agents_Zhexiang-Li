@@ -1,4 +1,4 @@
-"""Citations against the source register, ported from the skill's scripts/check_citations.py.
+"""Citations against the source register, ported from scripts/check_citations.py.
 
 The report shows registered source IDs (at least five, or all of them when fewer are registered), cites no ID the
 register lacks, links at least three of the registered web sources, and names its sources in words.

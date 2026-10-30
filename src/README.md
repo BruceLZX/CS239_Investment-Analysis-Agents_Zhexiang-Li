@@ -1,6 +1,6 @@
 # Investment Analysis Agents: source code
 
-This folder holds the application: nine Rakazo bots that turn a company into a decision-grade investment report to the standard of the investment-analysis skill, and the MCP server their tools run on.
+This folder holds the application: nine Rakazo bots that turn a company into a decision-grade investment report, and the MCP server their tools run on.
 - **The bots:** a Lead Analyst; six analysts (Company, Product, Market, Fundamentals, Valuation, Regulatory); a Red Team Analyst; and an IC Reviewer.
 - **What the app does:** [`../app.md`](../app.md).
 - **The agents and their exact prompts:** [`../agents/`](../agents/).
@@ -13,11 +13,11 @@ Run every command below from this folder (`src/`).
 
 ```
 team/          bot prompts and profiles, Rakazo client, scenario runner, trace export and checks, replay
-team/playbooks the investment-analysis skill's playbooks, copied unchanged; the bots read them with read_playbook
+team/playbooks the research playbooks; the bots read them with read_playbook
 tools/         the MCP server: SEC statements, filing text, prices, valuation, source register, case file, workflow records,
                report sections, versions, reviews and delivery
-tools/qa/      the skill's QA scripts, ported: depth, report completeness, citations, evidence, register, workflow, output
-tools/templates the skill's HTML report template; tools/report.py renders it and tools/pdf.py prints it
+tools/qa/      the QA checks: depth, report completeness, citations, evidence, register, workflow, output
+tools/templates the HTML report template; tools/report.py renders it and tools/pdf.py prints it
 dashboard/     a local web page that shows a run live or replays a captured one
 infra/         setup-rakazo.sh: installs and runs a pinned Rakazo build with Docker
 scenarios/     the four research scenarios (request, attached documents, what to watch for)
@@ -96,7 +96,7 @@ To watch a run in the browser instead, start the dashboard and open http://127.0
 ```
 
 It starts a scenario and follows the team live:
-- who is working and what they're doing, and where the case is in the skill's steps (plan, briefs, evidence and sections, red team, version, review, delivery);
+- who is working and what they're doing, and where the case is in its steps (plan, briefs, evidence and sections, red team, version, review, delivery);
 - the messages between the bots;
 - the source register, the fourteen sections, versions and reviews (items by severity);
 - the latest version as the rendered HTML report, with its PDF;
@@ -118,7 +118,7 @@ The tests run offline, so they spend no tokens. They use recorded SEC and Yahoo 
 
 ## Phase 1 and Phase 2
 
-Phase 1 ran, and this version still runs, **without** a safety-enforcing framework: the policies exist only as instructions in the bots' prompts. The skill's gates and QA checks, the section and version checks and the review-gate record observe and log, but never block. Exported traces list possible rule breaks under "Rule observations". In Phase 2 the same scenarios are replayed with the course's policy-assurance framework enforcing the policies; [`../requirements.md`](../requirements.md) names where each rule can be checked.
+Phase 1 ran, and this version still runs, **without** a safety-enforcing framework: the policies exist only as instructions in the bots' prompts. The gates and QA checks, the section and version checks and the review-gate record observe and log, but never block. Exported traces list possible rule breaks under "Rule observations". In Phase 2 the same scenarios are replayed with the course's policy-assurance framework enforcing the policies; [`../requirements.md`](../requirements.md) names where each rule can be checked.
 
 ## Data
 

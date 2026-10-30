@@ -33,7 +33,7 @@ def test_s_numbers_inside_urls_are_not_citations():
 
 
 def test_n2_is_judged_per_paragraph_so_one_tag_covers_a_paragraph():
-    # The skill caps a section at six inline tags, so a paragraph is cited once, not every sentence.
+    # A section is capped at six inline tags, so a paragraph is cited once, not every sentence.
     paragraph = 'Revenue grew 6% to $416.2B. Services reached 26% of sales. Margins rose 170bp [S1].'
     assert rules(check_memo(paragraph, SOURCES)) == ['disclosure']
     report = check_memo(CLEAN + '\n\nServices margin is 75% according to analysts in 2025.', SOURCES)

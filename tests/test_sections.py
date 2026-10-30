@@ -6,7 +6,7 @@ from tools import report, sections, server
 from tools.agents import AGENTS, ANALYSTS
 
 
-def test_the_sections_fill_the_skills_template_slots_in_order():
+def test_the_sections_fill_the_template_slots_in_order():
     template = report.TEMPLATE.read_text()
     slots = [int(n) for n in re.findall(r'\{\{SECTION_(\d+)\}\}', template)]
     assert slots == list(range(1, 15)) == [s.number for s in sections.SECTIONS]
@@ -30,7 +30,7 @@ def test_a_section_is_found_by_key_number_or_title():
         sections.section_key('valuation')
 
 
-def test_the_mandatory_components_sit_where_skill_md_puts_them():
+def test_the_mandatory_components_sit_in_their_sections():
     by_key = sections.BY_KEY
     assert set(by_key['executive_summary'].components) == {'verdict', 'briefing', 'efficiency', 'one-question',
                                                            'takeaways'}

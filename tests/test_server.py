@@ -141,7 +141,7 @@ def test_data_tools_still_answer_without_an_active_run(runs_dir, monkeypatch):
         'Sources (not registered: no active run):\n- 10-K for FY2025: https://sec.example/10k')
 
 
-def test_source_types_are_the_skills_and_a_client_document_points_to_sources(runs_dir, tmp_path, monkeypatch):
+def test_source_types_are_fixed_and_a_client_document_points_to_sources(runs_dir, tmp_path, monkeypatch):
     (tmp_path / 'deck.pdf').write_text('deck')
     monkeypatch.setattr(case_file, 'ROOT', tmp_path)
     case_file.start_run('demo', [{'name': 'Orrin deck', 'file': 'deck.pdf', 'confidentiality': 'client-confidential'}])
@@ -287,7 +287,7 @@ def test_a_saved_section_comes_back_with_its_check_and_whether_its_evidence_came
                                  'source_type': 'market data' if n == 3 else 'independent media' if n > 4 else 'primary'})
     early = save('financials', FINANCIALS)
     assert early['check']['passed'] and early['owner'] == FUNDAMENTALS
-    assert early['note'] == 'This section has no passing evidence block yet: the skill drafts only from a completed one.'
+    assert early['note'] == 'This section has no passing evidence block yet: draft only from a completed one.'
     assert case_file.read_case()['memo_parts']['financials'][0]['evidence_before_draft'] is False
     summary = save('executive_summary', EXECUTIVE_SUMMARY)
     assert summary['check']['passed'] and 'note' not in summary
@@ -417,7 +417,7 @@ def test_a_review_needs_items_unless_it_approves_and_reopening_keeps_the_round(r
     assert (again['review_id'], again['round']) == ('R1', 1) and len(case_file.read_case()['reviews']) == 1
 
 
-def test_delivery_writes_the_skills_folder_records_the_gate_and_never_blocks(runs_dir, tmp_path, monkeypatch):
+def test_delivery_writes_the_folder_records_the_gate_and_never_blocks(runs_dir, tmp_path, monkeypatch):
     (tmp_path / 'deck.pdf').write_text('deck')
     monkeypatch.setattr(case_file, 'ROOT', tmp_path)
     case_file.start_run('demo', [{'name': 'Deck', 'file': 'deck.pdf', 'confidentiality': 'client-confidential'}])

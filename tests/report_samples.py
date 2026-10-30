@@ -1,4 +1,4 @@
-"""Hand-written report sections that meet the skill's standard, for tests. The company, Northwind Devices (NWD), and
+"""Hand-written report sections that meet the report's standard, for tests. The company, Northwind Devices (NWD), and
 its figures are fictional."""
 
 
