@@ -228,6 +228,9 @@ def test_private_details_stay_out_of_the_trace(run_dir):
     dumped = json.dumps(build_trace(run_dir))
     assert 'deals.lead@realfund.com' not in dumped and '[redacted email]' in dumped
     assert 'user-secret' not in dumped and SYSTEM_PROMPT not in dumped
+    # The server names the files it writes by absolute path, which holds this machine's user name.
+    local = str(export_trace.ROOT / 'runs' / 'r1' / 'versions' / 'v1' / 'report.html')
+    assert export_trace.redact({'files': {'html': local}}) == {'files': {'html': 'src/runs/r1/versions/v1/report.html'}}
 
 
 def test_usage_is_summed_per_agent(run_dir):

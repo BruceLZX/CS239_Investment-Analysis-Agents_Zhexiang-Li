@@ -83,13 +83,14 @@ def _ms(value) -> float:
 
 
 def redact(value):
-    """Hide real email addresses anywhere in a nested value; keep fictional .example ones."""
+    """Hide real email addresses anywhere in a nested value, keeping fictional .example ones, and write this
+    machine's path to src/ as "src" (the server reports the files it writes by absolute path)."""
     if isinstance(value, str):
         def keep_or_hide(match):
             domain = match.group(0).rsplit('@', 1)[1].lower()
             fictional = domain.endswith('.example') or domain in FICTIONAL_DOMAINS
             return match.group(0) if fictional else '[redacted email]'
-        return EMAIL_RE.sub(keep_or_hide, value)
+        return EMAIL_RE.sub(keep_or_hide, value.replace(str(ROOT), 'src'))
     if isinstance(value, list):
         return [redact(item) for item in value]
     if isinstance(value, dict):
