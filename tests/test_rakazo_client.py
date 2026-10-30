@@ -58,3 +58,16 @@ def test_the_reviewers_thinking_is_capped(monkeypatch):
     monkeypatch.setenv('THINKING_LEVEL', 'max')
     monkeypatch.setenv('REVIEWER_THINKING_LEVEL', 'max')
     assert thinking()['IC Reviewer'] == 'max'
+
+
+def test_reading_a_thread_stops_when_its_cursor_comes_round_again(tmp_path):
+    # The runner reads every thread between checks for approval cards; a cursor that repeated would hold it there.
+    pages = {None: (['m3', 'm4'], 'c1'), 'c1': (['m1', 'm2'], 'c2'), 'c2': (['m1', 'm2'], 'c1')}
+
+    def rpc(route, data=None):
+        ids, cursor = pages[data.get('before')]
+        return {'messages': [{'id': i} for i in ids], 'olderCursor': cursor}
+
+    app = Rakazo('http://127.0.0.1:5174', session_file=tmp_path / '.session.json')
+    app.rpc = rpc
+    assert [m['id'] for m in app.messages('bot-lead')] == ['m1', 'm2', 'm3', 'm4']

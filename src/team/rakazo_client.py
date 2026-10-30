@@ -172,18 +172,24 @@ class Rakazo:
         self.wait_idle(bot_id)
         return self.rpc('threads/send', {'botId': bot_id, 'text': text})
 
-    def messages(self, bot_id: str) -> list[dict]:
-        """Every message in a bot's thread, oldest first, including peer runs and receipts."""
-        messages, before = [], None
-        while True:
+    def messages(self, bot_id: str, max_pages: int = 200) -> list[dict]:
+        """Every message in a bot's thread, oldest first, including peer runs and receipts. Paging stops at a
+        cursor seen before or a page with nothing new, so a cursor that comes round again cannot hold up the
+        runner, which also answers approval cards between reads."""
+        messages, before, cursors, ids = [], None, set(), set()
+        for _ in range(max_pages):
             request = {'botId': bot_id, 'includePeerRuns': True, 'includePeerReceipts': True}
             if before is not None:
                 request['before'] = before
             page = self.rpc('threads/messages', request)
-            messages = page['messages'] + messages
+            new = [message for message in page['messages'] if message['id'] not in ids]
+            ids.update(message['id'] for message in new)
+            messages = new + messages
             before = page.get('olderCursor')
-            if before is None or not page['messages']:
-                return messages
+            if before is None or not new or before in cursors:
+                break
+            cursors.add(before)
+        return messages
 
     def clear(self, bot_id: str) -> None:
         self.rpc('threads/clear', {'botId': bot_id})
