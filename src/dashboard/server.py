@@ -26,6 +26,7 @@ from starlette.routing import Route
 import uvicorn
 import yaml
 
+from team.exchanges import exchanges, read_tool_log
 from team.export_trace import api_events, build_trace
 from team.model_costs import call_cost
 from team.profiles import LEAD, team_profiles
@@ -121,8 +122,9 @@ def _result_text(text: str) -> str:
     return text
 
 
-def timeline(events: list[dict]) -> list[dict]:
-    items = []
+def timeline(events: list[dict], between: list[dict] = ()) -> list[dict]:
+    items = [{'ts': _ms(exchange['ts']), 'kind': 'exchange', 'agent': exchange['from'], 'to': exchange['to'],
+              'label': exchange['kind'], 'text': exchange['text']} for exchange in between]
     for event in sorted(events, key=lambda e: (_ms(e['ts']), e.get('seq', 0))):
         lead_text = event['type'] == 'assistant_text' and event['agent'] == LEAD  # what the user reads
         kind = 'message' if lead_text else TRACE_KINDS.get(event['type'])
@@ -148,7 +150,7 @@ def timeline(events: list[dict]) -> list[dict]:
         if kind in ('action', 'observation') and len(text) > TRACE_TEXT:
             text = text[:TRACE_TEXT] + f'… ({len(text) - TRACE_TEXT:,} more characters in the trace)'
         items.append({**item, 'text': text})
-    return items
+    return sorted(items, key=lambda item: item['ts'])
 
 
 def _summary(tool: str, arguments: dict) -> str:
@@ -161,6 +163,8 @@ def _summary(tool: str, arguments: dict) -> str:
     if tool in ('save_memo_part', 'save_evidence_block'):
         size = f" ({len(arguments.get('markdown') or ''):,} characters)" if tool == 'save_memo_part' else ''
         return f"{arguments.get('section', '')}{size}"
+    if tool == 'leave_note':
+        return f"answering {arguments['answers']}" if arguments.get('answers') else f"for {arguments.get('section', '')}"
     if tool == 'read_playbook':
         return ' > '.join(filter(None, (arguments.get('name', ''), arguments.get('heading', ''))))
     if tool == 'get_memo_parts':
@@ -186,16 +190,10 @@ def tool_calls(run_dir: Path, entries: list[dict]) -> list[dict]:
     """The MCP server's log for this run, each call credited to the bot that made it. The server logs the
     caller; for older logs without one, a tool only one bot may call goes to that bot, and a shared one to the
     allowed bot that was most recently given work."""
-    path = run_dir / 'tool_log.jsonl'
-    if not path.exists():
-        return []
     woken = [(entry['ts'], entry['to']) for entry in entries if entry['kind'] in ('request', 'message')]
     calls = []
-    for line in path.read_text().splitlines():
-        record = json.loads(line)
+    for record in read_tool_log(run_dir):
         arguments = record.get('arguments') or {}
-        if isinstance(arguments, str):
-            arguments = json.loads(arguments)
         ts = _ms(record['ts'])
         allowed = tool_owners().get(record['tool'], ())
         # The log keeps whole seconds, so a call can look up to a second older than the message that started it.
@@ -203,6 +201,14 @@ def tool_calls(run_dir: Path, entries: list[dict]) -> list[dict]:
             (name for when, name in reversed(woken) if when <= ts + 999 and name in allowed), None))
         calls.append({'ts': ts, 'tool': record['tool'], 'bot': bot, 'summary': _summary(record['tool'], arguments)})
     return calls
+
+
+def notes(case: dict) -> list[dict]:
+    """The notes between section owners, which the page shows with the messages."""
+    return [{'ts': _ms(note['at']), 'id': note['id'], 'kind': 'note', 'from': note['from'], 'to': note['to'],
+             'intent': f"answer to {note['answers']}" if note.get('answers') else f"note on {note['section']}",
+             'text': note['note'] + (f" [{', '.join(note['source_ids'])}]" if note.get('source_ids') else '')}
+            for note in case.get('notes') or []]
 
 
 def _version_report(version: dict) -> str:
@@ -303,7 +309,9 @@ def snapshot(run_dir: Path, rakazo: Rakazo | None = None) -> dict:
         'started': started, 'captured': bool(captured),
         'outcome': (_read_json(run_dir / 'outcome.json') or {}).get('outcome'),
         'status': status, 'live_error': live_error,
-        'conversation': entries, 'turns': turns(messages), 'tools': tool_calls(run_dir, entries),
+        'conversation': sorted(entries + notes(case), key=lambda entry: entry['ts']), 'turns': turns(messages),
+        'tools': tool_calls(run_dir, entries),
+        'exchanges': [{**exchange, 'ts': _ms(exchange['ts'])} for exchange in exchanges(case, read_tool_log(run_dir))],
         'case': case_view(case, started), 'usage': usage_points(records, bot_ids, started),
         'observations': None, 'cost': None, 'timeline': None,
     }
@@ -312,7 +320,7 @@ def snapshot(run_dir: Path, rakazo: Rakazo | None = None) -> dict:
         if _traces.get(case['run_id'], {}).get('key') != key:
             trace = build_trace(run_dir)
             _traces[case['run_id']] = {'key': key, 'observations': trace['observations'], 'cost': trace['usage'],
-                                       'timeline': timeline(trace['events'])}
+                                       'timeline': timeline(trace['events'], trace['exchanges'])}
         for name in ('observations', 'cost', 'timeline'):
             view[name] = _traces[case['run_id']][name]
     return view

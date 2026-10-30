@@ -23,6 +23,7 @@ import yaml
 from tools import case_file as case_rules, memo, sections
 from tools.agents import ANALYSTS, RESEARCHERS
 
+from .exchanges import exchanges, read_tool_log
 from .model_costs import call_cost
 from .profiles import BUILTIN_TOOLS, LEAD, RED_TEAM, REVIEWER, team_profiles
 
@@ -64,6 +65,7 @@ RED_TEAM_FIRST_BUDGET = {'web_search': 10, 'web_fetch': 8}
 LEAD_CASE_BUDGET = {'web_search': 8, 'web_fetch': 6}
 # Reply lengths from the role prompts (P21 for the analysts and the Red Team, P27 for the IC Reviewer).
 REPLY_LIMITS = {REVIEWER: ('P27', 1000), **{agent: ('P21', 1500) for agent in RESEARCHERS}}
+MAX_NEW_NOTES = 3  # P42
 STATUS_LIMIT = 300  # P8: the Lead's status note to the user before delivery
 # What counts as research when an evidence block lists the queries it ran.
 RESEARCH_TOOLS = {'web_search', 'web_fetch', 'read_sec_filing', 'get_sec_financials', 'list_sec_filings',
@@ -375,7 +377,8 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: lis
             if len(block.get('queries') or []) > ran:
                 observations.append({'rule': 'N1', 'detail': f"the {key} evidence block lists {len(block['queries'])} "
                                                               f"queries, but {block.get('author')} had run {ran}"})
-    return sorted(observations + observe_sections(case) + observe_workflow(events, case), key=_rule_key)
+    return sorted(observations + observe_sections(case) + observe_workflow(events, case)
+                  + observe_notes(events, case), key=_rule_key)
 
 
 def observe_sections(case: dict) -> list[dict]:
@@ -437,6 +440,21 @@ def observe_workflow(events: list[dict], case: dict) -> list[dict]:
             observations.append({'rule': 'P36', 'detail': f"version {version['version']} was saved without a QA loop "
                                                            'since the previous version'})
         previous = version['saved_at']
+    return observations
+
+
+def observe_notes(events: list[dict], case: dict) -> list[dict]:
+    """P42: at most three new notes for a brief, and none still open at delivery."""
+    observations, per_turn = [], {}
+    for event in events:
+        if event['type'] == 'tool_call' and event['tool'] == 'leave_note' and not (event.get('arguments') or {}).get('answers'):
+            turn = (event['agent'], event.get('rakazo_run_id'))
+            per_turn[turn] = per_turn.get(turn, 0) + 1
+    observations += [{'rule': 'P42', 'detail': f'{agent} left {count} new notes in one turn'}
+                     for (agent, _), count in per_turn.items() if count > MAX_NEW_NOTES]
+    if case['deliveries']:
+        observations += [{'rule': 'P42', 'detail': f"note {note['id']} from {note['from']} to {note['to']} was still "
+                                                    'open at delivery'} for note in case_rules.open_notes(case)]
     return observations
 
 
@@ -534,6 +552,7 @@ def build_trace(run_dir: Path) -> dict:
         'rakazo_runs': runs,
         'events': events,
         'observations': observe_rules(events, runs, case, replies),
+        'exchanges': exchanges(case, read_tool_log(run_dir)),
         'case_file': {
             'client_documents': [{'name': d['name'], 'confidentiality': d['confidentiality']} for d in case['client_documents']],
             'sources': case['sources'],
@@ -544,6 +563,7 @@ def build_trace(run_dir: Path) -> dict:
                                                          'saved_at')} for block in blocks]
                          for key, blocks in (case.get('evidence') or {}).items()},
             'user_data_requests': case.get('user_data_requests') or [],
+            'notes': case.get('notes') or [],
             'memo_parts': {key: [{k: r.get(k) for k in ('revision', 'author', 'chars', 'passed', 'evidence_before_draft',
                                                         'saved_at')} for r in revisions]
                            for key, revisions in (case.get('memo_parts') or {}).items()},
@@ -691,6 +711,18 @@ def render_markdown(trace: dict) -> str:
         final = (delivery.get('final_check') or {}).get('passed')
         lines.append(f"- Delivered report v{delivery['memo_version']} ({status}; final check "
                      f"{'passed' if final else 'failed'}) to {delivery.get('folder')}")
+    between: dict[tuple[str, str], dict[str, int]] = {}
+    for exchange in trace.get('exchanges') or []:
+        kinds = between.setdefault((exchange['from'], exchange['to']), {})
+        kinds[exchange['kind']] = kinds.get(exchange['kind'], 0) + 1
+    if between:
+        lines += ['', '## Exchanges between agents', '',
+                  'Besides messages, which all go through the Lead: what the agents did with each other\'s work through '
+                  'the case file.', '', '| From | To | Sections read | Sources cited | Notes | Answers | Review items | '
+                  'Weakest section |', '|---|---|---|---|---|---|---|---|']
+        lines += [f"| {sender} | {recipient} | " + ' | '.join(str(kinds.get(kind, '')) for kind in
+                                                              ('read', 'cite', 'note', 'answer', 'review', 'attack')) + ' |'
+                  for (sender, recipient), kinds in sorted(between.items())]
     lines += ['', '## Rule observations', '',
               'Possible rule breaks found in this run. They are only reported; nothing was blocked.', '']
     if trace['observations']:

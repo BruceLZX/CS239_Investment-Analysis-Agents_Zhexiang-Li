@@ -7,7 +7,7 @@ from dashboard import server
 from team.rakazo_client import RakazoError
 from tools import case_file
 
-from .test_export_trace import BOTS, REQUEST, ms, run_dir  # noqa: F401  (run_dir is a fixture: a captured run)
+from .test_export_trace import BOTS, REQUEST, ms, revision, run_dir  # noqa: F401  (run_dir is a fixture: a captured run)
 
 
 @pytest.fixture
@@ -298,3 +298,31 @@ def test_the_new_tools_get_short_summaries():
     assert server._summary('search_public_records', {'source': 'openfda_device', 'query': 'Vantelle'}) == \
         'openfda_device: Vantelle'
     assert server._summary('get_trading_snapshot', {'ticker': 'AAPL', 'sector_etf': 'XLK'}) == 'AAPL'
+
+
+def test_exchanges_between_agents_show_on_the_page_and_in_the_trace(runs):
+    run = runs / 'r1'
+    case = json.loads((run / 'case.json').read_text())
+    case['sources'][1]['registered_by'] = 'Market Analyst'
+    case['memo_parts'] = {'financials': [revision(1, 'Fundamentals Analyst', '2026-10-26T10:03:00+00:00')]}
+    case['notes'] = [{'id': 'N1', 'from': 'Market Analyst', 'to': 'Fundamentals Analyst', 'section': 'financials',
+                      'note': 'Segment revenue differs.', 'source_ids': ['S2'], 'answers': None,
+                      'at': '2026-10-26T10:02:00+00:00'}]
+    (run / 'case.json').write_text(json.dumps(case))
+    snap = server.snapshot(run)
+    assert [(e['kind'], e['from'], e['to'], e['ts']) for e in snap['exchanges']] == [
+        ('note', 'Market Analyst', 'Fundamentals Analyst', ms('2026-10-26T10:02:00+00:00')),
+        ('cite', 'Fundamentals Analyst', 'Market Analyst', ms('2026-10-26T10:03:00+00:00'))]
+    note = next(entry for entry in snap['conversation'] if entry['kind'] == 'note')
+    assert (note['from'], note['to'], note['intent']) == ('Market Analyst', 'Fundamentals Analyst', 'note on financials')
+    assert note['text'] == 'Segment revenue differs. [S2]'
+    assert [entry['ts'] for entry in snap['conversation']] == sorted(entry['ts'] for entry in snap['conversation'])
+    items = [item for item in snap['timeline'] if item['kind'] == 'exchange']
+    assert [(i['agent'], i['to'], i['label']) for i in items] == [('Market Analyst', 'Fundamentals Analyst', 'note'),
+                                                                  ('Fundamentals Analyst', 'Market Analyst', 'cite')]
+    assert [item['ts'] for item in snap['timeline']] == sorted(item['ts'] for item in snap['timeline'])
+
+
+def test_a_note_is_summarized_by_where_it_goes():
+    assert server._summary('leave_note', {'section': 'financials', 'note': 'x'}) == 'for financials'
+    assert server._summary('leave_note', {'answers': 'N1', 'note': 'x'}) == 'answering N1'

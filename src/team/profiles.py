@@ -151,7 +151,7 @@ def mcp_connection(agent: str) -> MCPConnection:
 # What every section writer needs: the playbooks, the register, its evidence, its sections and their checks.
 WRITER_TOOLS = ('read_client_document', 'read_playbook', 'register_source', 'list_sources', 'save_evidence_block',
                 'get_evidence_matrix', 'get_gate', 'get_memo_parts', 'save_memo_part', 'get_memo_check',
-                'request_user_data', 'get_workflow_doc')
+                'request_user_data', 'get_workflow_doc', 'leave_note')
 SEC_READING = ('find_sec_company', 'list_sec_filings', 'read_sec_filing')
 # A bot with more than 20 MCP tools gets them from Rakazo only through a search, load and execute catalog, which
 # hides each real call from the trace behind connectors_execute_tool and costs extra calls: DIRECT_TOOL_LIMIT in
@@ -173,7 +173,7 @@ ANALYSTS = {
                    SEC_READING + ('get_sec_financials', 'get_price_history')),
     VALUATION: ('Researches and writes the report\'s funding history and valuation and exit strategy sections from '
                 'prices, peer multiples, rounds and precedent exits.', 'valuation_analyst.md',
-                ('list_sec_filings', 'read_sec_filing', 'get_sec_financials', 'get_price_history',
+                ('read_sec_filing', 'get_sec_financials', 'get_price_history',
                  'get_valuation_snapshot', 'get_trading_snapshot', 'get_market_regime', 'get_insider_activity')),
     REGULATORY: ('Researches regulators\' and courts\' records and policy for the whole report, writes its ESG section '
                  'and files user data requests for records behind a login.', 'regulatory_analyst.md',

@@ -33,7 +33,7 @@ def new_case(run_id: str, scenario: str, client_documents: list[dict], request: 
         'run_id': run_id, 'scenario': scenario, 'request': request, 'started_at': now(), 'scope': None,
         'client_documents': client_documents,
         # memo_parts holds each section's revisions; memo_drafts holds the versions, snapshots of the sections.
-        'sources': [], 'evidence': {}, 'workflow': {}, 'user_data_requests': [], 'memo_parts': {},
+        'sources': [], 'evidence': {}, 'workflow': {}, 'user_data_requests': [], 'notes': [], 'memo_parts': {},
         'memo_drafts': [], 'reviews': [], 'deliveries': [],
     }
 
@@ -79,6 +79,11 @@ def log_tool_call(entry: dict) -> None:
         return
     with _lock, (run_dir / 'tool_log.jsonl').open('a') as log:
         log.write(json.dumps(entry) + '\n')
+
+
+def open_notes(case: dict) -> list[dict]:
+    """Notes between section owners that their owners have not answered yet."""
+    return [note for note in case.get('notes') or [] if not note.get('answers') and not note.get('answered_at')]
 
 
 def is_listed(case: dict) -> bool:
@@ -218,6 +223,8 @@ def status_summary(case: dict) -> dict:
         'open_rewrite_items': {owner: [i['section'] or 'report' for i in open_rewrites if i['owner'] == owner]
                                for owner in dict.fromkeys(i['owner'] for i in open_rewrites)},
         'user_data_requests': len(case.get('user_data_requests') or []),
+        'open_notes': [{'id': note['id'], 'from': note['from'], 'to': note['to'], 'section': note['section'],
+                        'note': note['note'], 'seen': bool(note.get('seen_at'))} for note in open_notes(case)],
         'latest_version': latest_version and {'version': latest_version['version'],
                                               'rating': latest_version['rating'],
                                               'changed_parts': latest_version.get('changed_parts', []),

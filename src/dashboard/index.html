@@ -76,6 +76,17 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .node.waiting .node-status { fill: var(--warn); font-weight: 700; }
 .node.flash rect.box { stroke: var(--warn); stroke-width: 4; }
 .packet { stroke: var(--panel); stroke-width: 2; }
+.peer { fill: none; stroke: var(--c); stroke-dasharray: 6 5; opacity: .55; transition: opacity .4s; cursor: help; }
+.peer.active { opacity: 1; stroke-dasharray: none; }
+.peer-label { font-size: 13px; font-weight: 700; fill: var(--c); opacity: 0; transition: opacity .3s; paint-order: stroke; stroke: var(--panel); stroke-width: 4px; pointer-events: none; }
+.peer-label.show { opacity: 1; }
+.exchange-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin: 8px 0 6px; }
+#exchanges { max-height: 190px; border-top: 1px solid var(--line); }
+#exchanges:empty::before { content: "Agents reading each other's sections, citing each other's sources and leaving each other notes appear here."; display: block; padding: 6px 2px; color: var(--muted); font-style: italic; font-size: 13px; }
+.pair { font-weight: 700; white-space: nowrap; }
+.x-kind { flex: none; }
+#team-panel.hide-read .x-read, #team-panel.hide-cite .x-cite, #team-panel.hide-note .x-note, #team-panel.hide-review .x-review { display: none; }
+.msg.note { border-style: dashed; border-left-style: solid; }
 .request-text { margin: 0; padding: 8px 12px; border-left: 4px solid var(--user); background: var(--soft); border-radius: 0 8px 8px 0; font-size: 14.5px; white-space: pre-wrap; }
 .docs { margin-top: 6px; font-size: 13px; color: var(--muted); }
 .chip { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--soft); color: var(--muted); white-space: nowrap; }
@@ -176,9 +187,10 @@ blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--lin
 .mark.k-observation { fill: var(--c); opacity: .5; }
 .mark.error { fill: var(--bad); opacity: 1; }
 .mark.k-message line { stroke: var(--c); stroke-width: 1.8; }
-.mark.k-message path { fill: var(--c); }
+.mark.k-message path, .mark.k-exchange path { fill: var(--c); }
+.mark.k-exchange line { stroke: var(--c); stroke-width: 1.3; stroke-dasharray: 3 3; }
 .mark.selected { stroke: var(--ink); stroke-width: 2.4; opacity: 1; }
-.mark.k-message.selected line { stroke-width: 3.4; }
+.mark.k-message.selected line, .mark.k-exchange.selected line { stroke-width: 3.4; }
 .playhead { stroke: var(--warn); stroke-width: 2; }
 .trace-log { list-style: none; margin: 0; padding: 0 4px 0 0; height: 250px; overflow-y: auto; font-size: 13px; position: relative; border-top: 1px solid var(--line); }
 .trace-log li { border-bottom: 1px solid var(--line); padding: 4px 2px; cursor: pointer; }
@@ -188,7 +200,8 @@ blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--lin
 .trace-row .kind { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .trace-full { margin: 4px 0 2px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12.5px; background: var(--soft); border-radius: 6px; padding: 6px 8px; max-height: 240px; overflow-y: auto; cursor: text; }
 .trace-panel.hide-thought .k-thought, .trace-panel.hide-action .k-action,
-.trace-panel.hide-observation .k-observation, .trace-panel.hide-message .k-message { display: none; }
+.trace-panel.hide-observation .k-observation, .trace-panel.hide-message .k-message,
+.trace-panel.hide-exchange .k-exchange { display: none; }
 @keyframes blink { 50% { opacity: .35; } }
 @keyframes pulse { 50% { stroke-opacity: .3; } }
 @keyframes arrive { from { transform: translateY(8px); opacity: 0; } }
@@ -225,7 +238,10 @@ blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--lin
   </section>
 
   <section class="overview">
-    <div class="panel"><h2>The team <span class="count" id="who-now"></span></h2><svg id="team" viewBox="0 0 820 452" role="img" aria-label="The nine agents and the messages between them"></svg></div>
+    <div class="panel" id="team-panel"><h2>The team <span class="count" id="who-now"></span></h2><svg id="team" viewBox="0 0 960 450" role="img" aria-label="The nine agents, the messages between them and what they do with each other's work"></svg>
+      <div class="exchange-head"><span class="muted small">Solid lines are messages, all through the Lead. Dashed arrows are agents working with each other through the case file:</span><span id="exchange-keys" class="trace-keys"></span></div>
+      <ul id="exchanges" class="list"></ul>
+    </div>
     <div class="panel">
       <h2>The request <span class="count" id="scenario-name"></span></h2>
       <div id="request"><p class="empty">The user's request appears here.</p></div>
@@ -237,7 +253,7 @@ blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--lin
     <h2>Agent trace <span class="count" id="trace-count"></span></h2>
     <div class="trace-head">
       <span id="trace-keys" class="trace-keys"></span>
-      <span class="muted small">One lane per agent, shaded while it works; arrows are messages. Click a mark or a row to read it.</span>
+      <span class="muted small">One lane per agent, shaded while it works; arrows are messages, dashed arrows are exchanges through the case file. Click a mark or a row to read it.</span>
     </div>
     <div class="trace">
       <svg id="trace-lanes" viewBox="0 0 1200 300" role="img" aria-label="Each agent's thoughts, actions, observations and messages over time"></svg>
@@ -283,16 +299,18 @@ const BOTS = [LEAD, ...ANALYSTS, RED_TEAM, REVIEWER];
 const SHORT = {[LEAD]: 'lead', [COMPANY]: 'company', [PRODUCT]: 'product', [MARKET]: 'market',
                [FUNDAMENTALS]: 'fundamentals', [VALUATION]: 'valuation', [REGULATORY]: 'regulatory',
                [RED_TEAM]: 'redteam', [REVIEWER]: 'reviewer', User: 'user'};
-// The user and the Lead on the left; the Lead's eight teammates in a column on the right.
+// The user above the Lead in the middle; the Lead's eight teammates in two columns around it, with room between them
+// for what they do with each other's work.
 const ROLES = {[COMPANY]: 'S1 company · S2 team', [PRODUCT]: 'S3 technology · S9 strategy',
                [MARKET]: 'S4 market · S5 competition', [FUNDAMENTALS]: 'S6 business model · S7 financials',
                [VALUATION]: 'S8 valuation · S12 exit', [REGULATORY]: 'S13 ESG · regulatory records',
                [RED_TEAM]: 'S10 risk · red-team review', [REVIEWER]: 'five review passes'};
-const NODE_W = 230, NODE_H = 50;
+const NODE_W = 212, NODE_H = 50, ROW_GAP = 120, MID_X = 480, LEAD_Y = 230;
+const COLUMNS = [[116, [COMPANY, PRODUCT, MARKET, REGULATORY]], [844, [FUNDAMENTALS, VALUATION, RED_TEAM, REVIEWER]]];
 const NODES = {
-  User: {x: 120, y: 226, role: 'asks for the report'},
-  [LEAD]: {x: 390, y: 226, role: 'plans · S11 · S14 · summary · delivers'},
-  ...Object.fromEntries([...ANALYSTS, RED_TEAM, REVIEWER].map((bot, i) => [bot, {x: 680, y: 30 + i * 56, role: ROLES[bot]}])),
+  User: {x: MID_X, y: 50, role: 'asks for the report'},
+  [LEAD]: {x: MID_X, y: LEAD_Y, role: 'plans · S11 · S14 · summary'},
+  ...Object.fromEntries(COLUMNS.flatMap(([x, bots]) => bots.map((bot, i) => [bot, {x, y: 50 + i * ROW_GAP, role: ROLES[bot]}]))),
 };
 const EDGES = [['User', LEAD], ...[...ANALYSTS, RED_TEAM, REVIEWER].map((bot) => [LEAD, bot])];
 const TOOL_VERBS = {
@@ -314,11 +332,11 @@ const TOOL_VERBS = {
   save_memo_part: 'writing a section', get_memo_parts: 'reading sections',
   save_memo_version: 'rendering a report version', get_memo_check: 'checking the report',
   start_review: 'opening the review', save_review_pass: 'saving a review pass', finish_review: 'closing the review',
-  get_latest_review: 'reading the review', deliver_memo: 'delivering the report',
+  get_latest_review: 'reading the review', deliver_memo: 'delivering the report', leave_note: 'leaving a note for an owner',
   web_search: 'searching the web', web_fetch: 'reading a web page',
 };
 const S = {mode: 'ready', snap: null, t: 0, end: 0, playing: false, replayTimer: null, livePoll: null,
-           startingFrom: null, view: null, anim: 0};
+           startingFrom: null, view: null, anim: 0, peers: {}, hidden: new Set()};
 
 // ---------- small helpers ----------
 function el(tag, attrs = {}, ...children) {
@@ -422,7 +440,14 @@ function md(text, compact) {
 // ---------- the team diagram ----------
 function buildDiagram() {
   const svg = $('team');
-  const edges = svgEl('g'), packets = svgEl('g', {id: 'packets'}), nodes = svgEl('g');
+  const edges = svgEl('g'), peers = svgEl('g', {id: 'peers'}), packets = svgEl('g', {id: 'packets'}), nodes = svgEl('g');
+  const defs = svgEl('defs');
+  for (const bot of BOTS) {
+    const marker = svgEl('marker', {id: 'arrow-' + SHORT[bot], viewBox: '0 0 8 8', refX: 7, refY: 4, markerWidth: 9, markerHeight: 9,
+                                    markerUnits: 'userSpaceOnUse', orient: 'auto'});
+    marker.append(svgEl('path', {d: 'M0,0 L8,4 L0,8 Z', style: `fill: var(--${SHORT[bot]})`}));
+    defs.append(marker);
+  }
   for (const [a, b] of EDGES) {
     const id = edgeId(a, b);
     edges.append(svgEl('line', {id, class: 'edge', x1: NODES[a].x, y1: NODES[a].y, x2: NODES[b].x, y2: NODES[b].y}));
@@ -440,7 +465,7 @@ function buildDiagram() {
     g.append(title, role, status);
     nodes.append(g);
   }
-  svg.append(edges, packets, nodes);
+  svg.append(defs, edges, peers, packets, nodes);
 }
 const edgeId = (a, b) => 'edge-' + [SHORT[a], SHORT[b]].sort().join('-');
 function edgeLabel(entry) {
@@ -457,6 +482,7 @@ function edgeLabel(entry) {
   return entry.intent || 'message';
 }
 function animate(entry) {
+  if (entry.kind === 'note') return;  // Drawn as an exchange, below.
   if (entry.kind === 'guard') {
     const node = $('node-' + SHORT[entry.from]);
     if (node) { node.classList.add('flash'); setTimeout(() => node.classList.remove('flash'), 2200); }
@@ -465,6 +491,7 @@ function animate(entry) {
   const a = NODES[entry.from], b = NODES[entry.to];
   if (!a || !b) return;
   const id = edgeId(entry.from, entry.to), line = $(id), label = $(id + '-label');
+  if (!line) return;
   line.classList.add('active');
   label.textContent = edgeLabel(entry);
   label.classList.add('show');
@@ -483,12 +510,110 @@ function animate(entry) {
   requestAnimationFrame(step);
 }
 
+// ---------- what the agents do with each other's work: dashed arrows on the diagram, and a list below it ----------
+const EXCHANGE_GROUPS = [['read', 'Read a section', ['read']], ['cite', 'Cited a source', ['cite']],
+                         ['note', 'Left a note', ['note', 'answer']], ['review', 'Review and red team', ['review', 'attack']]];
+const GROUP_OF = Object.fromEntries(EXCHANGE_GROUPS.flatMap(([group, , kinds]) => kinds.map((kind) => [kind, group])));
+const EXCHANGE_WORDS = {read: 'sections read', cite: 'sources cited', note: 'notes', answer: 'answers', review: 'review items', attack: 'called weakest'};
+// A curve between two teammates, clear of the Lead's box. Each direction gets its own, so a pair's exchanges both show.
+function peerPath(from, to) {
+  const a = NODES[from], b = NODES[to];
+  if (a.x === b.x) {  // The same column: bulge toward the middle.
+    const inward = a.x < MID_X ? 1 : -1, down = Math.sign(b.y - a.y), x = a.x + inward * NODE_W / 2;
+    const out = 30 + 26 * Math.abs(b.y - a.y) / ROW_GAP + (down > 0 ? 0 : 24), lane = down > 0 ? 7 : -7;
+    return `M${x},${a.y + down * 12 + lane} C${x + inward * out},${a.y + lane} ${x + inward * out},${b.y + lane} ${x + inward * 2},${b.y - down * 12 + lane}`;
+  }
+  // Across: from one column's inner edge to the other's, passing above or below the Lead.
+  const side = Math.sign(b.x - a.x), lane = side > 0 ? -6 : 6;
+  const y1 = a.y + Math.max(-12, Math.min(12, (b.y - a.y) / 12)) + lane, y2 = b.y - Math.max(-12, Math.min(12, (b.y - a.y) / 12)) + lane;
+  const mean = (y1 + y2) / 2, above = mean < LEAD_Y - 8 || (Math.abs(mean - LEAD_Y) <= 8 && side > 0);
+  const middle = (above ? Math.min(LEAD_Y - 44, mean + 70) : Math.max(LEAD_Y + 44, mean - 70)) + lane;
+  return `M${a.x + side * NODE_W / 2},${y1} Q${MID_X},${2 * middle - mean} ${b.x - side * (NODE_W / 2 + 2)},${y2}`;
+}
+function peerEdge(from, to) {
+  const key = `${from}>${to}`;
+  if (S.peers[key]) return S.peers[key];
+  const path = svgEl('path', {class: 'peer', d: peerPath(from, to), style: tint(from), 'marker-end': `url(#arrow-${SHORT[from]})`});
+  const title = svgEl('title');
+  path.append(title);
+  const label = svgEl('text', {class: 'peer-label', 'text-anchor': 'middle', style: tint(from)});
+  $('peers').append(path, label);
+  const spot = path.getPointAtLength(path.getTotalLength() * 0.3);
+  label.setAttribute('x', spot.x); label.setAttribute('y', spot.y - 6);
+  return S.peers[key] = {from, to, path, label, title, counts: {}};
+}
+// Thicker with more exchanges; only the kinds switched on count.
+function drawPeers() {
+  for (const edge of Object.values(S.peers)) {
+    const shown = Object.entries(edge.counts).filter(([kind]) => !S.hidden.has(GROUP_OF[kind]));
+    const total = shown.reduce((sum, [, n]) => sum + n, 0);
+    edge.path.style.display = total ? '' : 'none';
+    if (!total) edge.label.classList.remove('show');
+    edge.path.setAttribute('stroke-width', (1.3 + Math.min(3, Math.log2(1 + total) * 0.7)).toFixed(1));
+    edge.title.textContent = `${edge.from} → ${edge.to}: ` + shown.map(([kind, n]) => `${n} ${EXCHANGE_WORDS[kind]}`).join(', ');
+  }
+}
+function buildExchangeKeys() {
+  $('exchange-keys').replaceChildren(...EXCHANGE_GROUPS.map(([group, name]) => {
+    const key = el('button', {class: 'trace-key', 'aria-pressed': 'true'}, name, el('span', {class: 'muted', id: 'x-n-' + group}));
+    key.addEventListener('click', () => {
+      const on = key.getAttribute('aria-pressed') !== 'true';
+      key.setAttribute('aria-pressed', String(on));
+      $('team-panel').classList.toggle('hide-' + group, !on);
+      if (on) S.hidden.delete(group); else S.hidden.add(group);
+      drawPeers();
+    });
+    return key;
+  }));
+}
+function animatePeer(entry) {
+  const edge = S.peers[`${entry.from}>${entry.to}`];
+  if (!edge || S.hidden.has(GROUP_OF[entry.kind])) return;
+  edge.path.classList.add('active');
+  edge.label.textContent = entry.label;
+  edge.label.classList.add('show');
+  clearTimeout(edge.timer);
+  edge.timer = setTimeout(() => { edge.path.classList.remove('active'); edge.label.classList.remove('show'); }, 2200);
+  const color = getComputedStyle(document.documentElement).getPropertyValue('--' + SHORT[entry.from]);
+  const dot = svgEl('circle', {r: 6, class: 'packet', fill: color.trim() || '#2f5bd3'});
+  $('packets').append(dot);
+  const length = edge.path.getTotalLength(), begin = performance.now(), duration = 1100;
+  const step = (now) => {
+    const k = Math.min(1, (now - begin) / duration), point = edge.path.getPointAtLength(length * k);
+    dot.setAttribute('cx', point.x);
+    dot.setAttribute('cy', point.y);
+    if (k < 1) requestAnimationFrame(step); else dot.remove();
+  };
+  requestAnimationFrame(step);
+}
+function exchangeItem(entry) {
+  return el('li', {class: 'x-' + GROUP_OF[entry.kind]}, el('span', {class: 'time'}, '+' + fmt(entry.ts - S.snap.started)),
+            el('span', {class: 'bot-dot ' + SHORT[entry.from], title: entry.from}),
+            el('span', {class: 'pair', style: tint(entry.from)}, `${LANE_NAMES[entry.from]} → ${LANE_NAMES[entry.to]}`),
+            el('span', {class: 'grow muted', title: entry.text}, entry.text));
+}
+function renderExchanges(view) {
+  const list = view.exchanges, drawn = S.view.exchangesDrawn, fresh = list.slice(drawn);
+  for (const entry of fresh) {
+    const edge = peerEdge(entry.from, entry.to);
+    edge.counts[entry.kind] = (edge.counts[entry.kind] || 0) + 1;
+  }
+  if (fresh.length) drawPeers();
+  if (!S.quiet) fresh.slice(-5).forEach(animatePeer);
+  S.view.exchangesDrawn = list.length;
+  S.view.exchanges = syncList('exchanges', list, S.view.exchanges, exchangeItem, true);
+  for (const [group, , kinds] of EXCHANGE_GROUPS) {
+    const n = list.filter((entry) => kinds.includes(entry.kind)).length;
+    $('x-n-' + group).textContent = n || '';
+  }
+}
+
 // ---------- the agent trace: thoughts, actions, observations and messages on one timeline ----------
 const LANES = ['User', ...BOTS];
 const LANE_NAMES = {User: 'User', [LEAD]: 'Lead', [COMPANY]: 'Company', [PRODUCT]: 'Product', [MARKET]: 'Market',
                     [FUNDAMENTALS]: 'Fundamentals', [VALUATION]: 'Valuation', [REGULATORY]: 'Regulatory',
                     [RED_TEAM]: 'Red Team', [REVIEWER]: 'IC Reviewer'};
-const TRACE_KINDS = [['thought', '◆', 'Thoughts'], ['action', '●', 'Actions'], ['observation', '■', 'Observations'], ['message', '➜', 'Messages']];
+const TRACE_KINDS = [['thought', '◆', 'Thoughts'], ['action', '●', 'Actions'], ['observation', '■', 'Observations'], ['message', '➜', 'Messages'], ['exchange', '⇢', 'Exchanges']];
 const GLYPH = Object.fromEntries(TRACE_KINDS.map(([kind, glyph]) => [kind, glyph]));
 const TL = {left: 112, right: 1188, top: 6, lane: 40};
 // Within a lane, thoughts sit above actions and observations below them, so a turn reads ◆ ● ■ ◆ ● ■ …
@@ -497,8 +622,8 @@ const laneTop = (name) => TL.top + TL.lane * Math.max(0, LANES.indexOf(name));
 const laneY = (name) => laneTop(name) + TL.lane / 2;
 const tint = (name) => `--c: var(--${SHORT[name] || 'user'})`;
 const oneLine = (text, n) => { const line = String(text || '').replace(/\s+/g, ' ').trim(); return line.length > n ? line.slice(0, n) + '…' : line; };
-const traceWho = (item) => item.kind === 'message' ? `${LANE_NAMES[item.agent] || item.agent} → ${LANE_NAMES[item.to] || item.to}` : LANE_NAMES[item.agent] || item.agent;
-const traceTool = (item) => item.kind === 'action' || item.kind === 'observation' ? item.label : '';
+const traceWho = (item) => item.to ? `${LANE_NAMES[item.agent] || item.agent} → ${LANE_NAMES[item.to] || item.to}` : LANE_NAMES[item.agent] || item.agent;
+const traceTool = (item) => item.kind === 'message' || item.kind === 'thought' ? '' : item.label;
 function buildTraceKeys() {
   $('trace-keys').replaceChildren(...TRACE_KINDS.map(([kind, glyph, name]) => {
     const key = el('button', {class: 'trace-key', 'aria-pressed': 'true'}, glyph, name, el('span', {class: 'muted', id: 'trace-n-' + kind}));
@@ -553,14 +678,14 @@ function buildTrace(snap) {
   $('trace-log').textContent = '';
   S.traceEmpty = null;
   return {run: snap.run_id, t: -Infinity, shown: 0, marks: [], rows: [], X, layer: frame.marks, playhead: frame.playhead, spans,
-          counts: {thought: 0, action: 0, observation: 0, message: 0}};
+          counts: {thought: 0, action: 0, observation: 0, message: 0, exchange: 0}};
 }
 function traceMark(item, i, X) {
   const x = X(item.ts);
   let mark;
-  if (item.kind === 'message') {
+  if (item.to) {
     const y1 = laneY(item.agent), y2 = laneY(item.to), dir = y2 > y1 ? 1 : -1;
-    mark = svgEl('g', {class: 'mark k-message', style: tint(item.agent)});
+    mark = svgEl('g', {class: `mark k-${item.kind}`, style: tint(item.agent)});
     mark.append(svgEl('line', {x1: x, x2: x, y1, y2: y2 - dir * 6}),
                 svgEl('path', {d: `M${x - 4},${y2 - dir * 7} L${x + 4},${y2 - dir * 7} L${x},${y2 - dir} Z`}));
   } else {
@@ -690,11 +815,12 @@ function steps(view) {
 // ---------- rendering ----------
 function resetView(snap) {
   S.snap = snap;
-  S.view = {convo: [], sources: 0, versions: 0, tools: 0, parts: null, memo: null, rules: null, request: null};
+  S.view = {convo: [], sources: 0, versions: 0, tools: 0, exchanges: 0, exchangesDrawn: 0, parts: null, memo: null, rules: null, request: null};
   S.anim = 0;
   S.quiet = true;  // Don't animate what was already there when the run was opened.
   S.trace = null; S.traceEmpty = null;
-  for (const id of ['conversation', 'sources', 'parts', 'versions', 'tools']) $(id).textContent = '';
+  S.peers = {};
+  for (const id of ['conversation', 'sources', 'parts', 'versions', 'tools', 'peers', 'exchanges']) $(id).textContent = '';
   banner('');
 }
 function syncList(id, items, count, make, newestFirst) {
@@ -717,7 +843,7 @@ function render(t) {
     convo: snap.conversation.filter(at), tools: snap.tools.filter(at), sources: c.sources.filter(at),
     workflow: (c.workflow || []).filter(at), evidence: (c.evidence || []).filter(at), requests: (c.requests || []).filter(at),
     parts: (c.parts || []).filter(at), drafts: c.drafts.filter(at), reviews: c.reviews.filter(at),
-    deliveries: c.deliveries.filter(at), usage: snap.usage.filter(at),
+    deliveries: c.deliveries.filter(at), usage: snap.usage.filter(at), exchanges: (snap.exchanges || []).filter(at),
   };
   view.status = botStatus(snap, t, live);
   const finished = snap.captured && t >= S.end;
@@ -725,6 +851,7 @@ function render(t) {
   renderStatusBar(snap, t, view, finished);
   renderRequest(snap);
   renderTeam(snap, t, view, finished);
+  renderExchanges(view);
   renderTrace(snap, t);
   renderSteps(view);
   renderConversation(snap, view.convo);
@@ -1168,6 +1295,7 @@ $('skip').addEventListener('click', () => {
 $('speed').addEventListener('change', () => { if (S.mode === 'replay') render(S.t); });
 setInterval(() => { if (S.mode === 'live' && S.snap) $('elapsed').textContent = fmt(Date.now() - S.snap.started); }, 1000);
 buildDiagram();
+buildExchangeKeys();
 buildTraceKeys();
 traceEmpty('Replay a recorded run to watch each agent\'s thoughts, actions, observations and messages appear in time order.');
 renderSteps({convo: [], sources: [], workflow: [], evidence: [], parts: [], drafts: [], reviews: [], deliveries: [], status: {}});

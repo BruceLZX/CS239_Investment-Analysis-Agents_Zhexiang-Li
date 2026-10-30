@@ -80,7 +80,7 @@ def test_every_tool_is_listed_with_text_only_results():
         'get_gate', 'save_research_plan', 'save_profile_requirements', 'save_thesis_table', 'save_scenario_analysis',
         'save_red_team_review', 'get_workflow_doc', 'save_memo_part', 'get_memo_parts', 'run_qa_loop',
         'save_memo_version', 'get_memo_check', 'start_review', 'save_review_pass', 'finish_review',
-        'get_latest_review', 'deliver_memo'}
+        'get_latest_review', 'deliver_memo', 'leave_note'}
     assert all(t.output_schema is None for t in tools)
 
 
@@ -435,3 +435,69 @@ def test_delivery_writes_the_folder_records_the_gate_and_never_blocks(runs_dir, 
     assert (folder / 'sources' / 'deck.pdf').exists() and delivered['final_check']['output'] == []
     record = case_file.read_case()['deliveries'][0]
     assert record['memo_version'] == 1 and (case_file.active_run_dir() / 'memo_v1.md').exists()
+
+
+def a_case_with_a_source() -> str:
+    case_file.start_run('demo')
+    return call('register_source', SOURCE, 'Valuation Analyst')['id']
+
+
+def test_a_note_goes_to_the_sections_owner_and_reaches_it_once_through_its_next_section_tool():
+    source = a_case_with_a_source()
+    left = call('leave_note', {'note': 'Capex is $12.7B in my table, $9.4B in yours.', 'section': 's7', 'source_ids': [source]},
+                'Valuation Analyst')
+    assert (left['id'], left['to'], left['section']) == ('N1', FUNDAMENTALS, 'financials')
+    assert 'notes_for_you' not in left
+    # It wakes nobody and changes nothing; another agent's tools do not carry it.
+    assert 'notes_for_you' not in call('register_source', {**SOURCE, 'location': 'https://sec.example/other'}, 'Market Analyst')
+    first = call('register_source', {**SOURCE, 'location': 'https://sec.example/mine'}, FUNDAMENTALS)
+    assert first['notes_for_you'] == [{'id': 'N1', 'from': 'Valuation Analyst', 'section': 'financials',
+                                       'note': 'Capex is $12.7B in my table, $9.4B in yours.', 'source_ids': [source],
+                                       'answers': None}]
+    assert 'answer it with leave_note' in first['notes_next']
+    assert 'notes_for_you' not in call('register_source', {**SOURCE, 'location': 'https://sec.example/again'}, FUNDAMENTALS)
+
+
+def test_each_section_tool_can_carry_a_note():
+    source = a_case_with_a_source()
+    for tool, arguments in (('get_gate', {}), ('save_memo_part', {'section': 'financials', 'markdown': 'Short [S1].'}),
+                            ('get_memo_check', {'section': 'financials'})):
+        call('leave_note', {'note': f'About {tool}.', 'section': 'financials', 'source_ids': [source]}, 'Valuation Analyst')
+        assert [note['note'] for note in call(tool, arguments, FUNDAMENTALS)['notes_for_you']] == [f'About {tool}.']
+
+
+def test_an_answer_closes_the_note_and_reaches_its_author():
+    source = a_case_with_a_source()
+    call('leave_note', {'note': 'Capex differs.', 'section': 'financials', 'source_ids': [source]}, 'Valuation Analyst')
+    assert [(n['id'], n['to'], n['seen']) for n in call('get_case_status', agent=LEAD)['open_notes']] == [('N1', FUNDAMENTALS, False)]
+    answer = call('leave_note', {'note': 'You are right; corrected in revision 2.', 'answers': 'N1'}, FUNDAMENTALS)
+    assert (answer['id'], answer['to'], answer['section']) == ('N2', 'Valuation Analyst', 'financials')
+    assert answer['notes_for_you'][0]['id'] == 'N1'  # A bot answering from the Lead's brief has now seen it too.
+    assert call('get_case_status', agent=LEAD)['open_notes'] == []
+    back = call('register_source', {**SOURCE, 'location': 'https://sec.example/next'}, 'Valuation Analyst')
+    assert [(n['id'], n['answers']) for n in back['notes_for_you']] == [('N2', 'N1')]
+    assert 'notes_next' not in back  # An answer needs no answer.
+
+
+def test_a_note_that_cannot_be_checked_or_has_no_one_to_go_to_is_explained():
+    source = a_case_with_a_source()
+    note = {'note': 'Capex differs.', 'section': 'financials', 'source_ids': [source]}
+    assert 'a note holds at most 600' in error('leave_note', {**note, 'note': 'x' * 601}, 'Valuation Analyst')
+    assert 'needs text' in error('leave_note', {**note, 'note': ' '}, 'Valuation Analyst')
+    assert 'Name the section' in error('leave_note', {'note': 'Capex differs.'}, 'Valuation Analyst')
+    assert 'No section' in error('leave_note', {**note, 'section': 'nothing'}, 'Valuation Analyst')
+    assert 'at least one registered source' in error('leave_note', {**note, 'source_ids': []}, 'Valuation Analyst')
+    assert 'Not in the source register: S99' in error('leave_note', {**note, 'source_ids': ['S99']}, 'Valuation Analyst')
+    assert 'is yours' in error('leave_note', note, FUNDAMENTALS)
+    assert "the Lead Analyst's" in error('leave_note', {**note, 'section': 'thesis'}, 'Valuation Analyst')
+    assert 'There is no note N7' in error('leave_note', {'note': 'Fixed.', 'answers': 'N7'}, FUNDAMENTALS)
+    call('leave_note', note, 'Valuation Analyst')
+    assert f'for {FUNDAMENTALS}, not for you' in error('leave_note', {'note': 'Fixed.', 'answers': 'N1'}, 'Market Analyst')
+
+
+def test_the_qa_loop_lists_the_notes_still_open():
+    listed_case()
+    source = call('register_source', SOURCE, 'Valuation Analyst')['id']
+    call('leave_note', {'note': 'Capex differs.', 'section': 'financials', 'source_ids': [source]}, 'Valuation Analyst')
+    assert call('run_qa_loop', agent=LEAD)['open_notes'] == [
+        {'id': 'N1', 'from': 'Valuation Analyst', 'to': FUNDAMENTALS, 'section': 'financials'}]

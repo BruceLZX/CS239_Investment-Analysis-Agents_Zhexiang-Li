@@ -12,7 +12,7 @@ Run every command below from this folder (`src/`).
 ## Layout
 
 ```
-team/          bot prompts and profiles, Rakazo client, scenario runner, trace export and checks, replay
+team/          bot prompts and profiles, Rakazo client, scenario runner, trace export and checks, the agents' exchanges, replay
 team/playbooks the research playbooks; the bots read them with read_playbook
 tools/         the MCP server: SEC statements, filing text, prices, valuation, source register, case file, workflow records,
                report sections, versions, reviews and delivery
@@ -97,7 +97,7 @@ To watch a run in the browser instead, start the dashboard and open http://127.0
 
 It starts a scenario and follows the team live:
 - who is working and what they're doing, and where the case is in its steps (plan, briefs, evidence and sections, red team, version, review, delivery);
-- the messages between the bots;
+- the messages between the bots, and what they did with each other's work through the case file: sections read, sources cited, notes left, review items routed (dashed arrows on the team diagram and the trace);
 - the source register, the fourteen sections, versions and reviews (items by severity);
 - the latest version as the rendered HTML report, with its PDF;
 - at the end, rule observations and cost.

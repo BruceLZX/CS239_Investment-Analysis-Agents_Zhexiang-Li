@@ -59,3 +59,13 @@ def test_the_instructions_name_the_components_each_section_requires():
     lead = bots[profiles.LEAD].instructions
     assert '- **verdict:**' in lead and '- **sensitivity:**' in lead and '- **kpi:**' not in lead
     assert '- **kpi:**' in bots[profiles.COMPANY].instructions
+
+
+def test_section_owners_can_leave_each_other_notes_and_only_they():
+    bots = by_name()
+    for name in [*profiles.ANALYSTS, profiles.RED_TEAM]:
+        assert 'leave_note' in bots[name].mcp_tools, name
+    for name in (profiles.LEAD, profiles.REVIEWER):
+        assert 'leave_note' not in bots[name].mcp_tools, name
+    # Notes are the way they work with each other: messages stay the Lead's.
+    assert 'message_bot' not in [tool for tool in profiles.BUILTIN_TOOLS if tool not in bots[profiles.MARKET].disabled_builtin_tools]

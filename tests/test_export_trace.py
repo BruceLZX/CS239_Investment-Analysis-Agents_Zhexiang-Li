@@ -11,7 +11,7 @@ import json
 import pytest
 
 from team import check_trace, export_trace
-from team.export_trace import build_trace, render_markdown
+from team.export_trace import build_trace, observe_notes, render_markdown
 
 BOTS = {'Lead Analyst': 'bot-lead', 'Market Analyst': 'bot-res', 'IC Reviewer': 'bot-rev'}
 DECK = 'Orrin Fieldworks Series A deck'
@@ -417,3 +417,34 @@ def test_round_percentages_do_not_mark_a_decks_content(tmp_path, monkeypatch):
     tokens = export_trace.confidential_tokens({'client_documents': [
         {'name': 'Deck', 'file': 'deck.md', 'confidentiality': 'client-confidential'}]})
     assert {'98.7%', 'K261734', '51%'} <= set(tokens) and '10%' not in tokens
+
+
+def test_exchanges_between_agents_join_the_trace_and_its_markdown(run_dir):
+    case = json.loads((run_dir / 'case.json').read_text())
+    case['sources'][1]['registered_by'] = 'Market Analyst'
+    case['memo_parts'] = {'financials': [revision(1, 'Fundamentals Analyst', '2026-10-26T10:03:00+00:00')]}
+    case['notes'] = [{'id': 'N1', 'from': 'Market Analyst', 'to': 'Fundamentals Analyst', 'section': 'financials',
+                      'note': 'Segment revenue differs.', 'source_ids': ['S2'], 'answers': None,
+                      'at': '2026-10-26T10:02:00+00:00'}]
+    (run_dir / 'case.json').write_text(json.dumps(case))
+    (run_dir / 'tool_log.jsonl').write_text(json.dumps({
+        'ts': '2026-10-26T10:04:00+00:00', 'agent': 'Market Analyst', 'tool': 'get_memo_parts',
+        'arguments': {'sections_wanted': ['financials']}}) + '\n')
+    trace = build_trace(run_dir)
+    assert [(e['kind'], e['from'], e['to']) for e in trace['exchanges']] == [
+        ('note', 'Market Analyst', 'Fundamentals Analyst'), ('cite', 'Fundamentals Analyst', 'Market Analyst'),
+        ('read', 'Market Analyst', 'Fundamentals Analyst')]
+    assert trace['case_file']['notes'][0]['id'] == 'N1'
+    markdown = render_markdown(trace)
+    assert '## Exchanges between agents' in markdown
+    assert '| Market Analyst | Fundamentals Analyst | 1 |  | 1 |  |  |  |' in markdown
+    assert any(o['rule'] == 'P42' and 'N1' in o['detail'] for o in trace['observations'])  # Open at delivery.
+
+
+def test_too_many_new_notes_in_a_turn_are_observed():
+    note = {'type': 'tool_call', 'tool': 'leave_note', 'agent': 'Market Analyst', 'rakazo_run_id': 'r1',
+            'arguments': {'section': 'financials'}}
+    answer = {**note, 'arguments': {'answers': 'N1'}}
+    case = {'deliveries': [], 'notes': []}
+    assert observe_notes([note] * 3 + [answer] * 2 + [{**note, 'rakazo_run_id': 'r2'}], case) == []
+    assert observe_notes([note] * 4, case) == [{'rule': 'P42', 'detail': 'Market Analyst left 4 new notes in one turn'}]

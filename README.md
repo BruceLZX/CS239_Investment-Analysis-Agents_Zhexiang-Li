@@ -15,7 +15,7 @@ Its policies come from the evidence and QA standards the report is held to: the 
 | Deliverable | Where |
 |---|---|
 | What the app does and the tasks it supports | [`app.md`](app.md) |
-| Policies, P1–P41, by agent: permission, capability, lifecycle, information flow and isolation | [`policy.md`](policy.md) (the guidelines' name; [`policies.md`](policies.md) is the same file under the course page's name) |
+| Policies, P1–P42, by agent: permission, capability, lifecycle, information flow and isolation | [`policy.md`](policy.md) (the guidelines' name; [`policies.md`](policies.md) is the same file under the course page's name) |
 | Each tool's inputs and outputs | [`tools.md`](tools.md) |
 | Each agent: the nine LLM agents' tools and exact system prompts, and the scripted Scenario Runner's logic | [`agents/`](agents/) |
 | Example episodes from Phase 1, one per scenario, with the policies involved | [`episodes/`](episodes/) |

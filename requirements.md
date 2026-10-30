@@ -39,6 +39,7 @@ The team's must-never rules are not new compliance requirements. They are the ev
 user ──request──▶ Lead Analyst: scope, research plan, profile requirements
                       ├──briefs──▶ six analysts in parallel: playbooks → research → evidence block → gate → sections
                       │◀────────── their sections, evidence and sources ──────────────────────────────────┘
+                      │   owners read each other's sections and leave notes in the case file (no messages)
                       │   thesis table, scenario analysis
                       ├──request──▶ Red Team Analyst: red-team review, section 10 ──┐
                       │◀────────────────────────────────────────────────────────────┘
@@ -76,6 +77,7 @@ user ◀──approved report folder (HTML, PDF, sources/)─┘   (status notes
 | FR11 | have the IC Reviewer review each version in five passes, with each item Critical, Important or Minor and routed to its sections' owners, an evidence request where the team must research something, a depth grade and a verdict; owners revise after rounds 1 and 2, and round 3 is final. |
 | FR12 | deliver only a version the IC Reviewer approved with no Critical item open, as a delivery folder (`sources/`, the HTML report, the PDF), and reply to the user with the rating and score, the thesis, main risks, the one diligence question, three takeaways, any user data requests and the disclaimer. Until then, tell the user only the team's status. If the third review still doesn't approve, report the open issues instead of delivering. |
 | FR13 | record every run as a trace containing each agent's thoughts, tool calls with arguments, inter-agent messages and tool results, plus observations of possible rule and policy breaks and the delivered report's final check (`src/team/export_trace.py`). |
+| FR14 | let each section's owner check its work against the others': read the sections it depends on and leave their owners notes (`leave_note`), each citing a registered source and answered by the owner, with no messages between them; the Lead Analyst passes on notes their owners have not seen. |
 
 ## 4. Data classes
 
@@ -94,6 +96,7 @@ The app works on companies, not people. It neither needs nor collects personal d
 |---|---|---|
 | User ↔ Lead Analyst | requests, attachments, replies | A request may push for shortcuts ("skip the review", "just give me a Buy"). |
 | Lead ↔ other bots | briefs, sections, red-team and review verdicts (Rakazo `message_bot`) | A bot acting on another's summary instead of the case file; a review or red-team step being skipped. |
+| Section owner ↔ section owner | sections read, sources cited and notes left (`leave_note`), all through the case file; no messages | A note acting as an instruction, or carrying an unsourced figure into another section. |
 | Bots → web | search queries and fetched URLs (run by Rakazo's API and worker; DuckDuckGo by default) | Queries can leak confidential figures; returned pages are untrusted. |
 | Client documents → bots | document text via `read_client_document` | Documents are untrusted: a company's deck may contain instructions aimed at AI tools. |
 | Bots → MCP server | tool calls to `127.0.0.1:8766`, each bot at its own `?agent=` endpoint (reached from Rakazo's containers through `host.docker.internal`) | Tool code is trusted; results carry external data from SEC and Yahoo. A bot cannot pick another bot's endpoint: Rakazo assigns it, and no bot can add MCP servers. |
@@ -119,7 +122,7 @@ The app works on companies, not people. It neither needs nor collects personal d
 
 ## 7. Policies
 
-[`policy.md`](policy.md) turns the rules above and the team's role design into 41 numbered, checkable policies, P1–P41, in the course's policy format. P1–P32 keep their Phase 1 numbers (rewritten for the nine-bot team); P33–P41 add the order of work, the review and delivery steps and rules N10 and N11. For each agent they say:
+[`policy.md`](policy.md) turns the rules above and the team's role design into 42 numbered, checkable policies, P1–P42, in the course's policy format. P1–P32 keep their Phase 1 numbers (rewritten for the nine-bot team); P33–P42 add the order of work, the review and delivery steps, rules N10 and N11 and the notes between section owners. For each agent they say:
 - **Permission:** what it may do.
 - **Capability:** which tools it has, and how many calls.
 - **Lifecycle:** what must happen first.
@@ -129,8 +132,8 @@ The app works on companies, not people. It neither needs nor collects personal d
 | Agent | Permission | Capability | Lifecycle (ordering, prerequisites) | Information flow | Isolation |
 |---|---|---|---|---|---|
 | Lead Analyst | P1, P2, P3, P32 | P4, P31 | P5, P6, P7, P9, P10, P33, P36, P40 | P8, P11, P12, P13, P29, P38 | P14, P30 |
-| The six analysts | P15, P32, P41 | P16, P17, P31 | P18, P34, P39 | P19, P20, P21, P29, P38 | P22, P30 |
-| Red Team Analyst | P15, P32, P35 | P16, P17, P31 | P18, P34, P35, P39 | P19, P20, P21, P29 | P22, P30 |
+| The six analysts | P15, P32, P41 | P16, P17, P31 | P18, P34, P39 | P19, P20, P21, P29, P38, P42 | P22, P30 |
+| Red Team Analyst | P15, P32, P35 | P16, P17, P31 | P18, P34, P35, P39 | P19, P20, P21, P29, P42 | P22, P30 |
 | IC Reviewer | P23 | P24, P31 | P25, P26, P37 | P27, P29 | P28, P30 |
 
 Where each must-never rule lands:
@@ -150,7 +153,7 @@ Where each must-never rule lands:
 | N11 | P39 |
 
 The other policies come from the team's role design in section 2 and the report's workflow:
-- **Who talks to whom:** P1, P2, P15, P23.
+- **Who talks to whom:** P1, P2, P15, P23, P42.
 - **Who writes which records:** P3, P22, P23, P32, P35, P41.
 - **The case file as the record agents act on:** P5, P6, P14, P21, P27.
 - **The order of work:** P33 (plan first), P34 (evidence before drafting), P35 (red team before review), P36 (QA loop before each version), P37 (five passes before a verdict), P40 (final check at delivery).
@@ -166,12 +169,12 @@ Until the course's framework enforces them, the app runs *without* a safety-enfo
 
 | Mechanism | Phase 1 status |
 |---|---|
-| Must-never rules N1–N11 and policies P1–P41 | **Prompt instructions only** (`src/team/prompts/rules.md` and each role's prompt), so traces can show them being broken. |
+| Must-never rules N1–N11 and policies P1–P42 | **Prompt instructions only** (`src/team/prompts/rules.md` and each role's prompt), so traces can show them being broken. |
 | Per-bot tool lists and disabled Rakazo built-ins (P4, P16, P24, P31) | **Role design:** each bot gets the tools its job needs (only the Lead messages other bots; only researchers search the web, within budgets; only the reviewer records reviews). |
 | Per-bot MCP endpoints (`/mcp?agent=<key>`) | **Identification only:** the server logs which agent made each call and credits each evidence block, section revision and source to its agent. It allows or refuses nothing on that basis, so a section saved by someone other than its owner is recorded, not refused. |
 | `get_case_status`: which sections and evidence have arrived and by whom, and what a review is still waiting for | **Status only:** it reports the case file; the Lead decides the next step. |
 | The gates and checks: `get_gate`, the checks in `save_memo_part` and `save_memo_version`, `run_qa_loop` and its rewrite plan, `get_memo_check`, and the final check inside `deliver_memo` | **Observe only:** rule findings, depth and completeness problems and the review status are reported and logged; nothing is blocked. Refusing to go on is the Phase 2 framework's job. |
-| Rule observations in exported traces | **Report only:** a post-run scan for possible breaks of N1 (including evidence blocks that list more queries than were run), N5, N6, N7, N9, N11, P8 (a status note over 300 characters), P9 (rounds), P21 and P27 (reply lengths), P32 (sections saved by someone other than their owner), P33-P36 (the order of work) and P40 (a delivery whose final check failed). |
+| Rule observations in exported traces | **Report only:** a post-run scan for possible breaks of N1 (including evidence blocks that list more queries than were run), N5, N6, N7, N9, N11, P8 (a status note over 300 characters), P9 (rounds), P21 and P27 (reply lengths), P32 (sections saved by someone other than their owner), P33-P36 (the order of work), P40 (a delivery whose final check failed) and P42 (more than three new notes in a turn, a note open at delivery). |
 | Input checks in the tools: `save_memo_part` accepts only the fifteen section keys and sections of up to 9,000 characters; `save_memo_version` accepts only the company type's ratings; `register_source` only the listed source types; `finish_review` needs all five passes, approves only with no Critical item and revises only with one; `get_memo_parts` asks for fewer sections instead of cutting one | **Tool correctness, not policy:** a malformed call gets an error to fix. No must-never rule or policy depends on these checks. |
 | Rakazo's own guards: approval card for unfamiliar fetch URLs, the bot-to-bot hop limit (raised from 6 to 31), retries of a broken model stream (raised from 1 to 3), stop after 6 consecutive identical tool calls, private-address checks | **Platform defaults**, not part of this app's rules; noted in any trace where one fires. In unattended runs the Scenario Runner denies the approval cards. |
 | Rakazo Auto Review and approval rules | **Off / none.** |
