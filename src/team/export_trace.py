@@ -41,6 +41,8 @@ MD_LIMITS = {'thought': 1500, 'tool_result': 800, 'assistant_text': 4000, 'run_p
 CONFIDENTIAL_PATTERNS = (re.compile(r'\$\d[\d,.]*\s?(?:[MBK]\b|million|billion)?'),
                          re.compile(r'\b\d+(?:\.\d+)?%'),
                          re.compile(r'\*\*([^*]{3,60})\*\*'))
+# A whole percentage that is a multiple of 5 ("10%") is in too many ordinary searches to mark a deck's content.
+ROUND_PERCENT_RE = re.compile(r'^(?:\d*[05])%$')
 # Every tool whose arguments leave this machine: web search and fetch, and the public-record and literature queries.
 OUTBOUND_TOOLS = {'web_search', 'web_fetch', 'search_public_records', 'search_literature'}
 # Two ratings side by side ("a Buy or Sell call", "Invest/Pass") name the question, not an answer.
@@ -237,7 +239,9 @@ def confidential_tokens(case: dict) -> dict[str, str]:
         text = _document_text(path)
         for pattern in CONFIDENTIAL_PATTERNS:
             for match in pattern.finditer(text):
-                tokens.setdefault((match.group(1) if pattern.groups else match.group()).strip(), document['name'])
+                token = (match.group(1) if pattern.groups else match.group()).strip()
+                if not ROUND_PERCENT_RE.match(token):
+                    tokens.setdefault(token, document['name'])
     return tokens
 
 

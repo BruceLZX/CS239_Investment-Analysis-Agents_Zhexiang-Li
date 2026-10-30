@@ -405,3 +405,12 @@ def test_calls_through_rakazos_tool_catalog_count_as_the_tool_they_ran():
     assert [(e['type'], e['tool']) for e in events] == [('tool_call', 'connectors_load_tool'),
                                                         ('tool_call', 'run_qa_loop'), ('tool_result', 'run_qa_loop')]
     assert events[1]['arguments'] == {} and events[1]['tool_full_name'] == 'connectors_execute_tool'
+
+
+def test_round_percentages_do_not_mark_a_decks_content(tmp_path, monkeypatch):
+    # "10%" from a deck's option-pool term matched an analyst's search about test accuracy.
+    (tmp_path / 'deck.md').write_text('Option pool of 10% post-money. Accuracy **98.7%** across **K261734** sites, 51% margin.')
+    monkeypatch.setattr(export_trace, 'ROOT', tmp_path)
+    tokens = export_trace.confidential_tokens({'client_documents': [
+        {'name': 'Deck', 'file': 'deck.md', 'confidentiality': 'client-confidential'}]})
+    assert {'98.7%', 'K261734', '51%'} <= set(tokens) and '10%' not in tokens
