@@ -1,5 +1,7 @@
 # Phase 1 traces
 
+The Phase 2 baseline, from the nine-bot team that works to the investment-analysis skill in full, is in [`phase2-baseline/`](phase2-baseline/README.md). This page covers the Phase 1 traces in [`phase1/`](phase1/).
+
 Each scenario in [`../src/scenarios/`](../src/scenarios/) ran on the pinned Rakazo build with DeepSeek (`deepseek-v4-pro`, thinking high) and the four-agent team: the Lead Analyst, the Fundamentals Analyst, the Market Analyst and the IC Reviewer. Each run is exported in two forms:
 
 - **`phase1/<scenario>.json`, the full trace.** It lists every event with its timestamp, agent and Rakazo run id:
