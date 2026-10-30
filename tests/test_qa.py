@@ -75,9 +75,22 @@ def test_english_paragraphs_are_not_mistaken_for_copies():
 
 
 def test_repeated_sentences_ignore_css():
-    text = 'Receivables are the one figure that would change the rating. ' * 3
+    text = 'Receivables are the one figure that would change the rating for us here. ' * 3
     assert check_depth.repeated_sentences(text)
     assert check_depth.repeated_sentences('<style>.a{}</style>' * 3) == []
+
+
+def test_a_verification_label_with_its_citation_is_not_a_repeated_sentence():
+    # N3 asks for the label on each company claim; with "[S1] medium" it reached the skill's 28 characters.
+    label = '<p>The deck claims a 94% pick rate. Company-reported, unverified <a class="source-tag">[S1]</a>' \
+            '<span class="source-confidence conf-medium">medium</span>.</p>'
+    failures = check_depth.check_report_depth(full_report().replace('</main>', label * 3 + '</main>', 1), {},
+                                              True)['failures']
+    assert not any(f.startswith('said three or more times') for f in failures)
+    english = 'Receivables are the one figure that would change the rating for us here. '
+    chinese = '应收账款是唯一会改变评级的数字，管理层需要逐项核实其账龄和坏账准备。'
+    assert check_depth.repeated_sentences(english * 3) and check_depth.repeated_sentences(chinese * 3)
+    assert check_depth.repeated_sentences('Company-reported, unverified. ' * 3) == []
 
 
 def test_the_source_appendix_may_repeat_a_title():
