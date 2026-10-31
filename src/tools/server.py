@@ -387,28 +387,23 @@ def get_case_status() -> dict:
 
 
 @tool(WRITE)
-def set_case_scope(company: str, ticker: str | None, company_type: str, decision: str, language: str = '') -> dict:
+def set_case_scope(company: str, ticker: str | None, company_type: str, decision: str) -> dict:
     """Record what this case is about, before briefing anyone: the company, its ticker (empty for a private
-    company), company_type "listed" or "private", the decision the report serves, and the report's language ("en"
-    or "zh"; empty follows the user's request). The report's listed or private standard follows it. Set it once; a
-    later change is recorded."""
+    company), company_type "listed" or "private", and the decision the report serves. The report's listed or private
+    standard follows it. Set it once; a later change is recorded."""
     company_type = company_type.strip().lower()
     if company_type not in ('listed', 'private'):
         raise ValueError('company_type must be "listed" or "private".')
-    language = language.strip().lower()
-    if language and language not in report.LABELS:
-        raise ValueError('language must be "en" or "zh".')
     ticker = (ticker or '').strip().upper()
     with open_case() as case:
         scope = {'company': company.strip(), 'type': company_type, 'decision': decision.strip(),
                  'ticker': None if company_type == 'private' or ticker in ('', 'PRIVATE', 'NONE', 'N/A') else ticker,
-                 'language': language or report.language_of(case.get('request') or ''),
                  'set_by': CALLER.get(), 'set_at': now()}
         earlier = case.get('scope')
         if earlier and any(earlier[k] != scope[k] for k in ('company', 'ticker', 'type')):
             case.setdefault('scope_changes', []).append(earlier)
         case['scope'] = scope
-    return {k: scope[k] for k in ('company', 'ticker', 'type', 'decision', 'language')}
+    return {k: scope[k] for k in ('company', 'ticker', 'type', 'decision')}
 
 
 @tool(READ)
@@ -700,9 +695,7 @@ def _normalize(key: str, markdown: str) -> str:
     """A section's text without surrounding blank lines or a repeated title; the template adds the title."""
     lines = markdown.strip().splitlines()
     section = sections.BY_KEY[key]
-    if lines and re.fullmatch(r'#{1,6}\s*(?:' + '|'.join(map(re.escape, (section.title, section.title_zh,
-                                                                         section.title_en))) + r')\s*',
-                              lines[0].strip(), re.I):
+    if lines and re.fullmatch(r'#{1,6}\s*' + re.escape(section.title) + r'\s*', lines[0].strip(), re.I):
         lines = lines[1:]
     return '\n'.join(lines).strip()
 
@@ -712,11 +705,10 @@ def check_section_text(key: str, markdown: str, case: dict) -> dict:
     section = sections.BY_KEY[key]
     findings = memo.check_rules(markdown, case['sources'])
     try:
-        body = report.render_section(markdown, case['sources'], case_file.language(case))
+        body = report.render_section(markdown, case['sources'])
         render_error = None
     except report.ComponentError as error:
-        body, render_error = report.render_section(report.plain_markdown(markdown), case['sources'],
-                                                   case_file.language(case)), str(error)
+        body, render_error = report.render_section(report.plain_markdown(markdown), case['sources']), str(error)
     if section.number is None:
         depth = check_report.executive_summary_failures(body) + [
             f'missing the "::: {kind}" component' for kind in section.components
@@ -813,7 +805,7 @@ def get_memo_parts(sections_wanted: list[str] | None = None, version: int | None
 
 # The QA loop, versions and delivery
 
-COMPOSITE_RE = re.compile(r'(?:composite|overall|综合)[^0-9\n|]{0,40}(\d{1,2}(?:\.\d{1,2})?)', re.I)
+COMPOSITE_RE = re.compile(r'(?:composite|overall)[^0-9\n|]{0,40}(\d{1,2}(?:\.\d{1,2})?)', re.I)
 
 
 def composite_score(scoring_markdown: str) -> tuple[str | None, list[str]]:
@@ -832,14 +824,13 @@ def composite_score(scoring_markdown: str) -> tuple[str | None, list[str]]:
         if not table:
             continue
         header = [cell.lower() for cell in table[0]]
-        weight = next((i for i, cell in enumerate(header) if 'weight' in cell or '权重' in cell), None)
-        score = next((i for i, cell in enumerate(header) if ('score' in cell or '评分' in cell or '得分' in cell)
-                      and i != weight), None)
+        weight = next((i for i, cell in enumerate(header) if 'weight' in cell), None)
+        score = next((i for i, cell in enumerate(header) if 'score' in cell and i != weight), None)
         if weight is None or score is None:
             continue
         pairs = []
         for row in table[1:]:
-            if re.search(r'composite|overall|total|综合|合计', row[0], re.I):
+            if re.search(r'composite|overall|total', row[0], re.I):
                 continue
             w = re.search(r'(\d+(?:\.\d+)?)', row[weight]) if weight < len(row) else None
             s = re.search(r'(\d+(?:\.\d+)?)', row[score]) if score < len(row) else None
@@ -864,7 +855,7 @@ def _run_checks(case: dict, texts: dict[str, str], html_text: str, pdf_path: Pat
     listed = case_file.is_listed(case)
     per_section = {key: check_section_text(key, text, case) for key, text in texts.items()}
     plain = report.plain_report(texts, case['sources'], report.Cover((case.get('scope') or {}).get('company', '')),
-                                rating or '', '', composite or '', case_file.language(case))
+                                rating or '', '', composite or '')
     rules = memo.check_memo(plain, case['sources'], rating, listed)['findings']
     depth = check_depth.check_report_depth(html_text, texts, listed)
     report_check = check_report.check_report(html_text, pdf_path, listed, composite)
@@ -907,8 +898,7 @@ def _further_diligence(case: dict) -> list[str]:
 
 def _render(case: dict, texts: dict[str, str], cover: dict, data_as_of: str, composite: str) -> str:
     return report.render_report(texts, case['sources'], report.Cover(**cover), data_as_of, composite or '',
-                                case_file.language(case), case.get('user_data_requests') or [],
-                                _further_diligence(case))
+                                case.get('user_data_requests') or [], _further_diligence(case))
 
 
 @tool(WRITE)
@@ -971,7 +961,7 @@ def save_memo_version(rating: str, data_as_of: str, tagline: str, business_summa
         html_text = _render(case, texts, cover, data_as_of, composite or '')
         (folder / 'report.html').write_text(html_text)
         (folder / 'report.md').write_text(report.plain_report(texts, case['sources'], report.Cover(**cover), rating,
-                                                              data_as_of, composite or '', case_file.language(case)))
+                                                              data_as_of, composite or ''))
         pdf = report.write_pdf(folder / 'report.html', folder / 'report.pdf')
         diagnose_report.resolve((case.get('workflow') or {}).get('rewrite_plan') or [], case_file.current_parts(case),
                                 now())
@@ -1155,7 +1145,6 @@ def deliver_memo(version: int = 0) -> dict:
         saved = _version(case, version)
         gate = case_file.review_gate(case, saved['version'])
         texts = case_file.version_parts(case, saved)
-        language = case_file.language(case)
         cover = saved['cover']
         folder = (case_file.active_run_dir() / 'delivery'
                   / report.folder_name(cover['company'], cover.get('industry') or cover.get('tagline') or ''))
@@ -1166,7 +1155,7 @@ def deliver_memo(version: int = 0) -> dict:
             path = case_file.ROOT / document['file']
             if path.exists():
                 shutil.copy2(path, folder / 'sources' / path.name)
-        stem = report.report_file_name(cover['company'], language)
+        stem = report.report_file_name(cover['company'])
         html_path, pdf_path = folder / f'{stem}.html', folder / f'{stem}.pdf'
         shutil.copy2(saved['files']['html'], html_path)
         if saved['files'].get('pdf') and Path(saved['files']['pdf']).exists():

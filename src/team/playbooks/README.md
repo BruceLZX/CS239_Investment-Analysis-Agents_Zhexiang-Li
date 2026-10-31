@@ -1,8 +1,9 @@
 # Playbooks
 
-These are the reference files of the investment-analysis skill, copied unchanged from
+These are the reference files of the investment-analysis skill, from
 [BruceLZX/investment-analysis-skill](https://github.com/BruceLZX/investment-analysis-skill) (MIT) at commit
-`fb5ae3466aa6e9391cd0f7195633de08c4e54936`. They are the analysis standards the agent team works to.
+`fb5ae3466aa6e9391cd0f7195633de08c4e54936`, with their Chinese passages translated to English and otherwise unchanged.
+They are the analysis standards the agent team works to.
 
 The bots read them at run time with the `read_playbook` tool, one heading at a time, because together they are far
 longer than Rakazo's 20,000-character limit on a bot's instructions. Each bot's prompt names the playbooks and

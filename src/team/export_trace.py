@@ -556,8 +556,7 @@ def build_trace(run_dir: Path) -> dict:
         'case_file': {
             'client_documents': [{'name': d['name'], 'confidentiality': d['confidentiality']} for d in case['client_documents']],
             'sources': case['sources'],
-            'scope': case.get('scope') and {k: case['scope'].get(k) for k in ('company', 'ticker', 'type', 'decision',
-                                                                              'language')},
+            'scope': case.get('scope') and {k: case['scope'].get(k) for k in ('company', 'ticker', 'type', 'decision')},
             'workflow': case.get('workflow') or {},
             'evidence': {key: [{k: block.get(k) for k in ('author', 'queries', 'rows', 'gate', 'plan', 'gate_passed',
                                                          'saved_at')} for block in blocks]

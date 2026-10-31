@@ -60,8 +60,6 @@ def test_n3_company_claims_need_a_verification_status():
     labelled = check_memo(f'The robot picks 94% of ripe fruit, a company-provided figure not independently verified '
                           f'[S3].\n\n{DISCLAIMER}', SOURCES)
     assert labelled['findings'] == []
-    chinese = check_memo(f'机器人采摘率94%（公司提供，未独立验证）[S3]。\n\n{DISCLAIMER}', SOURCES)
-    assert chinese['findings'] == []
 
 
 def test_n4_listed_directional_ratings_need_a_filing_and_market_data():
@@ -79,7 +77,7 @@ def test_n4_committing_to_a_private_company_needs_an_independent_source():
 
 def test_n6_internal_working_material_and_team_names_are_flagged():
     for leak in ('As the Valuation Analyst found, the margin holds.', 'Per the evidence matrix, margins rose.',
-                 'The must-fix items from R2 are resolved.', 'Saved with save_memo_part.', '证据矩阵显示毛利率上升。'):
+                 'The must-fix items from R2 are resolved.', 'Saved with save_memo_part.'):
         assert 'N6' in rules(check_memo(f'{leak}\n\n{DISCLAIMER}', SOURCES)), leak
 
 
@@ -87,5 +85,5 @@ def test_a_missing_disclaimer_is_flagged():
     assert rules(check_memo('Revenue grew [S1].', SOURCES)) == ['disclosure']
 
 
-def test_citation_pattern_finds_ids_next_to_chinese_text():
-    assert memo.cited_ids('来源S1，见S12。') == {'S1', 'S12'}
+def test_citation_pattern_finds_ids_next_to_punctuation():
+    assert memo.cited_ids('Sources:S1, see S12.') == {'S1', 'S12'}

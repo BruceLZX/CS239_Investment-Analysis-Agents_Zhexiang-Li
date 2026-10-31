@@ -11,10 +11,10 @@ repository; no bot receives it.
 - **Shape** (analysis_core.md "Section Writing Contract"): open with the section plan's thesis sentence, a judgement about the company; then paragraphs that go claim, evidence [S#], interpretation, investor implication, confidence or open question. Cover judgement, evidence, mechanism, comparison (peers, benchmark, base rate or history), counter-evidence, investor implication, confidence and diligence questions, without showing those as labels: no "Economic mechanism:", "Investor implication:" or "{section} judgement" headings. Use content-specific micro-headings ("### Cash conversion is weaker than profit") only where they help.
 - **Depth floor:** at least 2,500 characters, 6 analytical paragraphs, 8 figures, 4 distinct source IDs and 6 mentions of sources (in words, tags or a Source column). Write 7,000-8,500 characters: the server refuses a section over 9,000, the most one model call can write. Depth is evidence density, not length: one real judgement with its evidence, comparison and priced risk beats padding.
 - **Citations:** cite a paragraph once, with one tag at the end of it ([S3] or [S3, S7]); at most 6 inline tags a section. Every table of figures has a Source column. Every paragraph, list item or table row with a material figure carries a source ID (N2).
-- **Precision** (company_deep_dive_playbook.md "The Granularity Benchmark"): exact figures with unit, period and date; full names of people, institutions and products; dated events (YYYY-MM or YYYY-MM-DD, never "recently"). When data is missing, say exactly what is missing, how material it is and which source would settle it ("not disclosed"; 未披露), and ask the user for it when a registry needs a login.
+- **Precision** (company_deep_dive_playbook.md "The Granularity Benchmark"): exact figures with unit, period and date; full names of people, institutions and products; dated events (YYYY-MM or YYYY-MM-DD, never "recently"). When data is missing, say exactly what is missing, how material it is and which source would settle it ("not disclosed"), and ask the user for it when a registry needs a login.
 - **Claims:** a claim resting only on company material says so: verified, partially verified, unverified, contradicted or not publicly disclosed (N3).
 - **Banned:** empty phrases ("huge market", "strong team", "high barriers to entry", "clear business model", "fierce competition", "risks are manageable", "well positioned"); vague counts ("about 5", "many patents", "experienced team"); any sentence about how the report or a section is written; the same paragraph or block reused across sections; names of the team's bots, tools or records (N6).
-- **Language:** write in the case's language. The template supplies each section's title, so start straight with the text.
+- **Language:** write in English, whatever language the request or a source is in. The template supplies each section's title, so start straight with the text.
 
 ## components
 
@@ -127,10 +127,10 @@ Where the app departs from the playbooks, and why:
 - **Workflow files are case-file records.** `_work/*.md` become typed tool arguments, so the checks read fields instead of parsing Markdown tables.
 - **Sections are written in Markdown, not HTML.** The server renders them into the report template, so the template's markup and its version marker cannot drift.
 - **Checks report and never block.** The Phase 2 policy framework decides what to enforce, and the trace records every check.
-- **Bugs in the original check scripts are fixed** (see each module in src/tools/qa/), and English word lists sit beside the Chinese ones.
+- **Bugs in the original check scripts are fixed** (see each module in src/tools/qa/).
 - **Scoring weights** are the app's own (tools/sections.py), since the report standard asks for a weighted score but defines none.
 - **Review rounds are capped at three.** The playbooks loop until no Critical item remains; here a third failed review ends the case without delivery.
 - **Evidence hierarchies.** The playbooks give three slightly different orders; the app uses the regulatory lens's (court and regulatory records first, OCR last) for source types and confidence.
 - **Section numbering** follows the template's fourteen slots; the deep-dive playbook's own section numbers and benchmark codes differ, so headings are matched by name.
-- **Reports in English.** The template's chrome is Chinese with bilingual section titles; a report in English adds English to the cover's labels, the briefing's subtitle and the disclaimers, keeping the Chinese that check_report.py requires.
+- **Reports in English.** The report template, section titles and check word lists are translated to English, and every report is written in English.
 - **Inline source tags.** The original scripts allow 6 a section and 60 a report, which fourteen sections within their own limit exceed. The app keeps 6 a section, applies it to the executive summary too, and allows 90 a report (6 for each of fifteen). N2 asks for a source ID in every paragraph, list item or table row with a figure, so a paragraph carries one tag and a table its Source column.

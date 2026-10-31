@@ -126,7 +126,7 @@ The reviewer produces a structured challenge document at `_work/investor_review.
 
 | Claim (Report Text) | Source Quality | Issue | Action Required |
 |---------------------|---------------|-------|-----------------|
-| "[Quote from report]" | Company-provided only | 未独立验证 | Search for independent corroboration |
+| "[Quote from report]" | Company-provided only | Not independently verified | Search for independent corroboration |
 | "[Quote]" | Media article from 2024 | Stale (>12 months old) | Search for updated data |
 | "[Quote]" | No source cited | Unattributed | Find source or remove claim |
 

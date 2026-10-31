@@ -37,7 +37,7 @@ def test_status_summary_lists_what_arrived_without_the_content(runs_dir):
     case_file.start_run('demo', [DECK])
     with case_file.open_case() as case:
         case['scope'] = {'company': 'Apple', 'ticker': 'AAPL', 'type': 'listed', 'decision': 'Watchlist or not',
-                         'language': 'en', 'set_by': 'Lead Analyst', 'set_at': 't'}
+                         'set_by': 'Lead Analyst', 'set_at': 't'}
         case['workflow']['research_plan'] = {'spines': []}
         case['evidence']['financials'] = [{'author': 'Fundamentals Analyst', 'queries': ['a'], 'rows': [],
                                            'gate_passed': False, 'saved_at': 't'}]
@@ -48,7 +48,7 @@ def test_status_summary_lists_what_arrived_without_the_content(runs_dir):
                                 'items': [{'severity': 'Critical'}, {'severity': 'Minor'}],
                                 'revision_requests': {'Fundamentals Analyst': ['financials']}})
     status = case_file.status_summary(case_file.read_case())
-    assert status['scope']['company'] == 'Apple' and status['scope']['language'] == 'en'
+    assert status['scope']['company'] == 'Apple'
     assert status['client_documents'] == [{'name': 'Deck', 'confidentiality': 'client-confidential'}]
     assert status['workflow']['research_plan'] and not status['workflow']['thesis_table']
     assert status['analysts']['Fundamentals Analyst'] == {'sections_saved': ['financials'],

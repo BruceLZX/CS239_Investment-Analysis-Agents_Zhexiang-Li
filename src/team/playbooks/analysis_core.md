@@ -56,7 +56,7 @@ The `_work/evidence_matrix.md` table is a hard gate. Each section's `Deep Eviden
 Evidence gate failure rules:
 
 - If a section has only company-provided material, write it as low-confidence and do not make a strong positive claim.
-- If no independent source can verify a claim, explicitly say `未独立验证`.
+- If no independent source can verify a claim, explicitly say `not independently verified`.
 - If a section lacks counter-evidence, add a red-team paragraph with the most plausible failure mode.
 - If a section lacks quantification, state which metric is missing and how it affects investment confidence.
 - If a section lacks peer/benchmark context, do not score it above 7/10.
@@ -64,11 +64,11 @@ Evidence gate failure rules:
 
 ## Section Writing Contract
 
-Each final section must cover the full analytical logic, but it should read like an investment memo, not a compliance checklist. Use judgement, evidence, mechanism, comparison, counter-evidence, investor implication, confidence, and diligence questions as the internal reasoning scaffold. Do not force every section to show the same subheadings such as `判断 / 证据 / 机制 / 对标 / 反证 / 投资含义 / 待验证问题`.
+Each final section must cover the full analytical logic, but it should read like an investment memo, not a compliance checklist. Use judgement, evidence, mechanism, comparison, counter-evidence, investor implication, confidence, and diligence questions as the internal reasoning scaffold. Do not force every section to show the same subheadings such as `Judgement / Evidence / Mechanism / Benchmark / Counter-evidence / Investor implication / Open questions`.
 
 The final report should not become pure black text on a white background. Use visual hierarchy and compact evidence displays to make dense analysis readable, while avoiding repetitive card stacks.
 
-Internal workflow language must not appear in the final report. Never write sentences that explain how the section should be written, such as `本节要把证据等级...放在同一条逻辑链`, `不能被写成`, `而不是把材料拆成孤立事实`, or `source ID只用于锁定证据来源`. The final report should analyze the company, not describe the report-writing rubric.
+Internal workflow language must not appear in the final report. Never write sentences that explain how the section should be written, such as `this section must put the evidence grade ... in one logical chain`, `cannot be written as`, `rather than splitting the material into isolated facts`, or `source IDs are only used to lock down where the evidence came from`. The final report should analyze the company, not describe the report-writing rubric.
 
 Preferred section shape:
 
@@ -79,7 +79,7 @@ Preferred section shape:
 5. Bring the main weakness or contrary evidence into the same discussion rather than isolating it mechanically.
 6. End with the investor implication and the most decision-relevant open questions.
 
-Use tables, KPI strips, risk matrices, scenario tables, or short callout cards when they improve scanability. Use explicit micro-headings only when they fit the section's content, not as a repeated template. Good micro-headings are content-specific, for example `现金流质量比利润表弱`, `监管路径是估值折扣的来源`, or `客户验证仍停留在试点阶段`.
+Use tables, KPI strips, risk matrices, scenario tables, or short callout cards when they improve scanability. Use explicit micro-headings only when they fit the section's content, not as a repeated template. Good micro-headings are content-specific, for example `Cash flow quality is weaker than the income statement`, `The regulatory path is the source of the valuation discount`, or `Customer validation is still at the pilot stage`.
 
 Recommended readable section pattern:
 
@@ -98,15 +98,15 @@ Use visual components selectively:
 
 Avoid rigid writing patterns:
 
-- Do not write `{section name}判断`, `{section name}的机制`, `{section name}的benchmark`, `{section name}原件优先级`, `{section name}决策门槛`, or `{section name}决策清单`.
+- Do not write `{section name} judgement`, `{section name} mechanism`, `{section name} benchmark`, `{section name} original-document priority`, `{section name} decision threshold`, or `{section name} decision checklist`.
 - Do not repeat the same seven labels in every section.
 - Do not make each section a stack of independent bullet cards.
 - Do not replace structured cards with unbroken long paragraphs.
 - Do not put evidence in one box and interpretation in another when a paragraph would read better.
-- Do not add a token "对标" or "反证" sentence just to satisfy the form; integrate comparison and counter-evidence into the argument.
+- Do not add a token "benchmark" or "counter-evidence" sentence just to satisfy the form; integrate comparison and counter-evidence into the argument.
 - Do not hide the recommendation until the end of a long fact list.
-- Do not append the same `投资人读法`, `来源/Source`, `数字锚点`, `仍需确认`, or generic transaction-structure paragraph to every section. If a reader would recognize the paragraph from another section, rewrite it as section-specific analysis or delete it.
-- Put full citations in one `数据来源与引用 / Source Appendix` module. Inline source/confidence tags should support the most important claims, not repeat the same source list in every paragraph.
+- Do not append the same `How investors should read this`, `Source`, `Key figures`, `Still to confirm`, or generic transaction-structure paragraph to every section. If a reader would recognize the paragraph from another section, rewrite it as section-specific analysis or delete it.
+- Put full citations in one `Source Appendix` module. Inline source/confidence tags should support the most important claims, not repeat the same source list in every paragraph.
 
 Avoid shallow claims unless evidence-backed:
 

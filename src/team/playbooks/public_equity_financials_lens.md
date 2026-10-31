@@ -57,7 +57,7 @@ Go beyond "price = $X" and provide the trading narrative:
 | **Volume profile** | Average daily volume (shares + USD), recent volume trend; is liquidity sufficient for the intended position size? |
 | **Short interest** | % of float short, days to cover, trend (rising/falling) — potential squeeze risk or smart-money signal |
 | **Insider trading** | Recent insider buys/sells (volume and direction over 3-6 months) — management conviction signal |
-| **Institutional ownership** | % held by institutions, recent filings (13F for US, 季度报告 for CN mutual funds) — smart money tracking |
+| **Institutional ownership** | % held by institutions, recent filings (13F for US, quarterly reports for CN mutual funds) — smart money tracking |
 | **Analyst consensus** | Number of analysts, rating distribution (buy/hold/sell), consensus target price, estimate dispersion |
 | **Earnings surprise history** | Last 4-8 quarters: beat/miss pattern, post-earnings drift direction |
 | **Technical context** | Key moving averages (50D/200D), relative strength vs. sector, any obvious chart patterns (breakout, breakdown, range-bound) |
@@ -122,7 +122,7 @@ This regime assessment should directly inform the position sizing recommendation
 Use primary or near-primary sources first:
 
 - US: SEC EDGAR 10-K, 10-Q, 8-K, DEF 14A, company IR releases.
-- Mainland China A-share: 巨潮资讯/CNINFO, SSE/SZSE/BSE company announcements, annual/interim/quarterly reports.
+- Mainland China A-share: CNINFO, SSE/SZSE/BSE company announcements, annual/interim/quarterly reports.
 - Hong Kong: HKEXnews, company annual/interim reports, announcements.
 - Other markets: local exchange filings, regulator filings, company IR documents.
 - Market data: exchange pages, reliable finance tools, broker/market-data terminals, or clearly cited finance aggregators. Record timestamp, currency, and exchange.
@@ -143,7 +143,7 @@ For public equities, `_work/evidence_matrix.md` must include dedicated rows for:
 - Consensus, guidance, profit warning, order/backlog, or other expectation anchor where available.
 - Catalysts, risks, and downside scenario.
 
-If data is unavailable, write `未披露/未找到` and explain how that limits the conclusion.
+If data is unavailable, write `not disclosed` or `not found` and explain how that limits the conclusion.
 
 ## Professional Financial Statement Analysis
 

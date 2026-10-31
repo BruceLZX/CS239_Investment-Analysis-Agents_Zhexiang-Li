@@ -308,7 +308,7 @@ def revision(number: int, author: str, saved_at: str, markdown: str = 'A short p
 def test_sections_versions_reviews_and_the_final_check_join_the_trace(run_dir):
     case = json.loads((run_dir / 'case.json').read_text())
     case['scope'] = {'company': 'Orrin Fieldworks', 'ticker': None, 'type': 'private', 'decision': 'Series A',
-                     'language': 'en', 'set_by': 'Lead Analyst', 'set_at': '2026-10-26T10:00:05+00:00'}
+                     'set_by': 'Lead Analyst', 'set_at': '2026-10-26T10:00:05+00:00'}
     case['memo_parts'] = {'competition': [dict(revision(1, 'Market Analyst', '2026-10-26T10:02:00+00:00'),
                                                evidence_before_draft=True)],
                           'scoring': [revision(1, 'Lead Analyst', '2026-10-26T10:03:30+00:00', '1. Picks 94% [S1].')]}
@@ -335,8 +335,8 @@ def test_sections_versions_reviews_and_the_final_check_join_the_trace(run_dir):
     # The delivered report is re-checked from the file the server wrote for that version.
     assert any(o['rule'] == 'N3' and o['detail'].startswith('delivered report v1') for o in trace['observations'])
     markdown = render_markdown(trace)
-    assert '| 5 | 竞争格局 Competitive Landscape | Market Analyst | 1 (Market Analyst) | 18 | yes | problems |' in markdown
-    assert '| 4 | 市场与行业分析 Market & Industry Analysis | Market Analyst | none |' in markdown
+    assert '| 5 | Competitive Landscape | Market Analyst | 1 (Market Analyst) | 18 | yes | problems |' in markdown
+    assert '| 4 | Market & Industry Analysis | Market Analyst | none |' in markdown
     assert '## Final check at delivery' in markdown and '| report | missing the timeline component |' in markdown
 
 

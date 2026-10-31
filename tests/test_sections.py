@@ -11,7 +11,7 @@ def test_the_sections_fill_the_template_slots_in_order():
     slots = [int(n) for n in re.findall(r'\{\{SECTION_(\d+)\}\}', template)]
     assert slots == list(range(1, 15)) == [s.number for s in sections.SECTIONS]
     for section in sections.SECTIONS:
-        assert f'data-title="{section.title_zh} ' in template, section.key
+        assert f'data-title="{section.title.replace("& ", "")}"' in template, section.key
 
 
 def test_every_section_has_an_owner_on_the_team_and_every_analyst_owns_sections():

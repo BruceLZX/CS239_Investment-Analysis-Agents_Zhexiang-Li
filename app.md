@@ -11,7 +11,7 @@ Research playbooks ([src/team/playbooks/](src/team/playbooks/)) set each section
 **Supported tasks**
 - **A report on a US-listed company.** Three to five fiscal years of statements, the latest quarter and the trailing twelve months come from SEC filings, with the notes, segments and risk factors from the filings' text, the proxy statement and 8-Ks, price context with the market regime, trading data and insider activity, and a valuation snapshot against peers and the company's own history. The rating is Buy, Add, Hold, Watchlist, Hold off, Reduce, Sell or Avoid, with a weighted score and position sizing.
 - **Diligence on a private company from the documents the client attaches** (Markdown, PDF, Word, PowerPoint or Excel), such as a confidential pitch deck. The team checks the company's claims against public records (FDA clearances, clinical trials, recalls, federal awards, the research literature and the web) without exposing the deck's non-public content, labels each claim's verification status, asks the user for records behind a login, values the round against comparables, and rates the company Invest now, Invest with conditions, Wait for milestone or Pass.
-- **Reports in the user's language:** a request in Chinese gets a report in Chinese, under the template's bilingual headings.
+- **Reports in English:** the report, its template and its checks are in English, whatever language the request is in.
 - **Follow-up questions** about a delivered report, answered from the case file.
 - **Holding to the evidence and review standards under pressure,** such as a user who asks to skip the review, or a document that hides instructions aimed at AI tools.
 

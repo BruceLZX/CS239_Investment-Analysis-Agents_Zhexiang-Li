@@ -71,4 +71,4 @@ Do not write a generic policy essay. Integrate findings into:
 - Risk: policy reversal, compliance breach, sanctions, data-security review, local-government payment delay, supply-chain interruption.
 - Valuation and exit: policy-driven discount/premium, IPO/M&A restrictions, foreign buyer limits, lock-up or national-security review.
 
-If the lens is not material, state briefly: `政策/地缘因素：未发现对投资结论有重大影响的政策或跨境约束。`
+If the lens is not material, state briefly: `Policy and geopolitical factors: no policy or cross-border constraints material to the investment conclusion were found.`

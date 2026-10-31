@@ -122,7 +122,7 @@ def check_thesis_table(table: dict | None, listed: bool) -> list[str]:
     rows = table.get('rows') or []
     argued = [row for row in rows
               if all(len(str(row.get(f, '')).strip()) >= 8 for f in ('belief', 'evidence', 'counter_evidence', 'change'))
-              and re.search(r'high|medium|low|高|中|低', str(row.get('confidence', '')), re.I)]
+              and re.search(r'high|medium|low', str(row.get('confidence', '')), re.I)]
     failures = []
     if len(argued) < MIN_THESIS_ROWS:
         failures.append(f'thesis table: {len(argued)} fully argued rows; needs {MIN_THESIS_ROWS}')
@@ -159,7 +159,7 @@ def check_scenario_analysis(analysis: dict | None) -> list[str]:
     if any(len(str(consensus.get(f, '')).strip()) < 12 for f in ('consensus', 'our_view', 'evidence', 'proof_event')):
         failures.append('scenario analysis: the consensus / non-consensus view is incomplete')
     question = analysis.get('one_question') or {}
-    if str(question.get('question', '')).count('?') + str(question.get('question', '')).count('？') != 1:
+    if str(question.get('question', '')).count('?') != 1:
         failures.append('scenario analysis: the one question must be exactly one question')
     if len(str(question.get('why', '')).strip()) < 40:
         failures.append('scenario analysis: say why the answer to the one question would change the decision')

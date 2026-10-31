@@ -14,8 +14,8 @@ from .check_evidence import PRIMARY_TYPES_RE
 from .terms import has_placeholder
 
 MIN_SOURCES, MIN_INDEPENDENT, MIN_PRIMARY = 8, 4, 1
-CONFIDENCE_RE = re.compile(r'high|medium|low|高|中|低', re.I)
-NOT_INDEPENDENT_RE = re.compile(r'company-provided|company provided|\bocr\b|公司提供', re.I)
+CONFIDENCE_RE = re.compile(r'high|medium|low', re.I)
+NOT_INDEPENDENT_RE = re.compile(r'company-provided|company provided|\bocr\b', re.I)
 
 
 def usable(source: dict) -> bool:

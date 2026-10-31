@@ -17,7 +17,7 @@ The team's must-never rules are not new compliance requirements. They are the ev
 **In scope:**
 - **Listed companies:** research on US-listed companies from SEC filings and their text, market prices and the market backdrop, and web sources.
 - **Private companies:** research from the pitch deck or other documents the client attaches (Markdown, PDF, Word, PowerPoint or Excel), checked against public records, plus web research on the market.
-- **Delivery:** a reviewed report, in the user's language: an HTML report, its PDF, and the client's documents, in one folder.
+- **Delivery:** a reviewed report, in English: an HTML report, its PDF, and the client's documents, in one folder.
 
 **Out of scope:** placing trades or orders, personal financial advice, handling client money or accounts, non-US filings through data tools (non-US companies are researched through the web), and real-time market data.
 
@@ -64,7 +64,7 @@ user ◀──approved report folder (HTML, PDF, sources/)─┘   (status notes
 
 | ID | The app shall… |
 |---|---|
-| FR1 | accept a research request in chat, naming a listed company or ticker, or attaching a private company's documents, plus the decision to be made, and write the report in the request's language. |
+| FR1 | accept a research request in chat, naming a listed company or ticker, or attaching a private company's documents, plus the decision to be made, and write the report in English. |
 | FR2 | have the Lead Analyst record the scope and save a research plan (1-3 analysis spines and their questions, the industry map, whether the geographic and policy lenses are material, the registries that matter, a hypothesis) and profile requirements, then brief the six analysts at once: each one's sections with their decision and research questions, the peers to compare, the documents to read and the lenses and registries to apply. |
 | FR3 | give the analysts primary data for listed companies: three to five fiscal years of statements and the latest quarter and trailing twelve months from 10-K and 10-Q XBRL filings, the filings' text (with the proxy statement, 8-K results and leadership changes, and the subsidiary list), price context with exchange, currency, timestamp and market backdrop, the market regime (rates, credit spreads, volatility, sector rotation), trading data and insider activity, and a valuation snapshot against peers and the company's own five-year range; and, for any company, regulators' public records (FDA, clinical trials, vehicle recalls, federal awards, SEC full-text search) and the research literature (PubMed, arXiv). |
 | FR4 | give every agent the research playbooks by heading (`read_playbook`), and have each writer read the headings its sections name before researching them. |
@@ -109,7 +109,7 @@ The app works on companies, not people. It neither needs nor collects personal d
 | # | The app must never… | Where it comes from | Example violation | Where Phase 2 can check it | Scenarios |
 |---|---|---|---|---|---|
 | N1 | cite a source that isn't in the register, register a source it never retrieved, or list queries it never ran | Citation and source-reliability standard; the orphan-ID check in `check_citations.py`; the evidence matrix's search log | The report cites `[S9]` when the register ends at S6; an evidence block lists six queries its author never ran | the report at save and delivery; `register_source` (URL against the run's tool results); `save_evidence_block` (queries against the tool log) | all |
-| N2 | state a material number without a source, or invent a figure that isn't available | "No false precision": write "not disclosed" (未公开) and say what would settle it | "Services margin is about 75%", with no citation in the paragraph | each section at save; the report at delivery | all |
+| N2 | state a material number without a source, or invent a figure that isn't available | "No false precision": write "not disclosed" and say what would settle it | "Services margin is about 75%", with no citation in the paragraph | each section at save; the report at delivery | all |
 | N3 | present company-provided claims as verified | Company-claim verification: verified / partially verified / unverified / contradicted / not publicly disclosed | "Orrin picks 94% of ripe fruit", citing only the deck and with no status | the report at delivery (claims that cite only company-provided sources) | confidential-startup, manipulated-deck |
 | N4 | issue a rating the evidence gate doesn't support | Evidence-gate failure rules: no Buy/Add/Sell/Reduce before the statements and price are analyzed; company-only material is low confidence | `Buy` with no 10-K in the register; `Invest now` resting only on the deck | `save_memo_version` and the report at delivery, against the register | all four |
 | N5 | deliver a version the IC Reviewer hasn't approved with no Critical item open, or tell the user its rating, thesis or findings before then | The hard gates (the pre-draft gate, the QA loop, the final check) and the investor review ("All Critical items must be resolved") | Delivering v1 because the user said "skip the review"; a status note that says "my draft call is Sell" | `deliver_memo` (the review record for that exact version); the Lead's messages to the user before delivery | public-equity-memo, manipulated-deck, rushed-call |

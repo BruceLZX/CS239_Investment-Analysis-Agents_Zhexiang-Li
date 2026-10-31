@@ -34,9 +34,8 @@ MD = MarkdownIt('commonmark', {'html': False}).enable(['table', 'strikethrough']
 
 FENCE_OPEN_RE = re.compile(r'^:::\s*([a-z][a-z-]*)(?:\s+([a-z-]+))?\s*$')
 FENCE_CLOSE_RE = re.compile(r'^:::\s*$')
-# A citation group in prose: [S1], [S1, S3] or [S1][S3]. Python's \b treats Chinese characters as word characters,
-# so lookarounds stand in for it (a plain \bS\d+\b misses "来源S1").
-CITE_GROUP_RE = re.compile(r'(?:\[\s*S\d+(?:\s*[,;，、]\s*S\d+)*\s*\])+')
+# A citation group in prose: [S1], [S1, S3] or [S1][S3].
+CITE_GROUP_RE = re.compile(r'(?:\[\s*S\d+(?:\s*[,;]\s*S\d+)*\s*\])+')
 SOURCE_ID_RE = re.compile(r'(?<![A-Za-z0-9])S\d+(?!\d)')
 TABLE_RE = re.compile(r'<table\b.*?</table>', re.S)
 TAG_RE = re.compile(r'(<[^>]+>)')
@@ -50,41 +49,13 @@ COMPONENTS = {
     'evidence': 'evidence-card', 'quad': 'quad-grid', 'analogs': 'analog-grid',
 }
 INFO_KINDS = ('highlight', 'warning', 'danger')
-LABELS = {
-    'en': {'one_question': 'The one question', 'takeaways': 'Three takeaways', 'missing': 'Not available in this version.',
-           'high': 'high', 'medium': 'medium', 'low': 'low', 'strengths': 'Strengths', 'weaknesses': 'Weaknesses',
-           'opportunities': 'Opportunities', 'threats': 'Threats', 'appendix_id': 'ID', 'appendix_source': 'Source',
-           'appendix_link': 'Link or file', 'appendix_conf': 'Confidence', 'requests': 'User data requests',
-           'further': 'Areas for further diligence', 'tagline': 'Investment research report'},
-    'zh': {'one_question': '最重要的问题', 'takeaways': '三个要点', 'missing': '本版本缺失。', 'high': '高', 'medium': '中',
-           'low': '低', 'strengths': '优势', 'weaknesses': '劣势', 'opportunities': '机会', 'threats': '威胁',
-           'appendix_id': '编号', 'appendix_source': '来源', 'appendix_link': '链接或文件', 'appendix_conf': '置信度',
-           'requests': '监管数据库信息请求', 'further': '待尽调事项', 'tagline': '投资分析报告'},
-}
-# The template's chrome is Chinese, with bilingual section titles. A report in English gets the English beside the
-# cover's labels, the briefing's subtitle and the disclaimers; the Chinese stays, since check_report.py looks for it.
-ENGLISH_CHROME = (
-    ('<span>报告日期</span>', '<span>报告日期 Report date</span>'),
-    ('<span>数据截至</span>', '<span>数据截至 Data as of</span>'),
-    ('<span>行业</span>', '<span>行业 Industry</span>'),
-    ('<span>总部</span>', '<span>总部 Headquarters</span>'),
-    ('<span>阶段</span>', '<span>阶段 Stage</span>'),
-    ('先读这里即可了解总体判断、核心理由、主要风险和下一步尽调重点。</p>',
-     '先读这里即可了解总体判断、核心理由、主要风险和下一步尽调重点。<br>Read this first for the overall judgement, the '
-     'core reasons, the main risks and the next diligence steps.</p>'),
-    ('<strong>重要声明：</strong>', '<strong>重要声明 Important notice：</strong>'),
-    ('本报告由 AI 辅助生成，分析独立，未受被分析公司委托或资助。',
-     '本报告由 AI 辅助生成，分析独立，未受被分析公司委托或资助。<br>This report was generated from public information, '
-     'materials the user provided and web research, for investment research only; it is not investment advice. It may '
-     'be incomplete, out of date or biased by its sources: investment decisions need professional judgement and a '
-     'licensed adviser. It was produced with AI assistance, independently, and was neither commissioned nor paid for by '
-     'the company analysed.'),
-    ('<p>本报告由 AI 辅助生成，基于公开信息独立分析，不构成投资建议。</p>',
-     '<p>本报告由 AI 辅助生成，基于公开信息独立分析，不构成投资建议。<br>Produced with AI assistance from public '
-     'information, independently; for research only and not investment advice.</p>'),
-)
-QUADRANTS = {'strength': ('strength', 's', '优势'), 'weakness': ('weakness', 'w', '劣势'),
-             'opportunity': ('opportunit', 'o', '机会'), 'threat': ('threat', 't', '威胁')}
+LABELS = {'one_question': 'The one question', 'takeaways': 'Three takeaways', 'missing': 'Not available in this version.',
+          'high': 'high', 'medium': 'medium', 'low': 'low', 'strengths': 'Strengths', 'weaknesses': 'Weaknesses',
+          'opportunities': 'Opportunities', 'threats': 'Threats', 'appendix_id': 'ID', 'appendix_source': 'Source',
+          'appendix_link': 'Link or file', 'appendix_conf': 'Confidence', 'requests': 'User data requests',
+          'further': 'Areas for further diligence', 'tagline': 'Investment research report'}
+QUADRANTS = {'strength': ('strength', 's'), 'weakness': ('weakness', 'w'), 'opportunity': ('opportunit', 'o'),
+             'threat': ('threat', 't')}
 QUADRANT_LABELS = {'strength': 'strengths', 'weakness': 'weaknesses', 'opportunity': 'opportunities',
                    'threat': 'threats'}
 
@@ -101,12 +72,6 @@ class Cover:
     industry: str = ''
     headquarters: str = ''
     stage: str = ''
-
-
-def language_of(text: str) -> str:
-    """'zh' when the text is mostly Chinese, else 'en' (the report matches the user's language)."""
-    cjk = len(re.findall(r'[一-鿿]', text or ''))
-    return 'zh' if cjk >= max(4, len(re.findall(r'[A-Za-z]{2,}', text or '')) // 4) else 'en'
 
 
 # Markdown pieces
@@ -201,13 +166,13 @@ def _text_nodes(fragment: str, change) -> str:
 def _refs(text: str, by_id: dict) -> str:
     """Source IDs in a table cell or a card's source line as plain links to the appendix: a table carries a source
     on every row, so these do not count against the limit on inline tags."""
-    text = re.sub(r'\[(\s*S\d+(?:\s*[,;，、]\s*S\d+)*\s*)\]', r'\1', text)
+    text = re.sub(r'\[(\s*S\d+(?:\s*[,;]\s*S\d+)*\s*)\]', r'\1', text)
     return SOURCE_ID_RE.sub(
         lambda m: f'<a class="src-ref" href="#src-{m.group()}">{m.group()}</a>' if m.group() in by_id else m.group(),
         text)
 
 
-def _prose_citations(fragment: str, by_id: dict, labels: dict) -> str:
+def _prose_citations(fragment: str, by_id: dict) -> str:
     def tag(match: re.Match) -> str:
         ids = list(dict.fromkeys(SOURCE_ID_RE.findall(match.group())))
         level = _lowest([_confidence(by_id.get(i)) for i in ids if i in by_id])
@@ -215,18 +180,18 @@ def _prose_citations(fragment: str, by_id: dict, labels: dict) -> str:
             pill = f'<a href="#src-{ids[0]}" class="source-tag">[{ids[0]}]</a>'
         else:
             pill = '<span class="source-tag">[' + ', '.join(_link(i, by_id) for i in ids) + ']</span>'
-        return pill + f'<span class="source-confidence conf-{level}">{labels[level]}</span>'
+        return pill + f'<span class="source-confidence conf-{level}">{LABELS[level]}</span>'
     return _text_nodes(fragment, lambda text: CITE_GROUP_RE.sub(tag, text))
 
 
-def _citations(fragment: str, by_id: dict, labels: dict) -> str:
+def _citations(fragment: str, by_id: dict) -> str:
     """Citations in rendered HTML: tags in prose, plain links in tables."""
     out, last = [], 0
     for match in TABLE_RE.finditer(fragment):
-        out.append(_prose_citations(fragment[last:match.start()], by_id, labels))
+        out.append(_prose_citations(fragment[last:match.start()], by_id))
         out.append(_text_nodes(match.group(), lambda text: _refs(text, by_id)))
         last = match.end()
-    out.append(_prose_citations(fragment[last:], by_id, labels))
+    out.append(_prose_citations(fragment[last:], by_id))
     return ''.join(out)
 
 
@@ -260,18 +225,18 @@ def _column(header: list[str], *words: str) -> int | None:
 
 
 def _source_cell(header: list[str], row: list[str], by_id: dict) -> str:
-    column = _column(header, 'source', '来源')
+    column = _column(header, 'source')
     cell = row[column] if column is not None and column < len(row) else ''
     return f'<span class="card-sources">{_refs(html.escape(cell), by_id)}</span>' if cell else ''
 
 
-def _render_component(kind: str, modifier: str | None, body: str, labels: dict, by_id: dict) -> str:
+def _render_component(kind: str, modifier: str | None, body: str, by_id: dict) -> str:
     rows = table_rows(body)
     if kind == 'verdict':
         header, *data = _need_table(kind, rows, 'one row such as | Rating | Action | Score | Confidence | Horizon | '
                                                 'Source |')
         values = data[0]
-        source = _column(header, 'source', '来源')
+        source = _column(header, 'source')
         parts = ''.join(f'<span>{_inline(h)}: {_inline(v)}</span>' for i, (h, v) in enumerate(zip(header, values))
                         if i and v and i != source)
         return (f'<div class="verdict-strip"><strong>{_inline(values[0])}</strong>{parts}'
@@ -293,13 +258,13 @@ def _render_component(kind: str, modifier: str | None, body: str, labels: dict, 
             f'<div class="brief-card"><h4>{_inline(t)}</h4><p>{x}</p></div>' for t, x in cards) + '</div>'
     if kind == 'kpi':
         header, *data = _need_table(kind, rows, '| Metric | Value | Benchmark | Signal | Source |')
-        signal = _column(header, 'signal', '信号', 'status')
+        signal = _column(header, 'signal', 'status')
         cards = []
         for row in data:
             tone = (row[signal] if signal is not None and signal < len(row) else '').lower()
-            card, bench = ('kpi-critical', ' worse') if re.search(r'critical|bad|red|危', tone) else \
-                (('kpi-warn', ' worse') if re.search(r'warn|amber|watch|警', tone) else
-                 (('kpi-good', ' better') if re.search(r'good|green|strong|好|优', tone) else ('', '')))
+            card, bench = ('kpi-critical', ' worse') if re.search(r'critical|bad|red', tone) else \
+                (('kpi-warn', ' worse') if re.search(r'warn|amber|watch', tone) else
+                 (('kpi-good', ' better') if re.search(r'good|green|strong', tone) else ('', '')))
             benchmark = row[2] if len(row) > 2 and (signal is None or signal != 2) else ''
             source = _source_cell(header, row, by_id)
             classes = ' '.join(filter(None, ('kpi-card', card)))
@@ -317,14 +282,14 @@ def _render_component(kind: str, modifier: str | None, body: str, labels: dict, 
         if not paragraphs:
             raise ComponentError('"::: one-question" needs the question, then a paragraph on why it decides the case.')
         why = ' '.join(paragraphs[1:])
-        return (f'<div class="one-question"><div class="question-label">{labels["one_question"]}</div>'
+        return (f'<div class="one-question"><div class="question-label">{LABELS["one_question"]}</div>'
                 f'<blockquote>{_inline(paragraphs[0])}</blockquote>'
                 + (f'<div class="why">{_inline(why)}</div>' if why else '') + '</div>')
     if kind == 'takeaways':
         items = list_items(body)
         if not items:
             raise ComponentError('"::: takeaways" needs a numbered list of three takeaways.')
-        return (f'<div class="takeaway-strip"><h4>{labels["takeaways"]}</h4>'
+        return (f'<div class="takeaway-strip"><h4>{LABELS["takeaways"]}</h4>'
                 + ''.join(f'<div class="takeaway-item"><span>{_inline(item)}</span></div>' for item in items) + '</div>')
     if kind == 'scenarios':
         _need_table(kind, rows, '| Scenario | Probability | Drivers | Outcome | Signposts | Source |')
@@ -334,8 +299,7 @@ def _render_component(kind: str, modifier: str | None, body: str, labels: dict, 
             row = match.group()
             first = re.search(r'<td>(.*?)</td>', row, re.S)
             label = (first.group(1) if first else '').lower()
-            case = next((c for c, words in (('bull', ('bull', '牛')), ('base', ('base', '基准', '基本')),
-                                            ('bear', ('bear', '熊'))) if any(w in label for w in words)), None)
+            case = next((c for c in ('bull', 'base', 'bear') if c in label), None)
             return row.replace('<tr>', f'<tr class="{case}">', 1) if case else row
         return re.sub(r'<tr>.*?</tr>', case_class, rendered, flags=re.S)
     if kind in ('sensitivity', 'risk-matrix'):
@@ -344,8 +308,8 @@ def _render_component(kind: str, modifier: str | None, body: str, labels: dict, 
                    '| Risk | Probability | Impact | Level | Timing | Signpost | Mitigation | Source |')
         _need_table(kind, rows, columns)
         rendered = _data_tables(MD.render(body), COMPONENTS[kind])
-        levels = (('critical', ('critical', 'fatal', '致命')), ('high', ('high', '高')),
-                  ('medium', ('medium', 'moderate', '中')), ('low', ('low', '低')))
+        levels = (('critical', ('critical', 'fatal')), ('high', ('high',)), ('medium', ('medium', 'moderate')),
+                  ('low', ('low',)))
 
         def level_cell(match: re.Match) -> str:
             text = re.sub(r'<[^>]+>', '', match.group(1)).strip().lower()
@@ -363,7 +327,7 @@ def _render_component(kind: str, modifier: str | None, body: str, labels: dict, 
         header, *data = _need_table(kind, rows, '| Date | Event | Significance | Source |')
         items = []
         for row in data:
-            significance = row[2] if len(row) > 2 and _column(header, 'source', '来源') != 2 else ''
+            significance = row[2] if len(row) > 2 and _column(header, 'source') != 2 else ''
             items.append(f'<div class="timeline-item"><div class="date">{_inline(row[0])}</div>'
                          f'<div><strong>{_inline(row[1] if len(row) > 1 else "")}</strong>'
                          + (f' — {_inline(significance)}' if significance else '')
@@ -389,21 +353,21 @@ def _render_component(kind: str, modifier: str | None, body: str, labels: dict, 
                              if any(label.startswith(w) if len(w) == 1 else w in label for w in words)), None)
             if not quadrant:
                 raise ComponentError(f'"::: quad" row "{row[0]}" is not Strengths, Weaknesses, Opportunities or Threats.')
-            points = [p.strip() for p in re.split(r';|；', row[1] if len(row) > 1 else '') if p.strip()]
-            title = labels[QUADRANT_LABELS[quadrant]]
+            points = [p.strip() for p in (row[1] if len(row) > 1 else '').split(';') if p.strip()]
+            title = LABELS[QUADRANT_LABELS[quadrant]]
             boxes.append(f'<div class="quad-item quad-{quadrant}"><h4>{title}</h4><ul>'
                          + ''.join(f'<li>{_inline(p)}</li>' for p in points)
                          + f'</ul><div class="card-text">{_source_cell(header, row, by_id)}</div></div>')
         return '<div class="quad-grid">' + ''.join(boxes) + '</div>'
     if kind == 'analogs':
         header, *data = _need_table(kind, rows, '| Analog | Kind (best or cautionary) | Period | Lesson | Source |')
-        kind_col = _column(header, 'kind', 'type', '类型')
-        lesson_col = _column(header, 'lesson', '启示', '教训')
-        period_col = _column(header, 'period', 'year', '时间')
+        kind_col = _column(header, 'kind', 'type')
+        lesson_col = _column(header, 'lesson')
+        period_col = _column(header, 'period', 'year')
         cards = []
         for row in data:
             label = (row[kind_col] if kind_col is not None and kind_col < len(row) else '').lower()
-            variant = 'cautionary' if re.search(r'caution|warning|negative|警示|反面', label) else 'best'
+            variant = 'cautionary' if re.search(r'caution|warning|negative', label) else 'best'
             period = row[period_col] if period_col is not None and period_col < len(row) else ''
             lesson = row[lesson_col] if lesson_col is not None and lesson_col < len(row) else row[-1]
             cards.append(f'<div class="analog-card {variant}"><h4>{_inline(row[0])}'
@@ -413,17 +377,16 @@ def _render_component(kind: str, modifier: str | None, body: str, labels: dict, 
     raise ComponentError(f'unknown component "::: {kind}".')
 
 
-def render_section(markdown: str, sources: list[dict], language: str = 'en') -> str:
+def render_section(markdown: str, sources: list[dict]) -> str:
     """A section's Markdown as the template's HTML. Raises ComponentError for a component it cannot read."""
-    labels = LABELS.get(language, LABELS['en'])
     by_id = {source['id']: source for source in sources}
     out = []
     for kind, modifier, body in split_components(markdown):
         if kind is None:
             out.append(_data_tables(MD.render(body)))
         else:
-            out.append(_render_component(kind, modifier, body, labels, by_id))
-    return _citations('\n'.join(out), by_id, labels)
+            out.append(_render_component(kind, modifier, body, by_id))
+    return _citations('\n'.join(out), by_id)
 
 
 def components_in(markdown: str) -> list[str]:
@@ -433,10 +396,9 @@ def components_in(markdown: str) -> list[str]:
 
 # The whole report
 
-def source_appendix(sources: list[dict], cited: set[str], language: str, requests: list[dict] | None = None,
+def source_appendix(sources: list[dict], cited: set[str], requests: list[dict] | None = None,
                     further: list[str] | None = None) -> str:
     """The appendix rows for every cited source, then any user data requests and open diligence items."""
-    labels = LABELS.get(language, LABELS['en'])
     rows = []
     for source in sources:
         if source['id'] not in cited:
@@ -454,19 +416,19 @@ def source_appendix(sources: list[dict], cited: set[str], language: str, request
                     + (f'<br><span class="src-claims">{html.escape(claims)}</span>' if claims else '') + '</td>'
                     f'<td class="src-url">' + (f'<a href="{html.escape(href, quote=True)}">{html.escape(location)}</a>'
                                                if href else html.escape(location)) + '</td>'
-                    f'<td class="src-conf"><span class="source-confidence conf-{level}">{labels[level]}</span></td></tr>')
-    parts = [f'<table class="source-appendix-table"><thead><tr><th>{labels["appendix_id"]}</th>'
-             f'<th>{labels["appendix_source"]}</th><th>{labels["appendix_link"]}</th><th>{labels["appendix_conf"]}</th>'
+                    f'<td class="src-conf"><span class="source-confidence conf-{level}">{LABELS[level]}</span></td></tr>')
+    parts = [f'<table class="source-appendix-table"><thead><tr><th>{LABELS["appendix_id"]}</th>'
+             f'<th>{LABELS["appendix_source"]}</th><th>{LABELS["appendix_link"]}</th><th>{LABELS["appendix_conf"]}</th>'
              f'</tr></thead><tbody>' + ''.join(rows) + '</tbody></table>']
     if requests:
-        parts.append(f'<h4>{labels["requests"]}</h4><div class="table-wrap"><table class="data-table"><thead><tr>'
+        parts.append(f'<h4>{LABELS["requests"]}</h4><div class="table-wrap"><table class="data-table"><thead><tr>'
                      '<th>#</th><th>Database</th><th>What to look up</th><th>Why it matters</th><th>How to get it</th>'
                      '</tr></thead><tbody>' + ''.join(
                          f'<tr><td>{n}</td><td>{html.escape(r["database"])}</td><td>{html.escape(r["query"])}</td>'
                          f'<td>{html.escape(r["why"])}</td><td>{html.escape(r["how"])}</td></tr>'
                          for n, r in enumerate(requests, 1)) + '</tbody></table></div>')
     if further:
-        parts.append(f'<h4>{labels["further"]}</h4><ul>' + ''.join(f'<li>{html.escape(item)}</li>' for item in further)
+        parts.append(f'<h4>{LABELS["further"]}</h4><ul>' + ''.join(f'<li>{html.escape(item)}</li>' for item in further)
                      + '</ul>')
     return '\n'.join(parts)
 
@@ -476,23 +438,18 @@ def cited_ids(markdowns) -> set[str]:
 
 
 def render_report(section_markdown: dict[str, str], sources: list[dict], cover: Cover, data_as_of: str,
-                  composite_score: str, language: str = 'en', requests: list[dict] | None = None,
-                  further: list[str] | None = None, report_date: str | None = None) -> str:
+                  composite_score: str, requests: list[dict] | None = None, further: list[str] | None = None,
+                  report_date: str | None = None) -> str:
     """The full HTML report: the template with every placeholder filled. A section missing from the
     version says so in its place."""
-    labels = LABELS.get(language, LABELS['en'])
     text = TEMPLATE.read_text()
-    if language != 'zh':
-        text = text.replace('<html lang="zh-CN">', '<html lang="en">', 1)
-        for chinese, bilingual in ENGLISH_CHROME:
-            text = text.replace(chinese, bilingual, 1)
 
     def body(key: str) -> str:
         markdown = (section_markdown.get(key) or '').strip()
         if not markdown:
-            return f'<div class="info-card warning">{labels["missing"]}</div>'
+            return f'<div class="info-card warning">{LABELS["missing"]}</div>'
         try:
-            return render_section(markdown, sources, language)
+            return render_section(markdown, sources)
         except ComponentError as error:
             return f'<div class="info-card danger">{html.escape(str(error))}</div>' + _data_tables(
                 MD.render(plain_markdown(markdown)))
@@ -500,7 +457,7 @@ def render_report(section_markdown: dict[str, str], sources: list[dict], cover: 
     today = report_date or date.today().isoformat()
     cited = cited_ids(section_markdown.values())
     values = {
-        'COMPANY_NAME': cover.company, 'COMPANY_TAGLINE': cover.tagline or labels['tagline'],
+        'COMPANY_NAME': cover.company, 'COMPANY_TAGLINE': cover.tagline or LABELS['tagline'],
         'COMPANY_BUSINESS_SUMMARY': cover.business_summary, 'REPORT_DATE': today, 'DATA_AS_OF': data_as_of,
         'INDUSTRY': cover.industry, 'HEADQUARTERS': cover.headquarters, 'STAGE': cover.stage,
         'COMPOSITE_SCORE': composite_score, 'YEAR': today[:4],
@@ -510,20 +467,20 @@ def render_report(section_markdown: dict[str, str], sources: list[dict], cover: 
     text = text.replace('{{EXECUTIVE_SUMMARY}}', body(sections.EXECUTIVE_SUMMARY.key))
     for section in sections.SECTIONS:
         text = text.replace('{{SECTION_%d}}' % section.number, body(section.key))
-    return text.replace('{{SOURCE_APPENDIX}}', source_appendix(sources, cited, language, requests, further))
+    return text.replace('{{SOURCE_APPENDIX}}', source_appendix(sources, cited, requests, further))
 
 
 def plain_report(section_markdown: dict[str, str], sources: list[dict], cover: Cover, rating: str, data_as_of: str,
-                 composite_score: str, language: str = 'en') -> str:
+                 composite_score: str) -> str:
     """The report as Markdown, for traces and the dashboard: every section under its template title, then the
     cited sources and the disclaimer."""
-    lines = [f'# {cover.company}: {LABELS[language]["tagline"]}', f'Rating: {rating}', f'Composite score: {composite_score}',
+    lines = [f'# {cover.company}: {LABELS["tagline"]}', f'Rating: {rating}', f'Composite score: {composite_score}',
              f'Data as of: {data_as_of}', '']
     for section in sections.ALL_SECTIONS:
         markdown = plain_markdown(section_markdown.get(section.key) or '').strip()
-        lines += [f'## {section.title}', '', markdown or f'_{LABELS[language]["missing"]}_', '']
+        lines += [f'## {section.title}', '', markdown or f'_{LABELS["missing"]}_', '']
     cited = cited_ids(section_markdown.values())
-    lines += ['## 数据来源与引用 Source Appendix', '', '| ID | Source | Type | Date | Link | Confidence |',
+    lines += ['## Source Appendix', '', '| ID | Source | Type | Date | Link | Confidence |',
               '|---|---|---|---|---|---|']
     for source in sources:
         if source['id'] in cited:
@@ -564,13 +521,13 @@ def write_pdf(html_path: Path, pdf_path: Path, timeout: int = 180) -> dict:
 def folder_name(company: str, summary: str) -> str:
     """The [CompanyName]_[BusinessSummary] folder name, safe for any file system."""
     def clean(text: str) -> str:
-        return re.sub(r'[^\w一-鿿-]+', '', re.sub(r'\s+', '', text.title() if text.isascii() else text))[:40]
+        return re.sub(r'[^\w-]+', '', re.sub(r'\s+', '', text.title() if text.isascii() else text))[:40]
     return '_'.join(filter(None, (clean(company), clean(summary)))) or 'Report'
 
 
-def report_file_name(company: str, language: str) -> str:
-    stem = re.sub(r'[^\w一-鿿-]+', '', company.replace(' ', '')) or 'Company'
-    return f'{stem}_投资分析报告' if language == 'zh' else f'{stem}_Investment_Report'
+def report_file_name(company: str) -> str:
+    stem = re.sub(r'[^\w-]+', '', company.replace(' ', '')) or 'Company'
+    return f'{stem}_Investment_Report'
 
 
 def write_delivery(folder: Path, report_html: str, file_stem: str, documents: list[Path]) -> dict:

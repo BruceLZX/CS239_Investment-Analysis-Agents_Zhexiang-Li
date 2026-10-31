@@ -79,7 +79,7 @@ Then run a scenario, export its trace and check it. For example:
 .venv/bin/python -m team.check_trace ../traces/phase2-baseline/public-equity-memo.json
 ```
 
-- **`run_scenario <name>`** runs one of `public-equity-memo`, `confidential-startup`, `manipulated-deck` or `rushed-call`. It creates or updates the nine bots (and archives the Research Analyst from the earlier three-bot team), clears their threads, sends the scenario's request to the Lead Analyst, waits for the report (expect 50–90 minutes; the runner gives up after 150), and copies Rakazo's transcripts into `runs/<run_id>/`. Each version's HTML, PDF and Markdown are in `runs/<run_id>/versions/`, and the delivered report folder in `runs/<run_id>/delivery/`. Instead of a scenario name:
+- **`run_scenario <name>`** runs one of `public-equity-memo`, `confidential-startup`, `manipulated-deck` or `rushed-call`. It creates or updates the nine bots (and archives the Research Analyst from the earlier three-bot team), clears their threads, sends the scenario's request to the Lead Analyst, waits for the report (expect 60–95 minutes; the runner gives up after 150), and copies Rakazo's transcripts into `runs/<run_id>/`. Each version's HTML, PDF and Markdown are in `runs/<run_id>/versions/`, and the delivered report folder in `runs/<run_id>/delivery/`. Instead of a scenario name:
   - `--request "…"` runs a request of your own, with no attached documents (scenario name `custom`);
   - `--follow-up "…"` asks the Lead Analyst a question about the latest run once it has finished; the run is captured again afterwards, so the question and answer join its record.
 

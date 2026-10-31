@@ -90,10 +90,6 @@ def is_listed(case: dict) -> bool:
     return (case.get('scope') or {}).get('type') != 'private'
 
 
-def language(case: dict) -> str:
-    return (case.get('scope') or {}).get('language') or 'en'
-
-
 def add_source(case: dict, title: str, source_type: str, location: str, date: str, confidence: str, claims: str,
                registered_by: str | None = None, via: str = 'register_source', claims_weakened: str = '') -> str:
     """Register a source and return its ID; re-registering the same location reuses the ID. registered_by is the
@@ -206,8 +202,7 @@ def status_summary(case: dict) -> dict:
     open_rewrites = [item for item in workflow.get('rewrite_plan') or [] if not item.get('resolved')]
     return {
         'run_id': case['run_id'],
-        'scope': case.get('scope') and {k: case['scope'].get(k) for k in ('company', 'ticker', 'type', 'decision',
-                                                                          'language')},
+        'scope': case.get('scope') and {k: case['scope'].get(k) for k in ('company', 'ticker', 'type', 'decision')},
         'client_documents': [{'name': d['name'], 'confidentiality': d['confidentiality']}
                              for d in case['client_documents']],
         'sources_registered': len(case['sources']),

@@ -3,8 +3,8 @@
 The report shows registered source IDs (at least five, or all of them when fewer are registered), cites no ID the
 register lacks, links at least three of the registered web sources, and names its sources in words.
 
-Fixed here: the script's \\bS\\d+\\b missed IDs next to Chinese text, and counted the register's own unfilled
-template row as a source; the register here holds only real entries.
+Fixed here: the script counted the register's own unfilled template row as a source; the register here holds only
+real entries.
 """
 import re
 
@@ -32,7 +32,7 @@ def check_citations(report_html: str, sources: list[dict]) -> dict:
     linked = len({url for url in urls if url in hrefs})
     if linked < min(len(urls), MIN_LINKED_URLS):
         failures.append(f'{linked} registered web sources are linked; needs {min(len(urls), MIN_LINKED_URLS)}')
-    if not re.search(r'来源|source|citation|evidence', visible, re.I):
+    if not re.search(r'source|citation|evidence', visible, re.I):
         failures.append('the report never names its sources')
     return {'failures': failures, 'passed': not failures, 'cited': sorted(shown & registered, key=lambda s: int(s[1:])),
             'linked_urls': linked}

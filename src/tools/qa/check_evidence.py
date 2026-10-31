@@ -16,7 +16,7 @@ Fixed here:
 - The script counted every bullet in a block as a search query, the section plan's own lines included; only the
   queries count now.
 - It failed a block whose "prohibited words" field listed the prohibited words; that field is exempt.
-- A one-character confidence ("高") failed the 3-character minimum; confidence needs a level, not a length.
+- A confidence failed a 3-character minimum; it needs a level, not a length.
 - Normalisation folded every English word into one letter, so English cells looked like copies of each other.
 - Primary sources are recognised from the register's source type, not by keywords where "sec" matched "secondary".
 """
@@ -54,18 +54,18 @@ ROW_FIELDS = {  # cell: (label, minimum characters)
     'weakens': ('Weakens / contradicts', 18), 'implication': ('Investor implication', 24),
     'confidence': ('Confidence', 1), 'follow_up': ('Follow-up', 18),
 }
-CONFIDENCE_RE = re.compile(r'high|medium|low|高|中|低', re.I)
+CONFIDENCE_RE = re.compile(r'high|medium|low', re.I)
 PRIMARY_TYPES_RE = re.compile(r'\bprimary\b|near-primary|filing|regulat|official|registry|patent|company page|'
-                              r'press release|公告|年报|财报|招股书|官网|监管|专利|工商', re.I)
+                              r'press release', re.I)
 # Dedicated evidence rows for a listed company.
 PUBLIC_EQUITY_ROWS = {
-    'market data': ('market data', 'share price', 'market cap', '股价', '市值'),
-    'income statement': ('income statement', 'revenue', 'margin', '利润表', '收入'),
-    'cash flow': ('cash flow', 'free cash flow', 'capex', '现金流'),
-    'balance sheet and debt': ('balance sheet', 'debt', 'liquidity', '资产负债', '债务'),
-    'valuation': ('valuation', 'p/e', 'ev/', 'multiple', '估值'),
-    'consensus and guidance': ('consensus', 'guidance', '一致预期', '指引'),
-    'capital allocation': ('buyback', 'dividend', 'capital allocation', 'repurchase', '回购', '分红', '资本配置'),
+    'market data': ('market data', 'share price', 'market cap'),
+    'income statement': ('income statement', 'revenue', 'margin'),
+    'cash flow': ('cash flow', 'free cash flow', 'capex'),
+    'balance sheet and debt': ('balance sheet', 'debt', 'liquidity'),
+    'valuation': ('valuation', 'p/e', 'ev/', 'multiple'),
+    'consensus and guidance': ('consensus', 'guidance'),
+    'capital allocation': ('buyback', 'dividend', 'capital allocation', 'repurchase'),
 }
 DUPLICATE_FIELDS = ('mechanism', 'benchmark', 'weakens', 'implication', 'follow_up')
 
@@ -73,9 +73,9 @@ DUPLICATE_FIELDS = ('mechanism', 'benchmark', 'weakens', 'implication', 'follow_
 def _normalized(cell: str) -> str:
     text = SOURCE_ID_RE.sub('s', cell.lower())
     for section in sections.SECTIONS:
-        text = text.replace(section.title_zh, '本节').replace(section.title_en.lower(), '本节')
+        text = text.replace(section.title.lower(), 'this section')
     text = re.sub(r'\d[\d,.]*%?', 'n', text)
-    return re.sub(r'[\s，。；：、,.!?！？;:（）()《》“”"\'\[\]]+', ' ', text).strip()
+    return re.sub(r'[\s,.!?;:()“”"\'\[\]]+', ' ', text).strip()
 
 
 def _is_primary(row: dict, by_id: dict) -> bool:

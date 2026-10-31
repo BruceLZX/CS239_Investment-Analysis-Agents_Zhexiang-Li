@@ -11,26 +11,26 @@ Professional investment analysis is defined by **specificity**, not length. A 20
 ### Numbers Must Be Precise
 - ❌ "approximately 45%" → ✅ "43.1373%" or "43.1%" (state source and confidence)
 - ❌ "hundreds of patents" → ✅ "69 granted patents + 12 pending across US/CN/EP"
-- ❌ "founded in 2023" → ✅ "2023年10月15日" or "2023年10月"
+- ❌ "founded in 2023" → ✅ "2023-10-15" or "2023-10"
 - ❌ "raised several hundred million" → ✅ "$75M Series B at $450M pre-money (2025-03-15)"
-- ❌ "large facility" → ✅ "16,000平方米，含二类/三类有源医疗器械GMP厂房"
+- ❌ "large facility" → ✅ "16,000 m², including GMP plants for Class II and III active medical devices"
 
 ### People Must Be Traceable
-- ❌ "毕业于知名大学" → ✅ "本科 中国科学技术大学 机械电子工程；硕士 香港理工大学 软件工程"
-- ❌ "曾在多家公司工作" → ✅ each role: company + title + dates + specific achievements
-- ❌ "行业资深人士" → ✅ "69篇同行评审论文；曾任职于Neuralink担任临床合作负责人"
+- ❌ "graduated from a well-known university" → ✅ "BS, University of Science and Technology of China, mechatronic engineering; MS, Hong Kong Polytechnic University, software engineering"
+- ❌ "has worked at several companies" → ✅ each role: company + title + dates + specific achievements
+- ❌ "industry veteran" → ✅ "69 peer-reviewed papers; previously head of clinical partnerships at Neuralink"
 - Every founder bio must trace from undergraduate through highest degree
 - Every key hire must have: institution + degree + year + prior employer + role + achievements
 
 ### Events Must Be Dated
-- ❌ "recently completed funding" → ✅ "2026年6月26日，超级工厂一期竣工投运"
-- ❌ "has partnerships with hospitals" → ✅ "与上海华山医院、上海市精神卫生中心、华西医院共建联合实验室"
-- ❌ "attended by investors" → ✅ "华映资本季薇、清松资本张松、戈壁创投唐啟波、傅利叶顾捷出席剪彩"
+- ❌ "recently completed funding" → ✅ "on 2026-06-26, phase 1 of the super factory was completed and began operating"
+- ❌ "has partnerships with hospitals" → ✅ "joint laboratories with Huashan Hospital (Shanghai), Shanghai Mental Health Center and West China Hospital"
+- ❌ "attended by investors" → ✅ "the ribbon cutting was attended by Ji Wei of Huaying Capital, Zhang Song of Qingsong Capital, Tang Qibo of Gobi Partners and Gu Jie of Fourier"
 
 ### If Data Is Unavailable
-- State EXACTLY what is missing (e.g., "注册资本未公开" not "信息不足")
+- State EXACTLY what is missing (e.g., "registered capital not disclosed" not "insufficient information")
 - Explain how material the gap is to the investment decision
-- List what source would resolve it (e.g., "需查阅工商登记档案")
+- List what source would resolve it (e.g., "needs the business registration file")
 - NEVER fill the gap with vague language that sounds informative but conveys no data
 
 ---
@@ -45,8 +45,8 @@ Map every legal entity in the corporate structure. This is not optional — inve
 |--------|-------------|-------------|------|-------------|---------------------|
 | [Holding Co] | Cayman/BVI | Ltd | IPO vehicle / top holding | 100% (top) | Founder(s) |
 | [HK Co] | Hong Kong | Ltd | Intermediate holding | 100% by Holding Co | — |
-| [WFOE] | Shanghai, China | 外商独资企业 | VIE anchor / operating license holder | 100% by HK Co | — |
-| [VIE OpCo] | Beijing, China | 内资有限公司 | Operating entity (holds ICP, licenses) | VIE controlled | Nominee shareholders |
+| [WFOE] | Shanghai, China | Wholly foreign-owned enterprise | VIE anchor / operating license holder | 100% by HK Co | — |
+| [VIE OpCo] | Beijing, China | Domestic limited company | Operating entity (holds ICP, licenses) | VIE controlled | Nominee shareholders |
 | [Subsidiary 1] | [Location] | [Type] | R&D center | X% | — |
 | [Subsidiary 2] | [Location] | [Type] | Sales entity | X% | — |
 
@@ -202,17 +202,17 @@ For EACH core technology, explain the mechanism in accessible but technically pr
 
 **1. Mechanism of Action (MOA) — The Physics/Biology**
 [Explain in 5-10 sentences the underlying scientific principle. Use the actual physics/biology terms.
-e.g., NOT "ultrasound stimulates the brain" BUT "经颅聚焦超声(tFUS)通过相控阵换能器发射多束超声波，
-在颅内特定位置形成干涉焦点，产生机械力效应(非热效应)调控神经元膜电位。焦点尺寸~2-3mm³，
-空间分辨率达亚毫米级别，可穿透完整颅骨，无需开颅手术。"]
+e.g., NOT "ultrasound stimulates the brain" BUT "transcranial focused ultrasound (tFUS) fires several ultrasound beams from a phased-array transducer that
+form an interference focus at a chosen point inside the skull, where the mechanical (not thermal) effect modulates neuron membrane potential. The focus is ~2-3 mm³,
+spatial resolution is sub-millimeter, and it passes through the intact skull with no craniotomy."]
 
 **2. Key Performance Metrics**
 | Metric | Value | Measurement Method | Source |
 |--------|-------|-------------------|--------|
-| Spatial resolution | 亚毫米级(~0.5mm) | [How measured] | [Paper/Source] |
-| Temporal resolution | 0.5-1.5s延迟 | [How measured] | [Paper/Source] |
-| Brain coverage | 25%全脑体积 | [How measured] | [Paper/Source] |
-| Penetration depth | 经颅(颅骨完整) | [How measured] | [Paper/Source] |
+| Spatial resolution | Sub-millimeter (~0.5mm) | [How measured] | [Paper/Source] |
+| Temporal resolution | 0.5-1.5s latency | [How measured] | [Paper/Source] |
+| Brain coverage | 25% of whole-brain volume | [How measured] | [Paper/Source] |
+| Penetration depth | Transcranial (skull intact) | [How measured] | [Paper/Source] |
 | Energy efficiency | [X W/cm²] | [How measured] | [Paper/Source] |
 
 **3. Academic & Clinical Evidence**
@@ -227,13 +227,13 @@ For EACH major competing technical approach, provide the SAME level of mechanism
 
 | Technical Dimension | Our Technology | Neuralink (electrode) | Synchron (stentrode) | Blackrock (Utah array) |
 |---------------------|---------------|----------------------|---------------------|------------------------|
-| Physical principle | [e.g., 超声波机械效应] | [e.g., 微电极记录电场] | [e.g., 血管内电极] | [e.g., 硬膜外电极阵列] |
-| Invasiveness | 非侵入(经颅) | 侵入(开颅植入) | 半侵入(血管介入) | 侵入(开颅植入) |
-| Channel count | [N] (等效) | 1024 | 16-128 | 96-256 |
-| Brain coverage | 25%全脑 | 1.3‰皮层 | 局部血管周围 | 1-2mm²皮层 |
-| Spatial resolution | 亚毫米 | 单神经元(50μm) | 毫米级 | 微米级(单神经元) |
-| Signal type | 血流间接(代谢) | 电场直接(电生理) | 电场直接(电生理) | 电场直接(电生理) |
-| Surgical requirement | 无 | 开颅手术 | 血管介入手术 | 开颅手术 |
+| Physical principle | [e.g., mechanical effect of ultrasound] | [e.g., microelectrodes recording electric fields] | [e.g., endovascular electrodes] | [e.g., epidural electrode array] |
+| Invasiveness | Non-invasive (transcranial) | Invasive (craniotomy implant) | Semi-invasive (endovascular) | Invasive (craniotomy implant) |
+| Channel count | [N] (equivalent) | 1024 | 16-128 | 96-256 |
+| Brain coverage | 25% of whole brain | 1.3‰ of cortex | Local, around the vessel | 1-2 mm² of cortex |
+| Spatial resolution | Sub-millimeter | Single neuron (50μm) | Millimeter | Micrometer (single neuron) |
+| Signal type | Indirect, blood flow (metabolic) | Direct, electric field (electrophysiology) | Direct, electric field (electrophysiology) | Direct, electric field (electrophysiology) |
+| Surgical requirement | None | Craniotomy | Endovascular surgery | Craniotomy |
 | FDA/NMPA status | [Status] | FDA HDE 2024 | FDA IDE 2023 | FDA IDE 2017 |
 
 **5. Technology Evolution & Roadmap**
@@ -244,7 +244,7 @@ For EACH major competing technical approach, provide the SAME level of mechanism
 - Who else is trying to solve it: [Research groups, competitors, open-source projects]
 
 **6. Key Debates in the Field**
-- Debate 1: [e.g., 侵入式 vs 非侵入式 — 哪个路线最终胜出？]
+- Debate 1: [e.g., invasive vs non-invasive: which route wins in the end?]
   - Pro-invasive argument: [with evidence]
   - Pro-noninvasive argument: [with evidence]
   - Our assessment: [which is more likely and why]
@@ -500,14 +500,14 @@ For EACH product, build this table:
 - What would make them switch: [our product's specific advantage]
 ```
 
-### 6.2 Example: 复远数科 Per-Product Competition (Illustrative)
+### 6.2 Example: Fuyuan Shuke Per-Product Competition (Illustrative)
 
 **Product 1: CSNS (SCI Cervical Stimulation)**
 - Direct competitors: ARCEX (ONWARD Medical, Swiss), ExaStim (GTX Medical, Netherlands), TESCoN device (various academic)
 - NOT competitors: Medtronic Intellis SCS (different approach—invasive, different indication—pain, different patient segment—lumbar)
 - Pipeline: NCT07361627 (Montreal), NCT07423949 (UBC), NCT07334977 (France)
 
-**Product 2: 胫享™ TNS (OAB Tibial Nerve Stimulation)**
+**Product 2: Jingxiang™ TNS (OAB Tibial Nerve Stimulation)**
 - Direct competitors: Urgent PC (Laborie, percutaneous PTNS), eCoin (Valencia Technologies, implantable), RENOVA (Stimwave, implantable), TENSmini (academic wearable)
 - NOT competitors: Medtronic InterStim (sacral, not tibial; invasive, not transcutaneous), Axonics (sacral, implantable)
 - Indirect: Anticholinergics (tolterodine, solifenacin), β3-agonists (mirabegron), Botox injections
@@ -595,7 +595,7 @@ CAC payback period:          [X] months
 
 When filling the above sections, prioritize:
 
-1. **Company filings** (10-K, 10-Q, 招股书, 年报, 工商登记) — highest confidence
+1. **Company filings** (10-K, 10-Q, prospectuses, annual reports, business registrations) — highest confidence
 2. **Regulatory databases** (FDA, NMPA, CDE, ClinicalTrials.gov, SEC EDGAR, CNINFO, HKEXnews)
 3. **Patent databases** (USPTO, CNIPA, WIPO Patentscope, Google Patents)
 4. **Government procurement records** (ccgp.gov.cn, SAM.gov)
@@ -613,70 +613,70 @@ When filling the above sections, prioritize:
 These benchmarks are derived from professional investment team analysis reports. Every section must hit these minimum specificity markers. The QA gate (`check_depth.py`) enforces them.
 
 ### S1 Company Overview
-- ✅ "2025年9月5日成立" not "2025年成立"
-- ✅ "注册资本1,275万人民币，实缴资本未公开" not "注册资本未公开"
-- ✅ "彭雷持股43.1373%，陈天桥持股19.6078%" not "创始人持股约40%"
-- ✅ "双总部：成都天府国际生物城(全球总部，16000㎡)+上海脑智天地"
-- ✅ "2026年6月26日超级工厂一期竣工投运，投资人代表：华映资本季薇、清松资本张松、戈壁创投唐啟波、傅利叶顾捷出席剪彩"
+- ✅ "founded 2025-09-05" not "founded in 2025"
+- ✅ "registered capital RMB 12.75 million, paid-in capital not disclosed" not "registered capital not disclosed"
+- ✅ "Peng Lei holds 43.1373%, Chen Tianqiao holds 19.6078%" not "the founder holds about 40%"
+- ✅ "Two headquarters: Chengdu Tianfu International Bio-Town (global headquarters, 16,000 m²) and the Shanghai Brain Intelligence Park"
+- ✅ "On 2026-06-26, phase 1 of the super factory was completed and began operating; investor representatives Ji Wei (Huaying Capital), Zhang Song (Qingsong Capital), Tang Qibo (Gobi Partners) and Gu Jie (Fourier) attended the ribbon cutting"
 - ✅ Entity map: parent/HK WFOE/VIE OpCo with EXACT ownership chain
 
 ### S2 Team
-- ✅ Full education trace: "本科中科大机械电子工程；硕士香港理工大学软件工程；博士复旦大学类脑智能(在读)"
-- ✅ Career chronology with exact titles and company names: "SaaS公司客如云创始人及CEO→阿里巴巴本地生活资深副总裁→第六次创业"
-- ✅ Key hires: "Bashar W. Badran, Ph.D. — 南卡罗来纳医科大学神经科学博士，创立MUSC Neuro-X实验室，69篇同行评审论文，曾任职Neuralink临床合作负责人"
-- ✅ External validation: "四川省千人计划创业领军人才"，"2023年追加10亿元投入AI+脑科学"
+- ✅ Full education trace: "BS, USTC, mechatronic engineering; MS, Hong Kong Polytechnic University, software engineering; PhD candidate, Fudan University, brain-inspired intelligence"
+- ✅ Career chronology with exact titles and company names: "founder and CEO of SaaS company Keruyun → senior vice president, Alibaba Local Services → sixth startup"
+- ✅ Key hires: "Bashar W. Badran, Ph.D.: PhD in neuroscience, Medical University of South Carolina; founded the MUSC Neuro-X lab; 69 peer-reviewed papers; previously head of clinical partnerships at Neuralink"
+- ✅ External validation: "Sichuan Thousand Talents Program entrepreneurial leader", "committed a further RMB 1 billion to AI and brain science in 2023"
 
 ### S3 Technology & IP
-- ✅ Technical mechanism deep-dive: "超声血流成像延迟时间0.5s~1.5s(近乎实时)"，"空间分辨率达亚毫米级别"
-- ✅ Direct technical comparison: "Neuralink 1024通道电极覆盖大脑皮层1.3‰ vs 超声波路线覆盖25%全脑体积"
-- ✅ Patent table with EXACT numbers: "CN119345607A" not "多项专利"
-- ✅ Technology readiness: "相控阵(Phased Array)全称相位控制阵列...电子扫描技术区别于传统单探头"
+- ✅ Technical mechanism deep-dive: "ultrasound blood-flow imaging latency of 0.5-1.5s (near real time)", "sub-millimeter spatial resolution"
+- ✅ Direct technical comparison: "Neuralink's 1,024-channel electrodes cover 1.3‰ of the cortex vs the ultrasound route's 25% of whole-brain volume"
+- ✅ Patent table with EXACT numbers: "CN119345607A" not "multiple patents"
+- ✅ Technology readiness: "a phased array (phase-controlled array) ... electronic scanning, unlike a traditional single probe"
 - ✅ Mechanism explained in accessible but precise terms, with quantified performance metrics
 
 ### S4 Market
-- ✅ TAM broken down by indication: "SCI 150亿(374万存量+10万/年新增)；OAB 200亿(2000万目标人群×¥1000/人)；VTE 150亿(5000万手术患者×¥300/人)；OSA 100亿(2030预测CAGR 19.7%)"
-- ✅ Global market with CAGR and source: "全球神经调控市场$68亿(2025)→$139亿(2033)，CAGR 10.4% — Grand View Research"
-- ✅ Policy timeline with specific documents: "2026年政府工作报告首次写入'脑机接口'，七部委《关于推动脑机接口产业创新发展的实施意见》，十五五规划六大重点产业"
+- ✅ TAM broken down by indication: "SCI RMB 15B (3.74M existing patients + 100K new a year); OAB RMB 20B (20M target patients × ¥1,000 each); VTE RMB 15B (50M surgical patients × ¥300 each); OSA RMB 10B (2030 forecast, CAGR 19.7%)"
+- ✅ Global market with CAGR and source: "Global neuromodulation market $6.8B (2025) → $13.9B (2033), CAGR 10.4%, Grand View Research"
+- ✅ Policy timeline with specific documents: "the 2026 Government Work Report names brain-computer interfaces for the first time; the seven ministries' Implementation Opinions on Promoting Innovative Development of the Brain-Computer Interface Industry; one of six priority industries in the 15th Five-Year Plan"
 - ✅ Geographic bifurcation: China market vs global, with separate data
 
 ### S5 Competition
-- ✅ Named competitors with technical comparison: "美敦力(侵入式DBS/SCS全球龙头，$10万+/台) vs 复远数科(非侵入式，¥2-3万/台，价格1/50)"
-- ✅ Not "竞争激烈" but specific: "巨头侵入式覆盖不足1%，我们瞄准99%"
-- ✅ Competitive moat quantified: "50+知识产权+5PCT+国家一级查新'国内首创国际领先'认证"
+- ✅ Named competitors with technical comparison: "Medtronic (global leader in invasive DBS/SCS, $100K+ a unit) vs Fuyuan Shuke (non-invasive, ¥20-30K a unit, 1/50 of the price)"
+- ✅ Not "fierce competition" but specific: "the giants' invasive therapies reach under 1% of patients; we target the other 99%"
+- ✅ Competitive moat quantified: "50+ IP filings, 5 PCT applications and a national-level novelty search certifying 'first in China, internationally leading'"
 - ✅ Direct product-by-product comparison table
 
 ### S6 Business Model
-- ✅ Dual-engine strategy clearly articulated: "现金流产品线(已获证→自我造血)+核心创新产品线(国内首创→估值锚点)"
-- ✅ Pricing: "设备¥2-3万+耗材¥300/套，单次治疗成本仅¥10元，侵入式价格的1/50"
-- ✅ Unit economics: "100万+收入即时，2028年盈亏平衡目标"
+- ✅ Dual-engine strategy clearly articulated: "a cash-flow product line (certified, self-funding) plus a core innovation line (first in China, the valuation anchor)"
+- ✅ Pricing: "device ¥20-30K plus consumables ¥300 a set; ¥10 a treatment; 1/50 of the invasive price"
+- ✅ Unit economics: "RMB 1M+ revenue already; break-even target 2028"
 
 ### S7 Financials
-- ✅ Actual revenue: "100万+高新技术服务及产品收入已实现" not "已有收入"
-- ✅ Financing history with EXACT details: "天使轮1.5亿(2026-03-12，国生资本+道彤投资联合领投)→天使+轮4.2亿(2026-07-03，华映资本领投，红杉中国+C资本+蓝思科技等跟投，老股东超额加码)"
-- ✅ ALL investors named, not "多家机构"
+- ✅ Actual revenue: "RMB 1M+ of high-tech services and product revenue realized" not "has revenue"
+- ✅ Financing history with EXACT details: "Angel round RMB 150M (2026-03-12, co-led by Guosheng Capital and Daotong Investment) → Angel+ round RMB 420M (2026-07-03, led by Huaying Capital, with HongShan, C Capital and Lens Technology following and existing shareholders over-subscribing)"
+- ✅ ALL investors named, not "several institutions"
 - ✅ Fund usage specified per round
 
 ### S8 Funding
-- ✅ Complete financing table: 时间 | 轮次 | 总融资额 | 投资方(ALL named) | 资金用途
-- ✅ Cumulative: "共融资2轮，累计完成融资5.7亿元人民币"
+- ✅ Complete financing table: Date | Round | Total raised | Investors (ALL named) | Use of funds
+- ✅ Cumulative: "2 rounds, RMB 570M raised in total"
 - ✅ Investor quality assessment: named VCs with track record
 
 ### S9 Strategy & Partnerships
-- ✅ Named partners with collaboration scope: "傅利叶 — 下肢外骨骼+上肢康复+GR-3人形机器人，'意图-执行-感知反馈'闭环训练"
-- ✅ "2026年1月28日正式签署战略合作协议" — exact date
-- ✅ Clinical partners: "华西、协和、华山等三甲医院" — named institutions
-- ✅ Roadmap with dates: "2026 Q3启动多中心临床"
+- ✅ Named partners with collaboration scope: "Fourier: lower-limb exoskeleton, upper-limb rehabilitation and the GR-3 humanoid robot, closed-loop 'intent-execution-sensory feedback' training"
+- ✅ "signed the strategic cooperation agreement on 2026-01-28" — exact date
+- ✅ Clinical partners: "West China, Peking Union and Huashan, among other top-tier hospitals" — named institutions
+- ✅ Roadmap with dates: "multi-center clinical trial starts 2026 Q3"
 
 ### S10 Risk
-- ✅ Specific risks tied to milestones: not "临床风险" but "CSNS多中心临床若显示疗效不优于假刺激对照→估值锚崩溃(-50% EV)"
-- ✅ Probability attached: "30%概率，致命等级"
-- ✅ Early warning signal: "2026 Q3-Q4销售数据持续低于预期"
-- ✅ Mitigation plan: "现金流产品维持公司运转；可聚焦OAB/OSA等临床难度较低的管线"
+- ✅ Specific risks tied to milestones: not "clinical risk" but "if the CSNS multi-center trial shows no benefit over sham stimulation, the valuation anchor collapses (-50% EV)"
+- ✅ Probability attached: "30% probability, fatal level"
+- ✅ Early warning signal: "2026 Q3-Q4 sales keep falling short of expectations"
+- ✅ Mitigation plan: "cash-flow products keep the company running; it can focus on pipelines with easier trials such as OAB and OSA"
 
 ### S11 Investment Thesis
-- ✅ Non-consensus insight with data: "市场认为非侵入式=低壁垒，但国家一级查新认证+50+IP+5PCT+2张证组合在天使轮极为稀缺"
+- ✅ Non-consensus insight with data: "the market assumes non-invasive means low barriers, but a national-level novelty certification, 50+ IP filings, 5 PCT applications and 2 certificates are very rare at the angel stage"
 - ✅ Bull/Base/Bear with specific revenue/probability
-- ✅ Exit path with named acquirers: "美敦力/雅培/品驰/迈瑞等战略并购" not "IPO或并购"
+- ✅ Exit path with named acquirers: "strategic acquisition by Medtronic, Abbott, PINS Medical or Mindray" not "IPO or M&A"
 
 ### S14 Scoring
 - ✅ Weighted score table with specific rationale per dimension

@@ -10,7 +10,7 @@ Fixed here, with the script's thresholds kept:
 - Numbers counted the digits of source IDs ("S12") and of URLs; they no longer do.
 - Repeated sentences were counted over the raw page, CSS and JavaScript included; only visible text is now, and
   not the source appendix, whose titles repeat by design, nor citation pills, whose "[S1] medium" turned a short
-  verification label into a sentence; and a sentence with no Chinese needs 60 characters, not 28, to count.
+  verification label into a sentence; and a sentence needs 60 characters, not 28, to count.
 - Near-duplicate paragraphs kept whitespace (a raw-string slip, "\\s" inside a character class) and folded every
   English word into the same letter, so English paragraphs looked alike; words now survive normalisation.
 - The granularity markers named brain-computer-interface companies; they are generic here (sections.py) and cover
@@ -30,10 +30,9 @@ MAX_INLINE_TAGS = 6
 MAX_TITLE_MENTIONS = 4
 SOURCE_TAG_RE = re.compile(r'class="[^"]*\bsource-tag\b[^"]*"')
 APPENDIX_RE = re.compile(r'<section[^>]*id="sources-appendix"[\s\S]*?</section>')
-# The script counts sentences of 28 non-space characters, a real sentence in Chinese but five English words, so an
-# English verification label repeated as N3 asks counted as copied text; English sentences need 60.
-MIN_REPEATED_CHARS, MIN_REPEATED_LATIN_CHARS = 28, 60
-CJK_RE = re.compile(r'[\u4e00-\u9fff]')
+# The script counts sentences of 28 non-space characters, about five words, so a verification label repeated as N3
+# asks counted as copied text; sentences need 60.
+MIN_REPEATED_CHARS = 60
 # Citation pills are not the writer's words: "[S1] medium" made a short verification label (N3) a sentence.
 CITATION_RE = re.compile(r'<(a|span)\b[^>]*class="[^"]*source-(?:tag|confidence)[^"]*"[^>]*>.*?</\1>', re.S)
 SECTION_RE = re.compile(r'<section[^>]+class="[^"]*section-card[^"]*"[^>]+id="s(?P<num>\d+)"[\s\S]*?>'
@@ -66,9 +65,9 @@ def check_section(section: sections.Section, markdown: str, body_html: str, list
     text = strip_html(body_html)
     lowered = text.lower()
     failures = []
-    for title in (section.title_zh, section.title_en):
-        if text.count(title) > MAX_TITLE_MENTIONS:
-            failures.append(f'repeats its own title "{title}" {text.count(title)} times; write about the company instead')
+    if text.count(section.title) > MAX_TITLE_MENTIONS:
+        failures.append(f'repeats its own title "{section.title}" {text.count(section.title)} times; write about the '
+                        'company instead')
     failures += [f'writes about how the report is made ("{m.group()}")'
                  for pattern in FORBIDDEN_PATTERNS for m in [re.search(pattern, text, re.I)] if m]
 
@@ -92,7 +91,7 @@ def check_section(section: sections.Section, markdown: str, body_html: str, list
     shallow = [phrase for phrase in SHALLOW_PHRASES if phrase in lowered]
     if shallow:
         failures.append('empty phrases: ' + ', '.join(shallow))
-    failures += [f'filler: "{phrase}"' for phrase in SECTION_FILLER if phrase in text]
+    failures += [f'filler: "{phrase}"' for phrase in SECTION_FILLER if phrase in lowered]
 
     # The markers read the Markdown too: a table's rows lose their cells' separators in the visible text.
     marker_text = text + '\n' + markdown
@@ -116,18 +115,18 @@ def check_section(section: sections.Section, markdown: str, body_html: str, list
 def _normalized(paragraph: str) -> str:
     text = SOURCE_ID_RE.sub('s', strip_html(paragraph).lower())
     for section in sections.SECTIONS:
-        text = text.replace(section.title_zh, '本节').replace(section.title_en.lower(), '本节')
+        text = text.replace(section.title.lower(), 'this section')
     text = re.sub(r'\d[\d,.]*%?', 'n', text)
-    return re.sub(r'[\s，。；：、,.!?！？;:（）()《》“”"\'\\]+', ' ', text).strip()
+    return re.sub(r'[\s,.!?;:()“”"\'\\]+', ' ', text).strip()
 
 
 def repeated_sentences(visible_text: str) -> list[str]:
-    """Sentences of 28 or more non-space characters (60 for a sentence with no Chinese) said three or more times."""
+    """Sentences of 60 or more non-space characters said three or more times."""
     counts: dict[str, int] = {}
     shown: dict[str, str] = {}
     for sentence in SENTENCE_RE.findall(visible_text):
         compact = re.sub(r'\s+', '', sentence)
-        if len(compact) >= (MIN_REPEATED_CHARS if CJK_RE.search(compact) else MIN_REPEATED_LATIN_CHARS):
+        if len(compact) >= MIN_REPEATED_CHARS:
             counts[compact] = counts.get(compact, 0) + 1
             shown.setdefault(compact, sentence.strip())
     return [shown[key] for key, count in counts.items() if count >= 3]

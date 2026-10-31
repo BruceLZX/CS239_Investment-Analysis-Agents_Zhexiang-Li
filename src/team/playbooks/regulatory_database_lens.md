@@ -18,121 +18,121 @@ Tier 1: Public web search → Tier 2: Public registry lookup → Tier 3: Account
 
 | Database | Agency | What It Contains | Access Level | Investment Value |
 |----------|--------|-----------------|-------------|-----------------|
-| **药品审评中心 (CDE)** | NMPA | Drug IND/NDA/ANDA applications, review status, clinical trial approvals | Public (部分) | ★★★★★ Critical for biotech |
-| **医疗器械注册** | NMPA | Device registration certificates, Class I/II/III approvals | Public | ★★★★★ Critical for medtech |
-| **临床试验登记** (chinadrugtrials.org.cn) | CDE | Trial phase, endpoints, enrollment, sites, status changes | Public | ★★★★★ Must-check for clinical-stage |
-| **GMP/GSP认证** | NMPA provincial | Manufacturing and distribution quality certifications | Account-gated | ★★★★ Production readiness |
-| **医保目录** | NHSA (医保局) | National reimbursement drug list (NRDL) inclusion, pricing | Public | ★★★★★ Revenue driver for drugs |
-| **集采 (VBP)** | NHSA | Volume-based procurement results, prices, volumes | Public | ★★★★ Margin impact |
-| **药品注册证书** | NMPA | Approved drug list with holder, specification, expiry | Public | ★★★★ IP/approval verification |
+| **Center for Drug Evaluation (CDE)** | NMPA | Drug IND/NDA/ANDA applications, review status, clinical trial approvals | Public (partly) | ★★★★★ Critical for biotech |
+| **Medical device registration** | NMPA | Device registration certificates, Class I/II/III approvals | Public | ★★★★★ Critical for medtech |
+| **Clinical trial registry** (chinadrugtrials.org.cn) | CDE | Trial phase, endpoints, enrollment, sites, status changes | Public | ★★★★★ Must-check for clinical-stage |
+| **GMP/GSP certification** | NMPA provincial | Manufacturing and distribution quality certifications | Account-gated | ★★★★ Production readiness |
+| **National reimbursement list** | NHSA | National reimbursement drug list (NRDL) inclusion, pricing | Public | ★★★★★ Revenue driver for drugs |
+| **Volume-based procurement (VBP)** | NHSA | Volume-based procurement results, prices, volumes | Public | ★★★★ Margin impact |
+| **Drug registration certificates** | NMPA | Approved drug list with holder, specification, expiry | Public | ★★★★ IP/approval verification |
 
 **Search strategies:**
-- `[药品名/公司名] CDE 审评进度 site:cde.org.cn`
-- `[公司名] 临床试验 site:chinadrugtrials.org.cn`
-- `[药品名] 医保目录 2025 2026 NRDL`
-- `[公司名] GMP 认证 药监局`
+- `[drug or company name] CDE review status site:cde.org.cn`
+- `[company name] clinical trial site:chinadrugtrials.org.cn`
+- `[drug name] national reimbursement list 2025 2026 NRDL`
+- `[company name] GMP certification NMPA`
 
 ### State-Owned Enterprises / Infrastructure / Defense
 
 | Database | Agency | What It Contains | Access Level | Investment Value |
 |----------|--------|-----------------|-------------|-----------------|
-| **央企名录+财务** | SASAC (国资委) | Central SOE list, financial summaries, restructuring approvals | Public (有限) | ★★★★ SOE ownership verification |
-| **国有产权交易** | 各地产权交易所 | SOE equity transfers, mixed-ownership reform deals | Public (分散) | ★★★★ Deal comps |
-| **政府采购** (ccgp.gov.cn) | 财政部 | Government procurement contracts, bidders, amounts | Public | ★★★★★ Revenue verification |
-| **武器装备科研生产许可** | 国防科工局 | Military production licenses (not publicly searchable) | Restricted | ★★★★★ Defense sector |
-| **军工保密资质** | 国防科工局 | Classified — cannot be searched | Restricted | ★★★ Risk indicator (if lost) |
+| **Central SOE list and financials** | SASAC | Central SOE list, financial summaries, restructuring approvals | Public (limited) | ★★★★ SOE ownership verification |
+| **State-owned equity transactions** | Local equity exchanges | SOE equity transfers, mixed-ownership reform deals | Public (scattered) | ★★★★ Deal comps |
+| **Government procurement** (ccgp.gov.cn) | Ministry of Finance | Government procurement contracts, bidders, amounts | Public | ★★★★★ Revenue verification |
+| **Weapons R&D and production license** | SASTIND | Military production licenses (not publicly searchable) | Restricted | ★★★★★ Defense sector |
+| **Defense security qualification** | SASTIND | Classified — cannot be searched | Restricted | ★★★ Risk indicator (if lost) |
 
 **Search strategies:**
-- `[公司名] 政府采购 中标 site:ccgp.gov.cn`
-- `[央企名] 国资委 财务 2025`
-- `[公司名] 产权交易 股权转让`
-- `[行业] 军工四证 资质`
+- `[company name] government procurement award site:ccgp.gov.cn`
+- `[central SOE name] SASAC financials 2025`
+- `[company name] equity exchange share transfer`
+- `[industry] defense industry licenses`
 
 ### Semiconductor / Electronics / Manufacturing
 
 | Database | Agency | What It Contains | Access Level | Investment Value |
 |----------|--------|-----------------|-------------|-----------------|
-| **集成电路企业认定** | MIIT (工信部) | IC design/foundry/packaging enterprise qualification | Public (名单) | ★★★★ Subsidy eligibility |
-| **国家大基金投资** | 国家集成电路产业投资基金 | Portfolio companies, investment amounts | Semi-public | ★★★★ Government backing signal |
-| **专精特新"小巨人"** | MIIT | SME designation list, tier (国家级/省级) | Public | ★★★★ Policy support indicator |
-| **高新技术企业认定** | 科技部/税务局 | High-tech enterprise status, tax benefits | Public | ★★★ Tax rate verification |
-| **专利检索** (cnipa.gov.cn) | CNIPA (知识产权局) | Patent applications, grants, legal status, assignments | Public | ★★★★★ IP due diligence |
-| **稀土/矿产配额** | MIIT/自然资源部 | Rare earth mining/smelting quotas, export quotas | Public | ★★★★ Supply-constrained industries |
+| **Integrated circuit enterprise qualification** | MIIT | IC design/foundry/packaging enterprise qualification | Public (list) | ★★★★ Subsidy eligibility |
+| **"Big Fund" investments** | China Integrated Circuit Industry Investment Fund | Portfolio companies, investment amounts | Semi-public | ★★★★ Government backing signal |
+| **"Little giant" specialized SMEs** | MIIT | SME designation list, tier (national or provincial) | Public | ★★★★ Policy support indicator |
+| **High-tech enterprise status** | Ministry of Science and Technology, tax bureau | High-tech enterprise status, tax benefits | Public | ★★★ Tax rate verification |
+| **Patent search** (cnipa.gov.cn) | CNIPA | Patent applications, grants, legal status, assignments | Public | ★★★★★ IP due diligence |
+| **Rare earth and mineral quotas** | MIIT, Ministry of Natural Resources | Rare earth mining/smelting quotas, export quotas | Public | ★★★★ Supply-constrained industries |
 
 **Search strategies:**
-- `[公司名] 专精特新 小巨人 site:miit.gov.cn`
-- `[公司名] 高新技术企业 认定`
-- `[公司名/技术名] 专利 site:cnipa.gov.cn`
-- `[行业] 集成电路 大基金 投资`
+- `[company name] little giant specialized SME site:miit.gov.cn`
+- `[company name] high-tech enterprise status`
+- `[company or technology name] patent site:cnipa.gov.cn`
+- `[industry] integrated circuit Big Fund investment`
 
 ### AI / Internet / Data
 
 | Database | Agency | What It Contains | Access Level | Investment Value |
 |----------|--------|-----------------|-------------|-----------------|
-| **算法备案** | CAC (网信办) | Algorithm registration records, service names, security assessments | Public | ★★★★ AI regulatory compliance |
-| **深度合成服务备案** | CAC | Deep synthesis (AI-generated content) service registrations | Public | ★★★★ AI product compliance |
-| **数据安全审查** | CAC | Data security review results (mostly non-public) | Restricted | ★★★★★ For companies with large user data |
-| **互联网信息服务许可 (ICP)** | MIIT | ICP license number, service scope | Public | ★★★ Basic operation legitimacy |
-| **个人信息保护审计** | CAC | Privacy compliance status | Non-public | ★★★ GDPR/China privacy law risk |
+| **Algorithm registration** | CAC | Algorithm registration records, service names, security assessments | Public | ★★★★ AI regulatory compliance |
+| **Deep synthesis service registration** | CAC | Deep synthesis (AI-generated content) service registrations | Public | ★★★★ AI product compliance |
+| **Data security review** | CAC | Data security review results (mostly non-public) | Restricted | ★★★★★ For companies with large user data |
+| **Internet content provider license (ICP)** | MIIT | ICP license number, service scope | Public | ★★★ Basic operation legitimacy |
+| **Personal information protection audit** | CAC | Privacy compliance status | Non-public | ★★★ GDPR/China privacy law risk |
 
 **Search strategies:**
-- `[公司名/AI产品名] 算法备案 网信办`
-- `[公司名] ICP 备案`
-- `[APP名] 深度合成 备案`
+- `[company or AI product name] algorithm registration CAC`
+- `[company name] ICP registration`
+- `[app name] deep synthesis registration`
 
 ### Aerospace / Aviation
 
 | Database | Agency | What It Contains | Access Level | Investment Value |
 |----------|--------|-----------------|-------------|-----------------|
-| **民用航天发射许可** | 国防科工局 | Launch licenses, payload approvals | Restricted (科研许可公开) | ★★★★★ Launch capability proof |
-| **卫星频率/轨道** | MIIT (无线电管理局) | Frequency assignments, orbital slot filings | Semi-public (ITU filings) | ★★★★★ Space resource scarcity |
-| **民用无人机经营许可证** | CAAC (民航局) | Drone operation permits | Public | ★★★★ Drone sector |
-| **适航证 (TC/PC/AC)** | CAAC | Aircraft type/production/airworthiness certificates | Public | ★★★★★ eVTOL/drone manufacturing |
+| **Civil space launch license** | SASTIND | Launch licenses, payload approvals | Restricted (research licenses are public) | ★★★★★ Launch capability proof |
+| **Satellite frequencies and orbits** | MIIT (Radio Administration Bureau) | Frequency assignments, orbital slot filings | Semi-public (ITU filings) | ★★★★★ Space resource scarcity |
+| **Civil drone operating permit** | CAAC | Drone operation permits | Public | ★★★★ Drone sector |
+| **Airworthiness certificates (TC/PC/AC)** | CAAC | Aircraft type/production/airworthiness certificates | Public | ★★★★★ eVTOL/drone manufacturing |
 
 **Search strategies:**
-- `[公司名/火箭名] 发射许可 民用航天`
-- `[卫星名/星座名] 频率 轨道 ITU`
-- `[公司名] 适航证 TC CAAC`
+- `[company or rocket name] launch license civil space`
+- `[satellite or constellation name] frequency orbit ITU`
+- `[company name] airworthiness certificate TC CAAC`
 
 ### Finance / Fintech
 
 | Database | Agency | What It Contains | Access Level | Investment Value |
 |----------|--------|-----------------|-------------|-----------------|
-| **金融许可证** | NFRA (金融监管总局) | Banking, insurance, trust licenses | Public | ★★★★ License legitimacy |
-| **支付业务许可证** | PBOC (央行) | Payment service provider licenses | Public | ★★★★★ Fintech core asset |
-| **基金从业资格** | AMAC (基金业协会) | Fund manager registrations, product filings | Public | ★★★★ Asset management |
-| **征信业务许可** | PBOC | Credit reporting licenses | Restricted | ★★★★★ If applicable |
-| **IPO/融资审核** | CSRC/交易所 | IPO filings, review status, feedback letters | Public | ★★★★★ Pre-IPO companies |
+| **Financial licenses** | NFRA | Banking, insurance, trust licenses | Public | ★★★★ License legitimacy |
+| **Payment business license** | PBOC | Payment service provider licenses | Public | ★★★★★ Fintech core asset |
+| **Fund manager registration** | AMAC | Fund manager registrations, product filings | Public | ★★★★ Asset management |
+| **Credit reporting license** | PBOC | Credit reporting licenses | Restricted | ★★★★★ If applicable |
+| **IPO and financing review** | CSRC, exchanges | IPO filings, review status, feedback letters | Public | ★★★★★ Pre-IPO companies |
 
 ### Energy / New Energy
 
 | Database | Agency | What It Contains | Access Level | Investment Value |
 |----------|--------|-----------------|-------------|-----------------|
-| **光伏/风电项目核准** | NEA (能源局) / 地方发改委 | Project approvals, capacity, grid connection | Semi-public | ★★★★ Pipeline verification |
-| **核安全许可证** | NNSA (核安全局) | Nuclear facility licenses, safety reviews | Public (部分) | ★★★★★ Nuclear/fusion sector |
-| **新能源汽车准入** | MIIT | NEV manufacturing qualification | Public | ★★★★ Automotive |
-| **碳排放配额** | MEE (生态环境部) | Carbon allowance allocations, trading data | Semi-public | ★★★ Carbon-intensive industries |
+| **Solar and wind project approvals** | NEA, local NDRC offices | Project approvals, capacity, grid connection | Semi-public | ★★★★ Pipeline verification |
+| **Nuclear safety license** | NNSA | Nuclear facility licenses, safety reviews | Public (partly) | ★★★★★ Nuclear/fusion sector |
+| **New energy vehicle market access** | MIIT | NEV manufacturing qualification | Public | ★★★★ Automotive |
+| **Carbon emission allowances** | MEE | Carbon allowance allocations, trading data | Semi-public | ★★★ Carbon-intensive industries |
 
 ### Construction / Real Estate
 
 | Database | Agency | What It Contains | Access Level | Investment Value |
 |----------|--------|-----------------|-------------|-----------------|
-| **房地产开发资质** | MOHURD (住建部) | Developer qualification grades | Public | ★★★★ Developer credibility |
-| **土地招拍挂** | 地方自然资源局 | Land auction results, prices, winners | Public (各地分散) | ★★★★ Land bank verification |
-| **预售许可证** | 地方住建委 | Pre-sale permits, project details | Public | ★★★ Project pipeline |
+| **Real estate development qualification** | MOHURD | Developer qualification grades | Public | ★★★★ Developer credibility |
+| **Land auctions** | Local natural resources bureaus | Land auction results, prices, winners | Public (scattered by locality) | ★★★★ Land bank verification |
+| **Pre-sale permits** | Local housing commissions | Pre-sale permits, project details | Public | ★★★ Project pipeline |
 
 ### Cross-Cutting Databases (All Industries)
 
 | Database | Agency | What It Contains | Access Level |
 |----------|--------|-----------------|-------------|
-| **国家企业信用信息公示系统** (gsxt.gov.cn) | SAMR (市场监管总局) | Business registration, shareholders, penalties, annual reports | Public |
-| **裁判文书网** (wenshu.court.gov.cn) | 最高人民法院 | All civil/criminal/administrative judgments | Public |
-| **中国执行信息公开网** (zxgk.court.gov.cn) | 最高人民法院 | Dishonest executees (老赖), enforcement cases | Public |
-| **信用中国** (creditchina.gov.cn) | NDRC (发改委) | Administrative penalties, credit ratings, blacklists | Public |
-| **国家税务总局** | STA | Tax payment ratings (A-level taxpayers) | Semi-public |
-| **企查查/天眼查/爱企查** | Commercial | Aggregated business data (often paywalled but richer) | Freemium |
-| **巨潮资讯** (cninfo.com.cn) | CSRC-designated | Public company filings, announcements | Public |
-| **全国中小企业股份转让系统** (neeq.com.cn) | NEEQ | NEEQ-listed company filings | Public |
+| **National Enterprise Credit Information Publicity System** (gsxt.gov.cn) | SAMR | Business registration, shareholders, penalties, annual reports | Public |
+| **China Judgements Online** (wenshu.court.gov.cn) | Supreme People's Court | All civil/criminal/administrative judgments | Public |
+| **China Enforcement Information Public Website** (zxgk.court.gov.cn) | Supreme People's Court | Dishonest judgment debtors, enforcement cases | Public |
+| **Credit China** (creditchina.gov.cn) | NDRC | Administrative penalties, credit ratings, blacklists | Public |
+| **State Taxation Administration** | STA | Tax payment ratings (A-level taxpayers) | Semi-public |
+| **Qichacha, Tianyancha, Aiqicha** | Commercial | Aggregated business data (often paywalled but richer) | Freemium |
+| **CNINFO** (cninfo.com.cn) | CSRC-designated | Public company filings, announcements | Public |
+| **National Equities Exchange and Quotations** (neeq.com.cn) | NEEQ | NEEQ-listed company filings | Public |
 
 ## The User Data Request Protocol
 
@@ -141,54 +141,54 @@ When the analyst hits an account-gated or restricted database, do NOT silently s
 ### Request Template
 
 ```markdown
-### 📋 监管数据库信息请求
+### 📋 Regulatory database information request
 
-为了提升 [公司名] 分析的数据质量，以下信息需要从监管数据库中获取：
+To improve the data quality of the [company name] analysis, the following information is needed from regulatory databases:
 
-| # | 数据库 | 需要查询的内容 | 为什么重要 | 如何获取 |
+| # | Database | What to look up | Why it matters | How to get it |
 |---|--------|---------------|-----------|---------|
-| 1 | [数据库名] | [具体查询对象] | [对投资判断的影响] | [获取方式：公开URL/登录路径/所需权限] |
+| 1 | [database name] | [what exactly to look up] | [effect on the investment judgement] | [how to get it: public URL, login path, permissions needed] |
 
-**如果您能提供以下任一文件，将显著提升报告的置信度：**
-- [ ] [文件名/截图类型 1]
-- [ ] [文件名/截图类型 2]
+**Any of these files would significantly raise the report's confidence:**
+- [ ] [file name or screenshot type 1]
+- [ ] [file name or screenshot type 2]
 ```
 
 ### Industry-Specific Request Templates
 
-#### Biotech/Medtech 专用
+#### Biotech/Medtech
 
 ```markdown
-### 📋 药监数据请求
+### 📋 Drug regulator data request
 
-以下数据对评估 [公司名] 的产品管线价值至关重要：
+These data are essential to valuing the product pipeline of [company name]:
 
-1. **CDE审评进度** — 请登录 https://www.cde.org.cn ，在"受理品种信息"中查询 [药品名/受理号]，截图审评状态和时间线。
-2. **临床试验详情** — 请访问 http://www.chinadrugtrials.org.cn ，搜索 [公司名/药品名]，导出试验阶段、入组人数、主要终点、状态变化历史。
-3. **医疗器械注册证** — 请访问 NMPA医疗器械查询，输入 [公司名]，截图注册证编号、有效期和产品范围。
-4. **医保目录状态** — 请搜索最新版NRDL，确认 [药品名] 是否在目录内、谈判价格和报销比例。
+1. **CDE review status:** log in at https://www.cde.org.cn, look up [drug name or acceptance number] under the accepted applications, and send a screenshot of its review status and timeline.
+2. **Clinical trial details:** at http://www.chinadrugtrials.org.cn, search [company or drug name] and export the trial phase, enrollment, primary endpoints and status history.
+3. **Medical device registration certificate:** in the NMPA's device lookup, enter [company name] and send a screenshot of the certificate number, expiry and product scope.
+4. **Reimbursement list status:** search the latest NRDL and confirm whether [drug name] is listed, its negotiated price and its reimbursement ratio.
 
-**重要性：** 这些数据直接决定产品管线的估值——一个III期临床的成功概率、一个器械的注册进度、一个药品的医保价格，任何一项变动都可能影响数十亿估值。
+**Why it matters:** these data directly set the pipeline's valuation. The odds of a Phase III trial, a device's registration progress or a drug's reimbursement price can each move the valuation by billions.
 ```
 
-#### SOE/Infrastructure 专用
+#### SOE/Infrastructure
 
 ```markdown
-### 📋 国资委/政府采购数据请求
+### 📋 SASAC and government procurement data request
 
-1. **央企产权登记** — 请通过国资委或产权交易所查询 [公司名] 的国有股权结构，确认实际控制人层级。
-2. **政府采购中标记录** — 请访问 https://www.ccgp.gov.cn ，搜索 [公司名]，导出近3年中标项目、金额和采购方。
-3. **专精特新认定** — 请访问MIIT官网查询 [公司名] 是否在"小巨人"名单中，以及认定层级（国家级/省级）。
+1. **Central SOE equity registration:** through SASAC or an equity exchange, look up [company name]'s state ownership structure and confirm the level of its actual controller.
+2. **Government procurement awards:** at https://www.ccgp.gov.cn, search [company name] and export the awards of the last 3 years, with amounts and buyers.
+3. **Little giant designation:** on the MIIT site, check whether [company name] is on the "little giant" list, and at which level (national or provincial).
 ```
 
-#### Semiconductor 专用
+#### Semiconductor
 
 ```markdown
-### 📋 工信部/知识产权数据请求
+### 📋 MIIT and intellectual property data request
 
-1. **集成电路企业认定** — 请确认 [公司名] 是否在MIIT公布的集成电路认定企业名单中。
-2. **大基金投资记录** — 请查询国家集成电路产业投资基金（大基金一期/二期/三期）的portfolio中是否包含 [公司名]。
-3. **核心专利法律状态** — 请在CNIPA (https://www.cnipa.gov.cn) 查询 [专利号列表] 的法律状态（有效/无效/质押/许可）。
+1. **Integrated circuit enterprise qualification:** confirm whether [company name] is on MIIT's list of qualified integrated circuit enterprises.
+2. **Big Fund investments:** check whether the portfolio of the China Integrated Circuit Industry Investment Fund (Big Fund phases I, II and III) includes [company name].
+3. **Legal status of core patents:** at CNIPA (https://www.cnipa.gov.cn), look up the legal status (valid, invalid, pledged or licensed) of [list of patent numbers].
 ```
 
 ## Integration into the Analysis Workflow
@@ -200,7 +200,7 @@ Trigger when the company belongs to:
 - SOE or SOE supply chain → SASAC/procurement databases
 - Semiconductor/advanced manufacturing → MIIT/CNIPA databases
 - AI/internet/platform → CAC algorithm registry
-- Aerospace/satellite → CAAC/国防科工局 databases
+- Aerospace/satellite → CAAC and SASTIND databases
 - Fintech/payment → PBOC/NFRA license databases
 - Energy/nuclear → NEA/NNSA databases
 - Any company → gsxt.gov.cn (business registration) + wenshu.court.gov.cn (litigation check) as baseline
@@ -210,7 +210,7 @@ Trigger when the company belongs to:
 1. **Before research:** Identify the company's industry → map to regulatory databases using the tables above.
 2. **During web search:** Include 2-3 targeted searches against each relevant public registry.
 3. **If account-gated:** Emit a User Data Request using the template.
-4. **If information cannot be obtained:** Explicitly note in the report: "未能从 [数据库名] 获取 [信息类型]，该数据对 [投资判断维度] 具有 [重要性等级] 的重要性。建议在尽调中要求公司提供。"
+4. **If information cannot be obtained:** Explicitly note in the report: "[information type] could not be obtained from [database name]; it has [importance level] importance for [dimension of the investment judgement]. Ask the company for it in diligence."
 5. **When user provides files:** Treat them as primary-source evidence (confidence: high), cite by filename and issuing agency.
 
 ### Data Hierarchy
@@ -218,11 +218,11 @@ Trigger when the company belongs to:
 Regulatory data ranks at the top of the evidence hierarchy:
 
 ```
-1. Court judgments / regulatory filings (源之根源) ← HIGHEST CONFIDENCE
+1. Court judgments / regulatory filings (the root source) ← HIGHEST CONFIDENCE
 2. Government-issued licenses / certificates
 3. Procurement contract awards (ccgp.gov.cn)
 4. Patent office records (CNIPA/USPTO)
-5. Public company filings (年报/招股书 via 巨潮)
+5. Public company filings (annual reports and prospectuses via CNINFO)
    --- "hard evidence" line ---
 6. Company-provided materials (pitch decks, internal reports)
 7. Media reports / industry analysis
@@ -234,7 +234,7 @@ Anything below the "hard evidence" line should be cross-verified against somethi
 ## Common Pitfalls
 
 1. **Don't assume data is unavailable just because it's not on the first page of search results.** Many Chinese government databases are poorly indexed by Google/Bing. Use site: searches and the databases' own (often terrible) search functions.
-2. **Don't confuse "企业信用信息公示系统" annual reports with audited financials.** The former are self-reported and often contain placeholder numbers for non-public companies.
-3. **Patent counts ≠ patent quality.** A company with 100 utility model patents (实用新型) may have weaker IP than one with 10 invention patents (发明专利). Always distinguish.
+2. **Don't confuse "National Enterprise Credit Information Publicity System" annual reports with audited financials.** The former are self-reported and often contain placeholder numbers for non-public companies.
+3. **Patent counts ≠ patent quality.** A company with 100 utility model patents may have weaker IP than one with 10 invention patents. Always distinguish.
 4. **NDRC approvals ≠ actual construction.** Many projects receive government approval but are never built due to financing or market conditions.
-5. **Algorithm registrations (算法备案) confirm existence but not performance.** A registered AI algorithm tells you the company is operating legally, not that the product is good.
+5. **Algorithm registrations confirm existence but not performance.** A registered AI algorithm tells you the company is operating legally, not that the product is good.

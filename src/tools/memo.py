@@ -13,10 +13,10 @@ import re
 from . import sections
 from .agents import AGENTS
 
-# SOURCE_ID_RE as in the original scripts/check_citations.py, with lookarounds for IDs next to Chinese text.
+# A source ID: S and digits, not inside another word or number.
 SOURCE_ID_RE = re.compile(r'(?<![A-Za-z0-9])S\d+(?!\d)')
-NUMBER_RE = re.compile(r'(?<![\w.])[$¥€]?\d[\d,]*(?:\.\d+)?\s?(?:%|x|×|bn|billion|million|mn|[MBK]\b|亿|万|倍)?')
-ISO_DATE_RE = re.compile(r'\b\d{4}-\d{2}(?:-\d{2})?\b|\d{4}\s*年(?:\s*\d{1,2}\s*月(?:\s*\d{1,2}\s*日)?)?')
+NUMBER_RE = re.compile(r'(?<![\w.])[$¥€]?\d[\d,]*(?:\.\d+)?\s?(?:%|x|×|bn|billion|million|mn|[MBK]\b)?')
+ISO_DATE_RE = re.compile(r'\b\d{4}-\d{2}(?:-\d{2})?\b')
 YEAR_RE = re.compile(r'^(?:FY)?(?:19|20)\d{2}$')
 URL_RE = re.compile(r'https?://\S+')
 FORM_RE = re.compile(r'\b(?:10-K|10-Q|8-K|20-F|S-1|DEF 14A|EX-\d+(?:\.\d+)?)(?:/A)?\b|\bItem\s+\d+[A-C]?\b', re.I)
@@ -27,20 +27,18 @@ FENCE_RE = re.compile(r'^:::')
 COVER_LINE_RE = re.compile(r'^(?:Rating|Composite score|Data as of):')
 TABLE_SEPARATOR_RE = re.compile(r'^\|?\s*:?-{2,}:?\s*(?:\|\s*:?-{2,}:?\s*)+\|?$')
 VERIFICATION_RE = re.compile(r'company-provided|company-reported|not independently verified|partially verified|unverified|'
-                             r'contradicted|not publicly disclosed|公司提供|公司自报|未独立验证|部分验证|已验证|未验证|矛盾|未披露',
-                             re.I)
+                             r'contradicted|not publicly disclosed', re.I)
 # Working material kept out of delivered reports ("mandatory cleanliness").
 INTERNAL_PHRASES_RE = re.compile(
     r'\bmust[- ]fix\b|\bshould[- ]fix\b|\bevidence (?:block|matrix|packet)\b|\bcase file\b|\bsource register\b'
     r'|\brewrite plan\b|\bred[- ]team review\b|\bsection gate\b|\bCritical item\b'
     r'|\b(?:get|save|set|list|find|read|register|deliver|start|finish|request|search)_[a-z_]+\b|\bTODO\b'
-    r'|\bthis run\b|\bnot retrieved\b|证据矩阵|证据块|改写清单|红队审查', re.I)
+    r'|\bthis run\b|\bnot retrieved\b', re.I)
 # Review (R1), rewrite-plan (W1) and user-data-request (U1) IDs.
 INTERNAL_IDS_RE = re.compile(r'(?<![A-Za-z0-9])[RWU]\d{1,3}(?!\d)')
 TEAM_NAMES_RE = re.compile('|'.join(re.escape(name) for name in AGENTS.values()))
-DISCLAIMER_RE = re.compile(r'not (?:investment|financial) advice|for research (?:purposes|reference) only|不构成投资建议',
-                           re.I)
-COMPANY_PROVIDED_RE = re.compile(r'company-provided|company provided|公司提供', re.I)
+DISCLAIMER_RE = re.compile(r'not (?:investment|financial) advice|for research (?:purposes|reference) only', re.I)
+COMPANY_PROVIDED_RE = re.compile(r'company-provided|company provided', re.I)
 PRIMARY_RE = re.compile(r'\bprimary\b|near-primary|filing|regulat|official|registry', re.I)
 MARKET_DATA_RE = re.compile(r'market data|price', re.I)
 

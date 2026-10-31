@@ -26,8 +26,7 @@ class Table:
 class Section:
     key: str
     number: int | None  # the template's slot, s1-s14; None for the executive summary
-    title_zh: str
-    title_en: str
+    title: str
     owner: str
     components: tuple[str, ...] = ()  # fence kinds the section must hold (report.COMPONENTS)
     tables: tuple[Table, ...] = ()
@@ -35,181 +34,176 @@ class Section:
     # Playbook headings the owner reads before researching, as (file, heading); an empty heading is the whole file.
     playbooks: tuple[tuple[str, str], ...] = ()
 
-    @property
-    def title(self) -> str:
-        return f'{self.title_zh} {self.title_en}'
 
-
-DATE = (r'\b(?:19|20)\d{2}-\d{2}-\d{2}\b|\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日'
+DATE = (r'\b(?:19|20)\d{2}-\d{2}-\d{2}\b'
         r'|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.? \d{1,2}, (?:19|20)\d{2}')
 PERCENT = r'\d+(?:\.\d+)?\s*%'
 
 EXECUTIVE_SUMMARY = Section(
-    'executive_summary', None, '5分钟速读', 'Executive Briefing', LEAD,
+    'executive_summary', None, 'Executive Briefing', LEAD,
     components=('verdict', 'briefing', 'efficiency', 'one-question', 'takeaways'),
     playbooks=(('decision_framework.md', ''), ('report_strategy_playbook.md', 'Minimum Decision Standard'),
                ('public_equity_financials_lens.md', 'A1. Current Market Regime Assessment')))
 
 SECTIONS = (
     Section(
-        'company_overview', 1, '公司概览', 'Company Overview', COMPANY,
+        'company_overview', 1, 'Company Overview', COMPANY,
         components=('kpi', 'timeline'),
-        tables=(Table('legal entity table', ('entity', '实体', '主体')),
-                Table('cap table', ('shareholder', '股东'), listed=False)),
+        tables=(Table('legal entity table', ('entity',)),
+                Table('cap table', ('shareholder',), listed=False)),
         markers=(('an exact date', DATE), ('an ownership percentage', PERCENT),
-                 ('the legal entities', r'incorporat|subsidiar|holding compan|legal entit|注册|子公司|控股|实体')),
+                 ('the legal entities', r'incorporat|subsidiar|holding compan|legal entit')),
         playbooks=(('company_deep_dive_playbook.md', 'Section 1: Company Overview — Forensic Identity'),
                    ('section_deepening.md', 'Company Overview'))),
     Section(
-        'team', 2, '创始人与核心团队', 'Founding Team & Key Personnel', COMPANY,
+        'team', 2, 'Founding Team & Key Personnel', COMPANY,
         components=('evidence',),
-        tables=(Table('education table', ('degree', 'institution', '学位', '院校', '学历')),
-                Table('career table', ('period', 'role', 'title', '任职', '职位', '期间')),
-                Table('team assessment matrix', ('dimension', '维度'))),
+        tables=(Table('education table', ('degree', 'institution')),
+                Table('career table', ('period', 'role', 'title')),
+                Table('team assessment matrix', ('dimension',))),
         markers=(('degrees and institutions',
-                  r'(?:B\.?S\b|B\.?A\b|bachelor|M\.?S\b|MBA|master|Ph\.?D|doctor|本科|学士|硕士|博士)'
-                  r'.{0,80}(?:universit|college|institute|school|大学|学院)'),
-                 ('career history', r'previously|formerly|served as|joined|founded|worked at|曾任|此前|加入|创立|创办'),
-                 ('counted achievements', r'\d+[\s-]*(?:patents?|papers?|publications?|years?|exits?|篇|项|年|次)')),
+                  r'(?:B\.?S\b|B\.?A\b|bachelor|M\.?S\b|MBA|master|Ph\.?D|doctor)'
+                  r'.{0,80}(?:universit|college|institute|school)'),
+                 ('career history', r'previously|formerly|served as|joined|founded|worked at'),
+                 ('counted achievements', r'\d+[\s-]*(?:patents?|papers?|publications?|years?|exits?)')),
         playbooks=(('company_deep_dive_playbook.md', 'Section 2: Founding Team & Core Personnel — Complete CVs'),
                    ('section_deepening.md', 'Founders and Team'))),
     Section(
-        'technology_product', 3, '技术与产品', 'Technology & Product', PRODUCT,
+        'technology_product', 3, 'Technology & Product', PRODUCT,
         components=('evidence',),
-        tables=(Table('performance metrics table', ('metric', '指标')),
-                Table('technology comparison table', ('dimension', 'approach', '维度', '路线')),
-                Table('moat table', ('barrier', '壁垒')),
-                Table('patent table', ('patent', '专利')),
-                Table('product inventory', ('product', '产品'))),
+        tables=(Table('performance metrics table', ('metric',)),
+                Table('technology comparison table', ('dimension', 'approach')),
+                Table('moat table', ('barrier',)),
+                Table('patent table', ('patent',)),
+                Table('product inventory', ('product',))),
         # Patent and application numbers as written: US 10,912,502, US 17/662,019, WO 2023/123456, CN202310123456.
-        markers=(('patent numbers', r'\b(?:US|CN|EP|WO|JP|KR)\s?\d[\d,/]{4,}\d|patent (?:no\.?|number)|专利号'),
+        markers=(('patent numbers', r'\b(?:US|CN|EP|WO|JP|KR)\s?\d[\d,/]{4,}\d|patent (?:no\.?|number)'),
                  ('an exact date', DATE),
                  ('a performance metric with a figure',
                   r'(?:accuracy|latency|throughput|efficiency|resolution|capacity|range|speed|power|yield|'
-                  r'sensitivity|specificity|density|cycles?|精度|延迟|效率|分辨率|容量|功率|速度|良率|灵敏度).{0,30}\d'),
+                  r'sensitivity|specificity|density|cycles?).{0,30}\d'),
                  # In words, or in the technology comparison table: Dimension | the company | a rival.
                  ('a comparison with a named rival',
-                  r'(?:\bvs\.?|versus|compared (?:with|to)|relative to|相比|相较|优于|对比).{0,80}[A-Z][A-Za-z]+'
-                  r'|(?:^|\n)\|\s*(?:Dimension|维度)\s*\|[^|\n]+\|[^|\n]+\|')),
+                  r'(?:\bvs\.?|versus|compared (?:with|to)|relative to).{0,80}[A-Z][A-Za-z]+'
+                  r'|(?:^|\n)\|\s*Dimension\s*\|[^|\n]+\|[^|\n]+\|')),
         playbooks=(('company_deep_dive_playbook.md', 'Section 3: Technology & IP — Patent-Level Detail'),
                    ('company_deep_dive_playbook.md', 'Section 4: Products — Per-Product Forensic Detail'),
                    ('section_deepening.md', 'Technology and Product'))),
     Section(
-        'market', 4, '市场与行业分析', 'Market & Industry Analysis', MARKET,
+        'market', 4, 'Market & Industry Analysis', MARKET,
         components=('evidence',),
-        tables=(Table('market size table', ('tam', 'sam', 'market size', '市场规模')),
-                Table('regional market table', ('region', '区域', '地区'))),
+        tables=(Table('market size table', ('tam', 'sam', 'market size')),
+                Table('regional market table', ('region',))),
         markers=(('market size with a figure',
-                  r'(?:\bTAM\b|\bSAM\b|\bSOM\b|market size|market (?:is|was) (?:worth|valued|sized)|市场规模).{0,60}\d'),
-                 ('a CAGR', r'CAGR.{0,30}\d+(?:\.\d+)?\s*%|\d+(?:\.\d+)?\s*%\s*CAGR|复合增长率'),
-                 ('policy with a year', r'(?:policy|regulat|\bact\b|\blaw\b|guideline|tariff|政策|法规|监管).{0,100}(?:19|20)\d{2}'),
+                  r'(?:\bTAM\b|\bSAM\b|\bSOM\b|market size|market (?:is|was) (?:worth|valued|sized)).{0,60}\d'),
+                 ('a CAGR', r'CAGR.{0,30}\d+(?:\.\d+)?\s*%|\d+(?:\.\d+)?\s*%\s*CAGR'),
+                 ('policy with a year', r'(?:policy|regulat|\bact\b|\blaw\b|guideline|tariff).{0,100}(?:19|20)\d{2}'),
                  # A region followed by its market or its share, or a table with a region column; the first port
                  # needed "market" within 50 characters and missed a split table with a Region column.
                  ('a geographic split', r'(?:United States|\bUS\b|U\.S\.|China|Europe|\bEU\b|Japan|India|Southeast Asia|'
-                                        r'global|美国|中国|欧洲|日本|全球).{0,50}(?:market|市场|\d+(?:\.\d+)?\s*%)'
-                                        r'|\|\s*(?:Region|Geography|Country|地区|区域|国家)\s*\|')),
+                                        r'global).{0,50}(?:market|\d+(?:\.\d+)?\s*%)'
+                                        r'|\|\s*(?:Region|Geography|Country)\s*\|')),
         playbooks=(('company_deep_dive_playbook.md', 'Section 5: Market — Domestic + International Bifurcation'),
                    ('geo_market_context_lens.md', ''), ('section_deepening.md', 'Market and Industry'))),
     Section(
-        'competition', 5, '竞争格局', 'Competitive Landscape', MARKET,
+        'competition', 5, 'Competitive Landscape', MARKET,
         components=('evidence', 'quad'),
-        tables=(Table('competitor table', ('competitor', '竞争对手', '竞品')),
-                Table('positioning table', ('position', '定位'))),
-        markers=(('a head-to-head comparison', r'\bvs\.?|versus|compared (?:with|to)|相比|相较|对比'),
-                 ('market share figures', r'(?:market share|share of|份额|市占率).{0,30}\d+(?:\.\d+)?\s*%'
+        tables=(Table('competitor table', ('competitor',)),
+                Table('positioning table', ('position',))),
+        markers=(('a head-to-head comparison', r'\bvs\.?|versus|compared (?:with|to)'),
+                 ('market share figures', r'(?:market share|share of).{0,30}\d+(?:\.\d+)?\s*%'
                                           r'|\d+(?:\.\d+)?\s*%\s*(?:market )?share'),
-                 ('named competitors', r'(?:competitor|rival|竞争对手|竞品).{0,60}[A-Z][a-z]+')),
+                 ('named competitors', r'(?:competitor|rival).{0,60}[A-Z][a-z]+')),
         playbooks=(('company_deep_dive_playbook.md', 'Section 6: Competition — Per-Product Forensic Mapping'),
                    ('section_deepening.md', 'Competition'))),
     Section(
-        'business_model', 6, '商业模式', 'Business Model', FUNDAMENTALS,
+        'business_model', 6, 'Business Model', FUNDAMENTALS,
         components=('evidence',),
-        tables=(Table('unit economics table', ('per unit', 'per customer', 'unit economics', 'ltv', 'cac', '单位经济', '单客')),
-                Table('pricing table', ('price', 'pricing', '定价', '价格'))),
-        markers=(('a price with a figure', r'(?:price|pricing|\bASP\b|\bfee|subscription|定价|价格|售价).{0,30}\d'),
-                 ('a margin with a figure', r'(?:gross margin|contribution margin|net margin|operating margin|unit economics|'
-                                            r'毛利率|净利率|贡献利润).{0,30}\d+(?:\.\d+)?\s*%'),
+        tables=(Table('unit economics table', ('per unit', 'per customer', 'unit economics', 'ltv', 'cac')),
+                Table('pricing table', ('price', 'pricing'))),
+        markers=(('a price with a figure', r'(?:price|pricing|\bASP\b|\bfee|subscription).{0,30}\d'),
+                 ('a margin with a figure', r'(?:gross margin|contribution margin|net margin|operating margin|unit economics)'
+                                            r'.{0,30}\d+(?:\.\d+)?\s*%'),
                  ('the revenue model', r'subscription|licen[cs]e|SaaS|per[- ]unit|per[- ]seat|recurring|one-time|hardware|'
-                                       r'services|commission|take rate|订阅|一次性|佣金|服务费')),
+                                       r'services|commission|take rate')),
         playbooks=(('company_deep_dive_playbook.md', '7.2 Detailed Unit Economics'),
                    ('section_deepening.md', 'Business Model'))),
     Section(
-        'financials', 7, '财务分析', 'Financial Analysis', FUNDAMENTALS,
+        'financials', 7, 'Financial Analysis', FUNDAMENTALS,
         components=('info',),
-        tables=(Table('financial statements table', ('revenue', '营业收入', '收入')),
-                Table('returns and working capital table', ('roe', 'roic', 'return on', 'dso', 'cash conversion', '回报', '周转'))),
-        markers=(('revenue with a figure', r'(?:revenue|sales|营收|收入|销售额).{0,40}\d'),
+        tables=(Table('financial statements table', ('revenue',)),
+                Table('returns and working capital table', ('roe', 'roic', 'return on', 'dso', 'cash conversion'))),
+        markers=(('revenue with a figure', r'(?:revenue|sales).{0,40}\d'),
                  ('profit or cash flow with a figure', r'(?:profit|net income|operating income|EBIT|EBITDA|free cash flow|FCF|'
-                                                       r'cash flow|利润|净利|现金流).{0,40}\d'),
-                 ('a fiscal year', r'\b(?:FY\s?)?(?:19|20)\d{2}\b|\d{4}\s*年')),
+                                                       r'cash flow).{0,40}\d'),
+                 ('a fiscal year', r'\b(?:FY\s?)?(?:19|20)\d{2}\b')),
         playbooks=(('public_equity_financials_lens.md', 'Professional Financial Statement Analysis'),
                    ('company_deep_dive_playbook.md', 'Section 7: Financials — Forensic Detail'),
                    ('section_deepening.md', 'Financials'))),
     Section(
-        'funding_valuation', 8, '融资历程与估值', 'Funding History & Valuation', VALUATION,
-        tables=(Table('funding or trading table', ('round', '轮次', 'market cap', '市值', 'price', '股价')),
-                Table('valuation methods table', ('method', '方法')),
-                Table('peer multiples table', ('peer', '同行', '可比', 'p/e', 'ev/'))),
+        'funding_valuation', 8, 'Funding History & Valuation', VALUATION,
+        tables=(Table('funding or trading table', ('round', 'market cap', 'price')),
+                Table('valuation methods table', ('method',)),
+                Table('peer multiples table', ('peer', 'p/e', 'ev/'))),
         markers=(('valuation or market value with a figure', r'(?:valuation|valued at|market cap|enterprise value|pre-money|'
-                                                              r'post-money|估值|市值).{0,50}\d'),
-                 ('a multiple', r'\d+(?:\.\d+)?\s*(?:x|×|倍)(?![A-Za-z])|P/E|EV/'),
-                 ('capital-raising history', r'\bround\b|Series [A-Z]|\bseed\b|\bIPO\b|offering|raised|financing|融资|轮')),
+                                                              r'post-money).{0,50}\d'),
+                 ('a multiple', r'\d+(?:\.\d+)?\s*(?:x|×)(?![A-Za-z])|P/E|EV/'),
+                 ('capital-raising history', r'\bround\b|Series [A-Z]|\bseed\b|\bIPO\b|offering|raised|financing')),
         playbooks=(('public_equity_financials_lens.md', 'Market Data and Valuation'),
                    ('public_equity_financials_lens.md', 'A2. Stock Price & Trading Context'),
                    ('section_deepening.md', 'Funding and Valuation'))),
     Section(
-        'strategy', 9, '发展方向与战略', 'Development Strategy', PRODUCT,
-        tables=(Table('milestone table', ('milestone', 'roadmap', '里程碑', '路线图')),
-                Table('partner table', ('partner', '合作'))),
+        'strategy', 9, 'Development Strategy', PRODUCT,
+        tables=(Table('milestone table', ('milestone', 'roadmap')),
+                Table('partner table', ('partner',))),
         markers=(('a partnership or plan with an action',
-                  r'(?:partner|agreement|collaborat|strategy|roadmap|plan|合作|战略|路线).{0,80}'
-                  r'(?:sign|launch|announc|expand|enter|start|plan|签署|达成|建立|启动|推出)'),
+                  r'(?:partner|agreement|collaborat|strategy|roadmap|plan).{0,80}'
+                  r'(?:sign|launch|announc|expand|enter|start|plan)'),
                  ('a dated milestone', r'\b(?:19|20)\d{2}\b|\bQ[1-4]\b|\bH[12]\b')),
         playbooks=(('section_deepening.md', 'Strategy'),)),
     Section(
-        'risk', 10, '风险评估', 'Risk Assessment', RED_TEAM,
+        'risk', 10, 'Risk Assessment', RED_TEAM,
         components=('risk-matrix', 'info'),
-        markers=(('a probability with a figure', r'(?:probability|likelihood|chance|概率|可能性).{0,30}\d+(?:\.\d+)?\s*%'
-                                                 r'|\d+(?:\.\d+)?\s*%\s*(?:probability|chance|概率)'),
-                 ('severity levels', r'\b(?:critical|high|medium|low|fatal)\b|致命|高|中|低'),
-                 ('mitigation', r'mitigat|hedg|contingen|缓释|应对|对冲')),
+        markers=(('a probability with a figure', r'(?:probability|likelihood|chance).{0,30}\d+(?:\.\d+)?\s*%'
+                                                 r'|\d+(?:\.\d+)?\s*%\s*(?:probability|chance)'),
+                 ('severity levels', r'\b(?:critical|high|medium|low|fatal)\b'),
+                 ('mitigation', r'mitigat|hedg|contingen')),
         playbooks=(('analysis_core.md', 'Red-Team Pass'), ('section_deepening.md', 'Risk'))),
     Section(
-        'thesis', 11, '投资潜力与投资逻辑', 'Investment Potential & Thesis', LEAD,
+        'thesis', 11, 'Investment Potential & Thesis', LEAD,
         components=('scenarios', 'analogs'),
-        tables=(Table('key assumptions table', ('assumption', '假设')),),
-        markers=(('scenarios', r'\b(?:bull|base|bear)\b|牛市|基准|熊市|情景'),
-                 ('a return multiple or target', r'\d+(?:\.\d+)?\s*(?:x|×|倍)(?![A-Za-z])|target price|price target|'
-                                                 r'目标价|MOIC|\bIRR\b')),
+        tables=(Table('key assumptions table', ('assumption',)),),
+        markers=(('scenarios', r'\b(?:bull|base|bear)\b'),
+                 ('a return multiple or target', r'\d+(?:\.\d+)?\s*(?:x|×)(?![A-Za-z])|target price|price target|'
+                                                 r'MOIC|\bIRR\b')),
         playbooks=(('decision_framework.md', ''), ('analysis_core.md', 'Deal Thesis Workflow'),
                    ('section_deepening.md', 'Investment Thesis'))),
     Section(
-        'exit', 12, '退出策略分析', 'Exit Strategy Analysis', VALUATION,
-        tables=(Table('exit routes table', ('acquirer', 'exit route', 'exit path', 'buyer', 'route', '收购方', '退出路径')),
-                Table('precedent exits table', ('precedent', 'transaction', 'deal', '先例', '交易'))),
-        markers=(('an exit route', r'\bIPO\b|M&A|acqui|trade sale|secondary sale|\bexit|上市|并购|收购|退出'),
+        'exit', 12, 'Exit Strategy Analysis', VALUATION,
+        tables=(Table('exit routes table', ('acquirer', 'exit route', 'exit path', 'buyer', 'route')),
+                Table('precedent exits table', ('precedent', 'transaction', 'deal'))),
+        markers=(('an exit route', r'\bIPO\b|M&A|acqui|trade sale|secondary sale|\bexit'),
                  ('a named acquirer or venue', r'[A-Z][A-Za-z&.]+(?:\s[A-Z][A-Za-z&.]+)*\s(?:Corp|Inc|Ltd|Group|Holdings|'
-                                               r'plc|AG|SE|N\.V\.)|NASDAQ|Nasdaq|NYSE|HKEX|STAR Market|科创板|港交所')),
+                                               r'plc|AG|SE|N\.V\.)|NASDAQ|Nasdaq|NYSE|HKEX|STAR Market')),
         playbooks=(('section_deepening.md', 'Exit Strategy'),)),
     Section(
-        'esg', 13, 'ESG评估', 'ESG Assessment', REGULATORY,
-        tables=(Table('ESG issues table', ('esg', 'issue', '议题')),
-                Table('regulatory record table', ('regulator', 'license', 'record', '监管', '许可', '记录')),
-                Table('policy impact matrix', ('factor', 'exposure', '因素', '敞口'))),
-        markers=(('governance', r'governance|board|independent director|dual-class|voting|治理|董事会|独立董事'),
+        'esg', 13, 'ESG Assessment', REGULATORY,
+        tables=(Table('ESG issues table', ('esg', 'issue')),
+                Table('regulatory record table', ('regulator', 'license', 'record')),
+                Table('policy impact matrix', ('factor', 'exposure'))),
+        markers=(('governance', r'governance|board|independent director|dual-class|voting'),
                  ('environmental or social issues', r'environment|emission|carbon|labor|labour|privacy|safety|'
-                                                    r'supply chain|环境|排放|碳|劳工|隐私|安全'),
-                 ('compliance records', r'complian|regulator|lawsuit|litigation|settlement|\bfine|recall|enforcement|'
-                                        r'合规|监管|诉讼|处罚|召回')),
+                                                    r'supply chain'),
+                 ('compliance records', r'complian|regulator|lawsuit|litigation|settlement|\bfine|recall|enforcement')),
         playbooks=(('regulatory_database_lens.md', 'Integration into the Analysis Workflow'),
                    ('policy_geopolitics_lens.md', ''), ('section_deepening.md', 'ESG and Governance'))),
     Section(
-        'scoring', 14, '综合评分与投资建议', 'Comprehensive Scoring & Recommendation', LEAD,
+        'scoring', 14, 'Comprehensive Scoring & Recommendation', LEAD,
         components=('sensitivity', 'takeaways'),
-        tables=(Table('weighted score table', ('weight', '权重')),),
-        markers=(('scores out of 10', r'\d+(?:\.\d+)?\s*/\s*10|(?:score|rating|评分).{0,30}\d+(?:\.\d+)?'),
-                 ('sensitivity with a valuation impact', r'(?:assumption|sensitivity|假设|敏感性).{0,80}'
-                                                         r'(?:EV|valuation|value|price|估值|价值|影响|impact)')),
+        tables=(Table('weighted score table', ('weight',)),),
+        markers=(('scores out of 10', r'\d+(?:\.\d+)?\s*/\s*10|(?:score|rating).{0,30}\d+(?:\.\d+)?'),
+                 ('sensitivity with a valuation impact', r'(?:assumption|sensitivity).{0,80}'
+                                                         r'(?:EV|valuation|value|price|impact)')),
         playbooks=(('section_deepening.md', 'Scoring and Recommendation'),
                    ('public_equity_financials_lens.md', 'Recommendation and Position Sizing'),
                    ('public_equity_financials_lens.md', 'A4. Regime-Appropriate Strategy'))),
@@ -248,7 +242,7 @@ NO_BENCHMARK_CAP = 7
 
 
 def section_key(name: str) -> str:
-    """A section's key from its key, number ("s4", "S4", "4") or English title; raises ValueError otherwise."""
+    """A section's key from its key, number ("s4", "S4", "4") or title; raises ValueError otherwise."""
     wanted = name.strip()
     if wanted in BY_KEY:
         return wanted
@@ -257,7 +251,7 @@ def section_key(name: str) -> str:
         return BY_NUMBER[int(number.group(1))].key
     lowered = wanted.lower()
     for section in ALL_SECTIONS:
-        if lowered in (section.title_en.lower(), section.title_zh):
+        if lowered == section.title.lower():
             return section.key
     keys = ', '.join(section.key for section in ALL_SECTIONS)
     raise ValueError(f'No section {name!r}. Sections: {keys}.')

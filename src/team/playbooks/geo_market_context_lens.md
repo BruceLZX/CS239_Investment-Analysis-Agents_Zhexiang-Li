@@ -62,4 +62,4 @@ Do not add a generic geography essay. Integrate the lens into:
 - Risk: include market-entry, localization, supply-chain, FX, macro, regulation, policy, and exit-market risks when material.
 - Exit: test whether likely acquirers/listing venues exist in the same market system.
 
-If the lens is not material, state briefly: `地理/市场体系因素：未发现对投资结论有重大影响的跨区域差异。`
+If the lens is not material, state briefly: `Geographic and market-system factors: no cross-regional differences material to the investment conclusion were found.`

@@ -118,7 +118,7 @@ Use narrative sections for the argument, then add compact visual elements where 
 Avoid two extremes:
 
 - Do not repeat the same `judgement/evidence/mechanism/risk/implication` cards in every section.
-- Do not repeat the same `投资人读法`, `来源/Source`, `数字锚点`, or `仍需确认` block in every section. It reads like a worksheet and should fail QA.
+- Do not repeat the same `How investors should read this`, `Source`, `Key figures`, or `Still to confirm` block in every section. It reads like a worksheet and should fail QA.
 - Do not replace structure with long black-text paragraphs. Dense analysis should be broken with content-specific micro-headings, tables, KPI strips, or callouts.
 
 ## Minimum Decision Standard

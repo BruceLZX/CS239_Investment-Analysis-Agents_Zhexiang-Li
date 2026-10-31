@@ -44,7 +44,7 @@ def test_each_component_renders_to_the_templates_classes():
                    '| Price war | 30% | -20% EV | Critical | S5 |\n| Receivables | 20% | -8% EV | medium | S2 |\n:::')
     assert 'risk-matrix' in risks and 'class="level-critical"' in risks and 'class="level-medium"' in risks
     scenarios = render('::: scenarios\n| Scenario | Probability | Outcome | Source |\n|---|---|---|---|\n'
-                       '| Bull | 25% | $55 | S3 |\n| Base case | 50% | $42 | S3 |\n| 熊市 | 25% | $30 | S3 |\n:::')
+                       '| Bull | 25% | $55 | S3 |\n| Base case | 50% | $42 | S3 |\n| Bear | 25% | $30 | S3 |\n:::')
     assert all(f'<tr class="{case}">' in scenarios for case in ('bull', 'base', 'bear'))
     quad = render('::: quad\n| Quadrant | Points | Source |\n|---|---|---|\n| Strengths | Margin; Cash | S1 |\n'
                   '| Weaknesses | Receivables | S2 |\n| Opportunities | Attach | S8 |\n| Threats | Price war | S5 |\n:::')
@@ -82,12 +82,11 @@ def test_plain_markdown_keeps_component_content_without_the_fences():
     assert report.components_in(EXECUTIVE_SUMMARY) == ['verdict', 'briefing', 'efficiency', 'one-question', 'takeaways']
 
 
-def full_report(language: str = 'en', **extra) -> str:
+def full_report(**extra) -> str:
     texts = {'executive_summary': EXECUTIVE_SUMMARY, 'financials': FINANCIALS, 'scoring': SCORING}
     cover = report.Cover('Northwind Devices', 'Devices and subscriptions', 'Sells devices with subscriptions.',
                          'Consumer electronics', 'Austin, TX', 'Listed (NASDAQ: NWD)')
-    return report.render_report(texts, SOURCES, cover, '2026-10-28', '6.7', language, report_date='2026-10-29',
-                                **extra)
+    return report.render_report(texts, SOURCES, cover, '2026-10-28', '6.7', report_date='2026-10-29', **extra)
 
 
 def test_the_report_fills_every_template_placeholder():
@@ -97,8 +96,7 @@ def test_the_report_fills_every_template_placeholder():
     assert '<meta name="composite-score" content="6.7">' in html
     assert '© 2026 Investment Analysis Skill' in html
     # A section missing from the version says so in its place.
-    assert html.count(report.LABELS['en']['missing']) == 12
-    assert '<html lang="zh-CN">' in full_report('zh') and report.LABELS['zh']['missing'] in full_report('zh')
+    assert html.count(report.LABELS['missing']) == 12
 
 
 def test_the_appendix_lists_each_cited_source_with_its_link_and_confidence():
@@ -113,7 +111,7 @@ def test_the_appendix_lists_each_cited_source_with_its_link_and_confidence():
 
 def test_a_client_document_links_to_the_delivery_folders_sources():
     deck = [*SOURCES, report_source := {**SOURCES[6], 'id': 'S9'}]
-    html = report.source_appendix(deck, {'S9'}, 'en')
+    html = report.source_appendix(deck, {'S9'})
     assert report_source['location'].startswith('sources/') and 'href="sources/northwind_deck.pdf"' in html
 
 
@@ -128,25 +126,18 @@ def test_the_pdf_prints_from_the_html(tmp_path: Path):
 
 def test_names_follow_the_output_contract():
     assert report.folder_name('Northwind Devices', 'consumer electronics') == 'NorthwindDevices_ConsumerElectronics'
-    assert report.report_file_name('Northwind Devices', 'en') == 'NorthwindDevices_Investment_Report'
-    assert report.report_file_name('北风科技', 'zh') == '北风科技_投资分析报告'
+    assert report.report_file_name('Northwind Devices') == 'NorthwindDevices_Investment_Report'
+    assert report.report_file_name('Müller & Sons') == 'MüllerSons_Investment_Report'
 
 
-def test_the_report_language_follows_the_request():
-    assert report.language_of('Prepare an investment memo on Apple (AAPL).') == 'en'
-    assert report.language_of('帮我分析一下苹果公司（AAPL）是否值得买入') == 'zh'
-
-
-def test_a_report_in_english_has_its_labels_and_disclaimers_in_english_too():
-    template = report.TEMPLATE.read_text()
-    assert all(chinese in template for chinese, _ in report.ENGLISH_CHROME)
-    english, chinese = full_report(), full_report('zh')
-    assert 'Report date' in english and 'it is not investment advice' in english
-    assert all(text in english for text in check_report.REQUIRED_TEXT)  # the Chinese the check needs
-    assert 'Report date' not in chinese and 'not investment advice' not in chinese
+def test_the_report_is_in_english_throughout():
+    html = full_report()
+    assert 'Report date' in html and 'it is not investment advice' in html
+    assert all(text in html for text in check_report.REQUIRED_TEXT)
+    assert not re.search(r'[\u4e00-\u9fff]', html)
 
 
 def test_every_section_has_a_template_title():
     html = full_report()
     for section in sections.SECTIONS:
-        assert f'<strong>{section.title_zh}</strong>' in html
+        assert f'<strong>{section.title}</strong>' in html

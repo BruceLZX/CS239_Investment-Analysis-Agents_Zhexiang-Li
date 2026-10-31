@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{COMPANY_NAME}} - 投资分析报告</title>
+    <title>{{COMPANY_NAME}} - Investment Research Report</title>
     <meta name="composite-score" content="{{COMPOSITE_SCORE}}">
     <style>
         :root {
@@ -1292,36 +1292,36 @@
     <div class="content">
         <div class="topbar" role="region" aria-label="Report tools">
             <div>
-                <div class="mobile-title">{{COMPANY_NAME}} 投资分析报告</div>
+                <div class="mobile-title">{{COMPANY_NAME}} Investment Research Report</div>
                 <label class="search-wrap">
                     <span class="sr-only">Search report</span>
-                    <input id="reportSearch" type="search" placeholder="搜索章节、风险、来源或关键指标">
+                    <input id="reportSearch" type="search" placeholder="Search sections, risks, sources or key metrics">
                 </label>
             </div>
             <div class="toolbar-actions">
-                <button class="tool-button" type="button" id="expandAll">展开全部</button>
-                <button class="tool-button" type="button" id="collapseAll">折叠全部</button>
-                <button class="tool-button" type="button" id="clearSearch">清除搜索</button>
-                <button class="tool-button" type="button" onclick="window.print()">打印 / PDF</button>
+                <button class="tool-button" type="button" id="expandAll">Expand all</button>
+                <button class="tool-button" type="button" id="collapseAll">Collapse all</button>
+                <button class="tool-button" type="button" id="clearSearch">Clear search</button>
+                <button class="tool-button" type="button" onclick="window.print()">Print / PDF</button>
             </div>
         </div>
 
         <nav class="sidebar" aria-label="Report navigation">
             <ol class="toc" id="toc">
-                <li><a href="#s1"><span class="num">01</span><span>公司概览</span></a></li>
-                <li><a href="#s2"><span class="num">02</span><span>核心团队</span></a></li>
-                <li><a href="#s3"><span class="num">03</span><span>技术产品</span></a></li>
-                <li><a href="#s4"><span class="num">04</span><span>市场行业</span></a></li>
-                <li><a href="#s5"><span class="num">05</span><span>竞争格局</span></a></li>
-                <li><a href="#s6"><span class="num">06</span><span>商业模式</span></a></li>
-                <li><a href="#s7"><span class="num">07</span><span>财务分析</span></a></li>
-                <li><a href="#s8"><span class="num">08</span><span>融资估值</span></a></li>
-                <li><a href="#s9"><span class="num">09</span><span>发展战略</span></a></li>
-                <li><a href="#s10"><span class="num">10</span><span>风险评估</span></a></li>
-                <li><a href="#s11"><span class="num">11</span><span>投资逻辑</span></a></li>
-                <li><a href="#s12"><span class="num">12</span><span>退出策略</span></a></li>
-                <li><a href="#s13"><span class="num">13</span><span>ESG治理</span></a></li>
-                <li><a href="#s14"><span class="num">14</span><span>评分建议</span></a></li>
+                <li><a href="#s1"><span class="num">01</span><span>Company Overview</span></a></li>
+                <li><a href="#s2"><span class="num">02</span><span>Founding Team</span></a></li>
+                <li><a href="#s3"><span class="num">03</span><span>Technology & Product</span></a></li>
+                <li><a href="#s4"><span class="num">04</span><span>Market & Industry</span></a></li>
+                <li><a href="#s5"><span class="num">05</span><span>Competition</span></a></li>
+                <li><a href="#s6"><span class="num">06</span><span>Business Model</span></a></li>
+                <li><a href="#s7"><span class="num">07</span><span>Financials</span></a></li>
+                <li><a href="#s8"><span class="num">08</span><span>Funding & Valuation</span></a></li>
+                <li><a href="#s9"><span class="num">09</span><span>Strategy</span></a></li>
+                <li><a href="#s10"><span class="num">10</span><span>Risk</span></a></li>
+                <li><a href="#s11"><span class="num">11</span><span>Investment Thesis</span></a></li>
+                <li><a href="#s12"><span class="num">12</span><span>Exit Strategy</span></a></li>
+                <li><a href="#s13"><span class="num">13</span><span>ESG</span></a></li>
+                <li><a href="#s14"><span class="num">14</span><span>Scoring</span></a></li>
             </ol>
         </nav>
 
@@ -1334,149 +1334,149 @@
                     <p class="business-summary">{{COMPANY_BUSINESS_SUMMARY}}</p>
                 </div>
                 <div class="hero-aside" aria-label="Company metadata">
-                    <div class="meta-row"><span>报告日期</span><strong>{{REPORT_DATE}}</strong></div>
-                    <div class="meta-row"><span>数据截至</span><strong>{{DATA_AS_OF}}</strong></div>
-                    <div class="meta-row"><span>行业</span><strong>{{INDUSTRY}}</strong></div>
-                    <div class="meta-row"><span>总部</span><strong>{{HEADQUARTERS}}</strong></div>
-                    <div class="meta-row"><span>阶段</span><strong>{{STAGE}}</strong></div>
+                    <div class="meta-row"><span>Report date</span><strong>{{REPORT_DATE}}</strong></div>
+                    <div class="meta-row"><span>Data as of</span><strong>{{DATA_AS_OF}}</strong></div>
+                    <div class="meta-row"><span>Industry</span><strong>{{INDUSTRY}}</strong></div>
+                    <div class="meta-row"><span>Headquarters</span><strong>{{HEADQUARTERS}}</strong></div>
+                    <div class="meta-row"><span>Stage</span><strong>{{STAGE}}</strong></div>
                 </div>
             </div>
             <div class="disclaimer">
-                <strong>重要声明：</strong>本报告基于公开信息、用户提供材料与网络调研生成，仅供投资研究参考，不构成任何投资建议。报告信息可能存在不完整、滞后或来源偏差，投资决策应结合专业判断并咨询持牌投资顾问。本报告由 AI 辅助生成，分析独立，未受被分析公司委托或资助。
+                <strong>Important notice:</strong> This report was generated from public information, materials the user provided and web research, for investment research only; it is not investment advice. It may be incomplete, out of date or biased by its sources: investment decisions need professional judgement and a licensed adviser. It was produced with AI assistance, independently, and was neither commissioned nor paid for by the company analysed.
             </div>
         </header>
 
         <main id="main-content">
             <section class="exec-summary" aria-labelledby="exec-title">
-                <h3 id="exec-title">5分钟速读：综合结论 (Executive Briefing)</h3>
-                <p class="summary-subtitle">先读这里即可了解总体判断、核心理由、主要风险和下一步尽调重点。</p>
+                <h3 id="exec-title">Executive Briefing: the Five-Minute Read</h3>
+                <p class="summary-subtitle">Read this first for the overall judgement, the core reasons, the main risks and the next diligence steps.</p>
                 {{EXECUTIVE_SUMMARY}}
             </section>
 
-            <div class="no-results" id="noResults">没有匹配的章节。请尝试更短的关键词。</div>
+            <div class="no-results" id="noResults">No matching sections. Try a shorter keyword.</div>
 
-            <section class="section-card" id="s1" data-title="公司概览 Company Overview">
+            <section class="section-card" id="s1" data-title="Company Overview">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s1-body">
                     <span class="section-index">01</span>
-                    <span class="section-title"><strong>公司概览</strong><span>Company Overview</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Company Overview</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s1-body">{{SECTION_1}}</div>
             </section>
 
-            <section class="section-card" id="s2" data-title="创始人与核心团队 Founding Team Key Personnel">
+            <section class="section-card" id="s2" data-title="Founding Team Key Personnel">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s2-body">
                     <span class="section-index">02</span>
-                    <span class="section-title"><strong>创始人与核心团队</strong><span>Founding Team & Key Personnel</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Founding Team & Key Personnel</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s2-body">{{SECTION_2}}</div>
             </section>
 
-            <section class="section-card" id="s3" data-title="技术与产品 Technology Product">
+            <section class="section-card" id="s3" data-title="Technology Product">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s3-body">
                     <span class="section-index">03</span>
-                    <span class="section-title"><strong>技术与产品</strong><span>Technology & Product</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Technology & Product</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s3-body">{{SECTION_3}}</div>
             </section>
 
-            <section class="section-card" id="s4" data-title="市场与行业分析 Market Industry Analysis">
+            <section class="section-card" id="s4" data-title="Market Industry Analysis">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s4-body">
                     <span class="section-index">04</span>
-                    <span class="section-title"><strong>市场与行业分析</strong><span>Market & Industry Analysis</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Market & Industry Analysis</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s4-body">{{SECTION_4}}</div>
             </section>
 
-            <section class="section-card" id="s5" data-title="竞争格局 Competitive Landscape">
+            <section class="section-card" id="s5" data-title="Competitive Landscape">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s5-body">
                     <span class="section-index">05</span>
-                    <span class="section-title"><strong>竞争格局</strong><span>Competitive Landscape</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Competitive Landscape</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s5-body">{{SECTION_5}}</div>
             </section>
 
-            <section class="section-card" id="s6" data-title="商业模式 Business Model">
+            <section class="section-card" id="s6" data-title="Business Model">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s6-body">
                     <span class="section-index">06</span>
-                    <span class="section-title"><strong>商业模式</strong><span>Business Model</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Business Model</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s6-body">{{SECTION_6}}</div>
             </section>
 
-            <section class="section-card" id="s7" data-title="财务分析 Financial Analysis">
+            <section class="section-card" id="s7" data-title="Financial Analysis">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s7-body">
                     <span class="section-index">07</span>
-                    <span class="section-title"><strong>财务分析</strong><span>Financial Analysis</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Financial Analysis</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s7-body">{{SECTION_7}}</div>
             </section>
 
-            <section class="section-card" id="s8" data-title="融资历程与估值 Funding History Valuation">
+            <section class="section-card" id="s8" data-title="Funding History Valuation">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s8-body">
                     <span class="section-index">08</span>
-                    <span class="section-title"><strong>融资历程与估值</strong><span>Funding History & Valuation</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Funding History & Valuation</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s8-body">{{SECTION_8}}</div>
             </section>
 
-            <section class="section-card" id="s9" data-title="发展方向与战略 Development Strategy">
+            <section class="section-card" id="s9" data-title="Development Strategy">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s9-body">
                     <span class="section-index">09</span>
-                    <span class="section-title"><strong>发展方向与战略</strong><span>Development Strategy</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Development Strategy</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s9-body">{{SECTION_9}}</div>
             </section>
 
-            <section class="section-card" id="s10" data-title="风险评估 Risk Assessment">
+            <section class="section-card" id="s10" data-title="Risk Assessment">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s10-body">
                     <span class="section-index">10</span>
-                    <span class="section-title"><strong>风险评估</strong><span>Risk Assessment</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Risk Assessment</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s10-body">{{SECTION_10}}</div>
             </section>
 
-            <section class="section-card" id="s11" data-title="投资潜力与投资逻辑 Investment Potential Thesis">
+            <section class="section-card" id="s11" data-title="Investment Potential Thesis">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s11-body">
                     <span class="section-index">11</span>
-                    <span class="section-title"><strong>投资潜力与投资逻辑</strong><span>Investment Potential & Thesis</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Investment Potential & Thesis</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s11-body">{{SECTION_11}}</div>
             </section>
 
-            <section class="section-card" id="s12" data-title="退出策略分析 Exit Strategy Analysis">
+            <section class="section-card" id="s12" data-title="Exit Strategy Analysis">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s12-body">
                     <span class="section-index">12</span>
-                    <span class="section-title"><strong>退出策略分析</strong><span>Exit Strategy Analysis</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Exit Strategy Analysis</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s12-body">{{SECTION_12}}</div>
             </section>
 
-            <section class="section-card" id="s13" data-title="ESG评估 ESG Assessment">
+            <section class="section-card" id="s13" data-title="ESG Assessment">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s13-body">
                     <span class="section-index">13</span>
-                    <span class="section-title"><strong>ESG评估</strong><span>ESG Assessment</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>ESG Assessment</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s13-body">{{SECTION_13}}</div>
             </section>
 
-            <section class="section-card" id="s14" data-title="综合评分与投资建议 Comprehensive Scoring Recommendation">
+            <section class="section-card" id="s14" data-title="Comprehensive Scoring Recommendation">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="s14-body">
                     <span class="section-index">14</span>
-                    <span class="section-title"><strong>综合评分与投资建议</strong><span>Comprehensive Scoring & Recommendation</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Comprehensive Scoring & Recommendation</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="s14-body">{{SECTION_14}}</div>
             </section>
@@ -1485,8 +1485,8 @@
             <section class="section-card" id="sources-appendix">
                 <button class="section-heading" type="button" aria-expanded="true" aria-controls="sources-appendix-body">
                     <span class="section-index">📚</span>
-                    <span class="section-title"><strong>数据来源与引用 (Source Appendix)</strong><span>Source Appendix</span></span>
-                    <span class="section-toggle">收起</span>
+                    <span class="section-title"><strong>Source Appendix</strong></span>
+                    <span class="section-toggle">Collapse</span>
                 </button>
                 <div class="section-body" id="sources-appendix-body">
                     {{SOURCE_APPENDIX}}
@@ -1496,9 +1496,9 @@
 
         <footer>
             <div class="footer-panel">
-                <p><strong>{{COMPANY_NAME}} 投资分析报告</strong> | 报告日期：{{REPORT_DATE}} | 数据截至：{{DATA_AS_OF}}</p>
-                <p>本报告由 AI 辅助生成，基于公开信息独立分析，不构成投资建议。</p>
-                <p>分析方法论：14 维度投资分析框架 v2.0 | © {{YEAR}} Investment Analysis Skill</p>
+                <p><strong>{{COMPANY_NAME}} Investment Research Report</strong> | Report date: {{REPORT_DATE}} | Data as of: {{DATA_AS_OF}}</p>
+                <p>Produced with AI assistance from public information, independently; for research only and not investment advice.</p>
+                <p>Method: 14-dimension investment analysis framework v2.0 | © {{YEAR}} Investment Analysis Skill</p>
             </div>
         </footer>
     </div>
@@ -1516,7 +1516,7 @@
             var toggle = card.querySelector(".section-toggle");
             card.classList.toggle("collapsed", collapsed);
             button.setAttribute("aria-expanded", String(!collapsed));
-            toggle.textContent = collapsed ? "展开" : "收起";
+            toggle.textContent = collapsed ? "Expand" : "Collapse";
         }
 
         cards.forEach(function (card) {

@@ -7,7 +7,7 @@ consensus view and the geographic frame; a listed company's report covers price,
 valuation and position sizing; and the PDF exists.
 
 Fixed or added here:
-- The scenario rule counted only English "bull case"-style labels; Chinese labels and scenario-table rows count too.
+- The scenario rule counted only "bull case"-style labels; scenario-table rows count too.
 - The assumption rule matched almost any text (".*" across the whole report); it needs the words themselves.
 - The public-equity "valuation" group matched "pe" inside any English word; it needs P/E as a term.
 - Every report needs sixteen visual components but the script checked two; all are checked here,
@@ -32,36 +32,34 @@ MIN_SOURCE_MENTIONS = 30
 MAX_SOURCE_TAGS = MAX_INLINE_TAGS * len(sections.ALL_SECTIONS)
 MIN_TABLES = 4
 MAX_KPI_DASHBOARDS = 6
-REQUIRED_TEXT = ('5分钟速读', '重要声明', '数据截至', '风险', '投资')
+REQUIRED_TEXT = ('Executive Briefing', 'Important notice', 'Data as of', 'Risk', 'Investment')
 EXEC_GROUPS = {
-    'verdict/action': ('结论', '建议', '行动', 'verdict', 'action', 'recommend'),
-    'score/rating': ('评分', '评级', 'score', 'rating'),
-    'core positives': ('核心理由', '正面', '优势', 'bull', 'positive', 'strength', 'in favour', 'in favor'),
-    'key risks': ('风险', '下行', 'bear', 'risk'),
-    'evidence confidence': ('置信', 'confidence', '证据质量', 'source confidence'),
-    'valuation/terms': ('估值', '价格', '条款', 'valuation', 'price', 'terms'),
-    'follow-up diligence': ('尽调', '待验证', '待核实', 'follow-up', 'diligence'),
-    'one question': ('最重要的问题', '一个问题', 'one question', '关键问题'),
-    'three takeaways': ('三件事', '三个要点', 'three takeaways', 'three things'),
+    'verdict/action': ('verdict', 'action', 'recommend'),
+    'score/rating': ('score', 'rating'),
+    'core positives': ('bull', 'positive', 'strength', 'in favour', 'in favor'),
+    'key risks': ('bear', 'risk'),
+    'evidence confidence': ('confidence',),
+    'valuation/terms': ('valuation', 'price', 'terms'),
+    'follow-up diligence': ('follow-up', 'diligence'),
+    'one question': ('one question',),
+    'three takeaways': ('three takeaways', 'three things'),
 }
 PUBLIC_EQUITY_GROUPS = {
-    'stock price context': ('股价', 'share price', '价格截至', '交易日', '市值', 'market cap', 'ticker', '证券代码'),
-    'income statement quality': ('利润表', '收入', '毛利率', '营业利润', '净利润', 'eps', 'margin', 'earnings quality', '盈利质量'),
-    'cash flow': ('现金流', '经营现金流', '自由现金流', 'capex', '资本开支', 'fcf', 'cash conversion', '现金转化', 'cash flow'),
-    'balance sheet': ('资产负债表', '资产', '负债', '现金', '债务', '流动性', '杠杆', 'balance sheet', 'debt', 'liquidity'),
-    'notes/accounting quality': ('附注', '会计', '审计', '减值', '关联方', '表外', 'accounting', 'auditor', 'impairment',
-                                 'related-party', 'related party'),
-    'valuation': ('估值', 'p/e', 'ev/ebitda', 'ev/sales', 'p/b', 'fcf yield', '市盈率', '市净率'),
-    'position sizing': ('仓位', 'position sizing', '配置', 'starter position', 'full position', 'watchlist', 'buy',
-                        'hold', 'reduce', 'sell'),
+    'stock price context': ('share price', 'market cap', 'ticker'),
+    'income statement quality': ('eps', 'margin', 'earnings quality'),
+    'cash flow': ('capex', 'fcf', 'cash conversion', 'cash flow'),
+    'balance sheet': ('balance sheet', 'debt', 'liquidity'),
+    'notes/accounting quality': ('accounting', 'auditor', 'impairment', 'related-party', 'related party'),
+    'valuation': ('p/e', 'ev/ebitda', 'ev/sales', 'p/b', 'fcf yield'),
+    'position sizing': ('position sizing', 'starter position', 'full position', 'watchlist', 'buy', 'hold', 'reduce',
+                        'sell'),
 }
-SCENARIO_RE = re.compile(r'(?:bull|bear|base)\s*(?:case|情景|场景)|牛市情景|基准情景|熊市情景|乐观情景|悲观情景', re.I)
-ASSUMPTION_RE = re.compile(r'关键假设|敏感性分析|sensitivity|key assumption', re.I)
-CONSENSUS_RE = re.compile(r'非共识|non.consensus|variant perception|市场共识|共识|consensus', re.I)
-GEOGRAPHY_RE = re.compile(r'地理|市场体系|国内|国际|海外|本土|全球|区域|跨境|客户市场|供应链|资本市场|退出市场|home market|'
-                          r'customer market|supplier market|capital market|exit market|geographic|domestic|international|'
+SCENARIO_RE = re.compile(r'(?:bull|bear|base)\s*case', re.I)
+ASSUMPTION_RE = re.compile(r'sensitivity|key assumption', re.I)
+CONSENSUS_RE = re.compile(r'non.consensus|variant perception|consensus', re.I)
+GEOGRAPHY_RE = re.compile(r'home market|customer market|supplier market|capital market|exit market|geographic|domestic|international|'
                           r'overseas|region|cross-border', re.I)
-SOURCE_WORDS_RE = re.compile(r'来源|Source|source|公告|年报|招股书|专利|监管|filing|10-K|10-Q|annual report|disclosed')
+SOURCE_WORDS_RE = re.compile(r'Source|source|filing|10-K|10-Q|annual report|disclosed')
 # The sixteen components every report needs, by the class (or classes) that show each is there.
 REQUIRED_COMPONENTS = {
     'verdict strip': ('verdict-strip',), 'briefing grid': ('briefing-grid', 'brief-card'),
@@ -123,9 +121,9 @@ def check_report(report_html: str, pdf_path: str | Path | None = None, listed: b
     tags = _class_count(report_html, 'source-tag')
     if tags > MAX_SOURCE_TAGS:
         failures.append(f'{tags} inline source tags; at most {MAX_SOURCE_TAGS}')
-    if len(re.findall(r'class="[^"]*citation-line[^"]*"|引用锚点', report_html)) > 1:
+    if len(re.findall(r'class="[^"]*citation-line[^"]*"|Citation anchor', report_html)) > 1:
         failures.append('repeated citation-anchor blocks')
-    if not re.search(r'数据来源与引用|引用附录|Source Appendix', visible, re.I):
+    if not re.search(r'Source Appendix', visible, re.I):
         failures.append('no source appendix')
     if len(re.findall(r'<a\s+[^>]*href=', report_html)) < 5:
         failures.append('fewer than five links')
@@ -153,8 +151,7 @@ def check_report(report_html: str, pdf_path: str | Path | None = None, listed: b
     if listed:
         lowered = visible.lower()
         for group, words in PUBLIC_EQUITY_GROUPS.items():
-            if not any(re.search(r'(?<![a-z])' + re.escape(w) + r'(?![a-z])', lowered) if w.isascii() else w in lowered
-                       for w in words):
+            if not any(re.search(r'(?<![a-z])' + re.escape(w) + r'(?![a-z])', lowered) for w in words):
                 failures.append(f'public equity: no {group}')
     for name, classes in REQUIRED_COMPONENTS.items():
         present = [_class_count(report_html, c) > 0 for c in classes]

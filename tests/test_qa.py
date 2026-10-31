@@ -76,7 +76,7 @@ def test_a_section_s_markers_read_its_tables():
     section = sections.BY_KEY['technology_product']
     table = '\n\n| Dimension | Northwind X1 | Contoso Edge | Source |\n|---|---|---|---|\n| Battery | 18 h | 12 h | S1 |\n'
     markdown = FINANCIALS + table
-    html = report.render_section(markdown, SOURCES, 'en')
+    html = report.render_section(markdown, SOURCES)
     assert 'granularity: no a comparison with a named rival' not in check_depth.check_section(
         section, markdown, html)['failures']
 
@@ -112,8 +112,7 @@ def test_a_verification_label_with_its_citation_is_not_a_repeated_sentence():
                                               True)['failures']
     assert not any(f.startswith('said three or more times') for f in failures)
     english = 'Receivables are the one figure that would change the rating for us here. '
-    chinese = '应收账款是唯一会改变评级的数字，管理层需要逐项核实其账龄和坏账准备。'
-    assert check_depth.repeated_sentences(english * 3) and check_depth.repeated_sentences(chinese * 3)
+    assert check_depth.repeated_sentences(english * 3)
     assert check_depth.repeated_sentences('Company-reported, unverified. ' * 3) == []
 
 
@@ -151,9 +150,9 @@ def test_the_report_check_names_each_missing_component():
     assert 'missing the KPI signal component' not in all_critical['failures']
 
 
-def test_chinese_scenario_labels_count_and_pe_needs_the_term():
-    zh = '<p>牛市情景、基准情景与熊市情景</p>'
-    assert 'no bull, base and bear scenarios' not in check_report.check_report(zh, listed=False)['failures']
+def test_scenario_labels_count_and_pe_needs_the_term():
+    labels = '<p>Bull case, base case and bear case</p>'
+    assert 'no bull, base and bear scenarios' not in check_report.check_report(labels, listed=False)['failures']
     # "pe" inside "people" or "operate" is not a valuation multiple.
     failures = check_report.check_report('<p>people operate</p>', listed=True)['failures']
     assert 'public equity: no valuation' in failures
@@ -178,8 +177,8 @@ def test_citations_must_be_registered_and_linked():
     assert any('register lacks: S42' in f for f in orphan['failures'])
 
 
-def test_ids_next_to_chinese_text_are_found():
-    assert check_citations.check_citations('<p>来源S1、S2</p>', SOURCES[:2])['cited'] == ['S1', 'S2']
+def test_ids_next_to_punctuation_are_found():
+    assert check_citations.check_citations('<p>Sources:S1,S2</p>', SOURCES[:2])['cited'] == ['S1', 'S2']
 
 
 # check_evidence
@@ -187,12 +186,12 @@ def test_ids_next_to_chinese_text_are_found():
 ROW = {'source_ids': 'S1, S4', 'source_type': 'primary', 'finding': 'Gross margin rose to 41.3% in FY2025 from 39.6%.',
        'mechanism': 'Subscriptions carry a 78% margin, so mix shift lifts the blend.',
        'benchmark': 'Peer median gross margin is 36.5%.', 'weakens': 'Hardware margin fell to 28.1%.',
-       'implication': 'Supports quality but not a discount valuation.', 'confidence': '高',
+       'implication': 'Supports quality but not a discount valuation.', 'confidence': 'high',
        'follow_up': 'Is the attach rate durable past FY2026?'}
 PLAN = {'decision_question': 'Is the margin expansion structural?', 'thesis_sentence': 'Mix, not price, drives margins.',
         'why_different': 'Only section that reads the segment note.', 'mechanism': 'Subscription mix lifts margin.',
         'comparison_set': 'Four listed device makers.', 'counter_evidence': 'Hardware price war risk.',
-        'visual': 'Statements table and a red-flag card.', 'prohibited': '不能被写成 a list of facts; no scaffolds.'}
+        'visual': 'Statements table and a red-flag card.', 'prohibited': 'cannot be written as a list of facts; no scaffolds.'}
 
 
 def block(**changes) -> dict:
@@ -201,14 +200,14 @@ def block(**changes) -> dict:
             'gate': list(check_evidence.GATE_ITEMS), 'plan': PLAN, **changes}
 
 
-def test_a_complete_evidence_block_passes_even_with_a_one_character_confidence():
+def test_a_complete_evidence_block_passes():
     assert check_evidence.check_block(block(), SOURCES) == []
 
 
 def test_the_prohibited_words_field_may_list_the_prohibited_words():
     # check_evidence.py failed a block for naming, in this very field, the phrases it prohibits.
     assert check_evidence.check_block(block(), SOURCES) == []
-    rubric = dict(PLAN, mechanism='不能被写成 a list.')
+    rubric = dict(PLAN, mechanism='cannot be written as a list.')
     assert any('internal writing rubric' in f for f in check_evidence.check_block(block(plan=rubric), SOURCES))
 
 

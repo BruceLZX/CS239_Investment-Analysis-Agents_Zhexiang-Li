@@ -192,13 +192,13 @@ def test_longer_results_are_cut_where_rakazo_would_cut_them(runs_dir):
 
 # Scope, playbooks and workflow records
 
-def test_the_scope_records_the_language_of_the_request(runs_dir):
-    case_file.start_run('demo', request='帮我分析一下北风科技是否值得投资')
-    scope = call('set_case_scope', {'company': '北风科技', 'ticker': '', 'company_type': 'private',
-                                    'decision': '是否投资'}, LEAD)
-    assert scope == {'company': '北风科技', 'ticker': None, 'type': 'private', 'decision': '是否投资', 'language': 'zh'}
-    assert 'language must be' in error('set_case_scope', {'company': 'A', 'ticker': '', 'company_type': 'private',
-                                                          'decision': 'x', 'language': 'fr'})
+def test_the_scope_records_the_company_its_type_and_the_decision(runs_dir):
+    case_file.start_run('demo', request='Should we invest in Northwind Robotics?')
+    scope = call('set_case_scope', {'company': 'Northwind Robotics', 'ticker': '', 'company_type': 'private',
+                                    'decision': 'Whether to invest'}, LEAD)
+    assert scope == {'company': 'Northwind Robotics', 'ticker': None, 'type': 'private', 'decision': 'Whether to invest'}
+    assert 'company_type must be' in error('set_case_scope', {'company': 'A', 'ticker': '', 'company_type': 'public',
+                                                              'decision': 'x'})
 
 
 def test_playbooks_are_read_by_heading_or_listed_when_too_long():
@@ -271,7 +271,7 @@ def test_an_evidence_block_reports_its_gate_and_the_gate_covers_your_sections(ru
     assert set(gate['sections']) == {'business_model', 'financials'}
     assert gate['sections']['financials']['passed'] and not gate['sections']['business_model']['passed']
     assert len(call('get_gate', {}, LEAD)['sections']) == 14
-    assert '| 财务分析 Financial Analysis | financials | Fundamentals Analyst | Fundamentals Analyst | 4 | 4 | passed |' in call(
+    assert '| Financial Analysis | financials | Fundamentals Analyst | Fundamentals Analyst | 4 | 4 | passed |' in call(
         'get_evidence_matrix', {})
     assert 'error' not in call('get_evidence_matrix', {'sections_wanted': ['s7']})
     assert 'needs no evidence block' in error('save_evidence_block', {'section': 'executive_summary', 'queries': [],
@@ -306,8 +306,8 @@ def test_sections_come_back_whole_or_the_reader_is_asked_for_fewer(runs_dir):
     save('financials', FINANCIALS)
     save('scoring', SCORING)
     listing = call('get_memo_parts', {})
-    assert '| 7 | 财务分析 Financial Analysis | financials | Fundamentals Analyst | revision 1 by Fundamentals Analyst |' in listing
-    assert '| 4 | 市场与行业分析 Market & Industry Analysis | market | Market Analyst | not saved | | |' in listing
+    assert '| 7 | Financial Analysis | financials | Fundamentals Analyst | revision 1 by Fundamentals Analyst |' in listing
+    assert '| 4 | Market & Industry Analysis | market | Market Analyst | not saved | | |' in listing
     assert call('get_memo_parts', {'sections_wanted': ['s7']}).endswith(FINANCIALS.strip())
     save('financials', FINANCIALS + '\n' + 'More analysis. ' * 200)
     save('scoring', SCORING + '\n' + 'More scoring. ' * 300)
