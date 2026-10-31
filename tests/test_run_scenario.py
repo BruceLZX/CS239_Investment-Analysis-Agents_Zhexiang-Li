@@ -174,3 +174,57 @@ def test_a_new_request_or_turn_opens_a_new_budget_window(runs_dir):
     app.requests['analyst'] = ['m1', 'm2']
     run_scenario.note_windows(app, bots, {'Lead Analyst': [{'id': 'l2'}], 'Market Analyst': [{'id': 'a2'}], 'IC Reviewer': [{'id': 'i1'}]}, seen)
     assert windows() == {'Lead Analyst': 2, 'Market Analyst': 2, 'IC Reviewer': 1}
+
+
+class QuietRakazo:
+    """A team with nothing running, whose Lead's latest run failed until it has been resumed `failures` times."""
+
+    def __init__(self, failures):
+        self.failures, self.sent = failures, []
+
+    def runs_in_flight(self, bot_id):
+        return []
+
+    def last_run_failed(self, bot_id):
+        return len(self.sent) < self.failures
+
+    def send(self, bot_id, text):
+        self.sent.append((bot_id, text))
+
+
+class Clock:
+    def __init__(self):
+        self.now = 0.0
+
+    def monotonic(self):
+        return self.now
+
+    def sleep(self, seconds):
+        self.now += seconds
+
+    def strftime(self, format):
+        return '00:00:00'
+
+
+@pytest.fixture
+def quiet_case(runs_dir, monkeypatch):
+    case_file.start_run('s', [], 'request')
+    monkeypatch.setattr(run_scenario, 'time', Clock())
+
+
+def test_a_failed_turn_of_the_lead_is_resumed_rather_than_ending_the_run(quiet_case):
+    app = QuietRakazo(failures=1)
+    assert run_scenario.wait_for_finish(app, {'Lead Analyst': 'lead'}, 9000, 240, 'deny') == 'stalled'
+    assert app.sent == [('lead', run_scenario.RESUME)]
+
+
+def test_a_team_that_keeps_failing_is_resumed_only_so_often(quiet_case):
+    app = QuietRakazo(failures=99)
+    assert run_scenario.wait_for_finish(app, {'Lead Analyst': 'lead'}, 9000, 240, 'deny') == 'stalled'
+    assert len(app.sent) == run_scenario.MAX_RESUMES
+
+
+def test_a_team_gone_quiet_with_no_failed_run_is_not_prompted(quiet_case):
+    app = QuietRakazo(failures=0)
+    assert run_scenario.wait_for_finish(app, {'Lead Analyst': 'lead'}, 9000, 240, 'deny') == 'stalled'
+    assert app.sent == []

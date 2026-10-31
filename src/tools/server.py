@@ -469,7 +469,8 @@ def request_user_data(database: str, query: str, why: str, how: str, section: st
 def tell_user(message: str) -> dict:
     """Send the user a message: this is what the user reads, and your own text at the end of a turn is not shown.
     Until a version is delivered, one status line of at most 300 characters saying what the team is doing and waiting
-    for: a message that states the draft's rating, runs longer or names internal material is refused and not sent.
+    for: a message that states the draft's rating, gives a figure or grade, runs longer or names internal material is
+    refused and not sent.
     After delivery, the report's rating, thesis and risks, and answers to follow-up questions."""
     with open_case() as case:
         case.setdefault('user_messages', []).append({'text': message.strip(), 'at': now()})

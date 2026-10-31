@@ -38,7 +38,7 @@ get_case_status: Takes no input. Returns what has arrived in the case: the run I
 
 set_case_scope: Takes company, ticker (empty for a private company), company_type (listed or private) and decision (what the report serves). Records the case's scope, which sets the report's cover and whether each section is held to the listed or the private standard, and returns it; a later change of company, ticker or type is recorded.
 
-tell_user: Takes message. The Lead Analyst's only channel to the user, recorded in the case file; returns that it was sent. Until a version is delivered, a message over 300 characters or stating the draft's rating is refused and not sent; a message naming internal material is refused at any time.
+tell_user: Takes message. The Lead Analyst's only channel to the user, recorded in the case file; returns that it was sent. Until a version is delivered, a message over 300 characters, stating the draft's rating or giving a figure or grade is refused and not sent; a message naming internal material is refused at any time.
 
 request_user_data: Takes database, query (what to look up), why (what it changes in the decision), how (how the user can get it) and section. Records a user data request, credited to the caller, for evidence behind a login, in a restricted registry or in a document the server cannot read; the requests appear in the rendered report's appendix and go to the user with the delivered report. Returns its ID (U1, U2, ...).
 

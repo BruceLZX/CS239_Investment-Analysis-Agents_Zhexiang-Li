@@ -140,6 +140,11 @@ class Rakazo:
         runs = snapshot.get('activeRuns') or ([snapshot['run']] if snapshot.get('run') else [])
         return [run for run in runs if run['status'] in ACTIVE_STATUSES | WAITING_STATUSES]
 
+    def last_run_failed(self, bot_id: str) -> bool:
+        """Whether the bot's latest run ended on an error, such as a model call cut off mid-stream."""
+        run = self.rpc('threads/get', {'botId': bot_id}).get('run') or {}
+        return run.get('status') == 'failed'
+
     def wait_idle(self, bot_id: str, timeout: float = 600, poll: float = 3) -> None:
         deadline = time.monotonic() + timeout
         while runs := self.runs_in_flight(bot_id):

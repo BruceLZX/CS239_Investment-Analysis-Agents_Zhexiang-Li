@@ -21,11 +21,11 @@ tools/qa/      the QA checks: depth, report completeness, citations, evidence, r
 tools/templates the HTML report template; tools/report.py renders it and tools/pdf.py prints it
 dashboard/     a local web page that shows a run live or replays a captured one
 infra/         setup-rakazo.sh: installs and runs a pinned Rakazo build with Docker
-scenarios/     the four research scenarios (request, attached documents, what to watch for)
-fixtures/      fictional client documents the scenarios attach
+scenarios/     the five research scenarios (request, attached documents, what to watch for)
+fixtures/      fictional client documents the scenarios attach, and the saved case compromised-lead starts from
 runs/          created at run time and gitignored: per-run case files, tool logs, Rakazo transcripts
 ../tests/      offline tests (see ../tests/README.md)
-../traces/     exported Phase 1 traces and what each scenario showed
+../traces/     exported traces and what each scenario showed
 ```
 
 ## External requirements

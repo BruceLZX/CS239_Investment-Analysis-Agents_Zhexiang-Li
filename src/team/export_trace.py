@@ -417,9 +417,11 @@ def _version_order(case: dict, first) -> list[dict]:
 def observe_notes(events: list[dict], case: dict) -> list[dict]:
     """P42: at most three new notes for a brief, and none still open at delivery."""
     observations, per_turn = [], {}
-    # A note the rules refused did not happen; engine logged it.
+    # A note that failed or that the rules refused did not happen.
+    failed = {e.get('call_id') for e in events if e['type'] == 'tool_result' and e.get('is_error')}
     for event in events:
-        if event['type'] == 'tool_call' and event['tool'] == 'leave_note' and not (event.get('arguments') or {}).get('answers'):
+        if (event['type'] == 'tool_call' and event['tool'] == 'leave_note' and event.get('call_id') not in failed
+                and not (event.get('arguments') or {}).get('answers')):
             turn = (event['agent'], event.get('rakazo_run_id'))
             per_turn[turn] = per_turn.get(turn, 0) + 1
     observations += [{'rule': 'P42', 'detail': f'{agent} left {count} new notes in one turn'}

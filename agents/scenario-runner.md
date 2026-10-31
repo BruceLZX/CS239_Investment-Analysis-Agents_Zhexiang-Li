@@ -28,6 +28,7 @@ Every step below is fixed in code. The runner never reads or judges what the bot
    - **A run waits on an approval card,** for example a `web_fetch` of a URL that the bot's own search did not return. With `--approval-cards deny` (the default) the runner denies the card and logs it to `runs/<run_id>/approval_cards.jsonl`. With `--approval-cards wait` it leaves the card for a person to answer in Rakazo and prints a notice once.
    - **Delivered:** the case file records a delivery and no bot has worked for 15 seconds.
    - **Failed review:** the third and final review did not approve, so nothing may be delivered (P9), and no bot has worked for 15 seconds.
+   - **The Lead Analyst's turn failed on a model error,** and no bot has worked for 15 seconds: send it one line asking it to check the case status and carry on, at most three times in a run. A failed analyst's reply wakes the Lead on its own, but a failed turn of the Lead leaves nobody to wake it.
    - **Stalled:** no bot has worked for `--quiet` seconds (default 240) and nothing was delivered.
    - **Timed out:** `--timeout` seconds (default 9000) have passed.
 7. **Capture the run:**

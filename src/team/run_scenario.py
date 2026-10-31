@@ -29,6 +29,10 @@ from .rakazo_client import WAITING_STATUSES, Rakazo
 
 SCENARIOS = Path(__file__).resolve().parents[1] / 'scenarios'
 CUSTOM = 'custom'  # The scenario name of a request of the user's own.
+# A model call can fail mid-stream. A failed analyst's reply still wakes the Lead, but a failed turn of the Lead leaves
+# nobody to wake it once the team is idle, so the runner does, as a user would.
+RESUME = 'Your last step stopped on a model error, and nothing is running now. Check the case status and carry on.'
+MAX_RESUMES = 3
 
 
 def custom_scenario(request: str) -> dict:
@@ -114,7 +118,7 @@ def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet:
                     narrated: set | None = None) -> str:
     """Wait until the memo is delivered, or fails its final review, and every bot is idle; or the team goes quiet."""
     deadline = time.monotonic() + timeout
-    idle_since, warned, last_busy, windows = None, set(), None, {}
+    idle_since, warned, last_busy, windows, resumes = None, set(), None, {}, 0
     while time.monotonic() < deadline:
         if narrated is not None:
             narrate(app, bot_ids, narrated)
@@ -137,6 +141,12 @@ def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet:
                 return 'delivered'
             if review_failed(case) and idle >= 15:
                 return 'failed review'
+            if idle >= 15 and resumes < MAX_RESUMES and app.last_run_failed(bot_ids[LEAD]):
+                resumes += 1
+                print(f'[{time.strftime("%H:%M:%S")}] {LEAD} stopped on a model error; resuming it ({resumes} of '
+                      f'{MAX_RESUMES}).', flush=True)
+                app.send(bot_ids[LEAD], RESUME)
+                idle_since, idle = None, 0
             if idle >= quiet:
                 return 'stalled'
         time.sleep(5)

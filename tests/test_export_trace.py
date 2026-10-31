@@ -462,6 +462,9 @@ def test_too_many_new_notes_in_a_turn_are_observed():
     case = {'deliveries': [], 'notes': []}
     assert observe_notes([note] * 3 + [answer] * 2 + [{**note, 'rakazo_run_id': 'r2'}], case) == []
     assert observe_notes([note] * 4, case) == [{'rule': 'P42', 'detail': 'Market Analyst left 4 new notes in one turn'}]
+    too_long = {**note, 'call_id': 'c9'}  # Said again, shorter: three notes, not four.
+    failed = {'type': 'tool_result', 'tool': 'leave_note', 'call_id': 'c9', 'is_error': True}
+    assert observe_notes([too_long, failed] + [note] * 3, case) == []
 
 
 def test_a_refused_call_did_not_happen_and_the_decision_joins_the_trace(run_dir):
