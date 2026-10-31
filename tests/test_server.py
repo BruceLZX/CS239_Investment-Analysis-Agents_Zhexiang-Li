@@ -80,7 +80,7 @@ def test_every_tool_is_listed_with_text_only_results():
         'get_gate', 'save_research_plan', 'save_profile_requirements', 'save_thesis_table', 'save_scenario_analysis',
         'save_red_team_review', 'get_workflow_doc', 'save_memo_part', 'get_memo_parts', 'run_qa_loop',
         'save_memo_version', 'get_memo_check', 'start_review', 'save_review_pass', 'finish_review',
-        'get_latest_review', 'deliver_memo', 'leave_note'}
+        'get_latest_review', 'deliver_memo', 'leave_note', 'web_search', 'web_fetch', 'tell_user'}
     assert all(t.output_schema is None for t in tools)
 
 
@@ -417,7 +417,7 @@ def test_a_review_needs_items_unless_it_approves_and_reopening_keeps_the_round(r
     assert (again['review_id'], again['round']) == ('R1', 1) and len(case_file.read_case()['reviews']) == 1
 
 
-def test_delivery_writes_the_folder_records_the_gate_and_never_blocks(runs_dir, tmp_path, monkeypatch):
+def test_delivery_writes_the_folder_and_records_the_gate(runs_dir, tmp_path, monkeypatch):
     (tmp_path / 'deck.pdf').write_text('deck')
     monkeypatch.setattr(case_file, 'ROOT', tmp_path)
     case_file.start_run('demo', [{'name': 'Deck', 'file': 'deck.pdf', 'confidentiality': 'client-confidential'}])
@@ -427,7 +427,7 @@ def test_delivery_writes_the_folder_records_the_gate_and_never_blocks(runs_dir, 
     call('save_memo_version', VERSION, LEAD)
     delivered = call('deliver_memo', {}, LEAD)
     assert delivered['review_gate'] == {'reviewed': False, 'approved': False, 'review_id': None}
-    assert not delivered['final_check']['passed'] and delivered['note'] == 'Report only: delivery is never blocked.'
+    assert not delivered['final_check']['passed']
     folder = Path(delivered['folder'])
     assert folder.name == 'NorthwindDevices_ConsumerElectronics'
     assert sorted(p.name for p in folder.iterdir()) == ['NorthwindDevices_Investment_Report.html',

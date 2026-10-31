@@ -11,7 +11,8 @@ PARAGRAPH_RE = re.compile(r'<p(?:\s+[^>]*)?>[\s\S]*?</p>', re.I)
 SENTENCE_RE = re.compile(r'[^.!?]{24,}[.!?]')
 # check_depth.py's NUMBER_PATTERN.
 NUMBER_RE = re.compile(r'(?<![A-Za-z])(?:\d+(?:\.\d+)?%?|\d+(?:\.\d+)?\s*(?:billion|million|m|bn))', re.I)
-PLACEHOLDER_TERMS = ('todo', 'tbd', 'xxx', 'placeholder')
+# "placeholder" alone is an ordinary word; only a bracketed one is left over from a template.
+PLACEHOLDER_TERMS = ('todo', 'tbd', 'xxx', '[placeholder]')
 
 # check_depth.py ANALYTICAL_COVERAGE_TERMS.
 ANALYTICAL_COVERAGE = {
@@ -99,4 +100,4 @@ def missing_groups(text: str, groups: dict[str, tuple[str, ...]]) -> list[str]:
 
 def has_placeholder(text: str) -> bool:
     lowered = text.lower()
-    return any(re.search(r'(?<![a-z])' + re.escape(term) + r'(?![a-z])', lowered) for term in PLACEHOLDER_TERMS)
+    return any(re.search(r'(?<![a-z\[])' + re.escape(term) + r'(?![a-z\]])', lowered) for term in PLACEHOLDER_TERMS)

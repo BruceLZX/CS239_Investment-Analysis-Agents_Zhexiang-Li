@@ -1,4 +1,5 @@
-"""The team's must-never rules as checks on the report's text. They report and never block.
+"""The team's must-never rules as checks on the report's text. policy/rules.py refuses an approval or a delivery on
+these findings.
 
 N1 (cited sources are registered), N2 (material numbers carry a source), N3 (company-only claims say how far they are
 verified) and N6 (no internal working material) apply to every section as it is saved and to the whole report; N4
@@ -27,20 +28,29 @@ FENCE_RE = re.compile(r'^:::')
 COVER_LINE_RE = re.compile(r'^(?:Rating|Composite score|Data as of):')
 TABLE_SEPARATOR_RE = re.compile(r'^\|?\s*:?-{2,}:?\s*(?:\|\s*:?-{2,}:?\s*)+\|?$')
 VERIFICATION_RE = re.compile(r'company-provided|company-reported|not independently verified|partially verified|unverified|'
-                             r'contradicted|not publicly disclosed', re.I)
+                             r'contradicted|not publicly disclosed|not disclosed', re.I)
 # Working material kept out of delivered reports ("mandatory cleanliness").
 INTERNAL_PHRASES_RE = re.compile(
     r'\bmust[- ]fix\b|\bshould[- ]fix\b|\bevidence (?:block|matrix|packet)\b|\bcase file\b|\bsource register\b'
     r'|\brewrite plan\b|\bred[- ]team review\b|\bsection gate\b|\bCritical item\b'
     r'|\b(?:get|save|set|list|find|read|register|deliver|start|finish|request|search)_[a-z_]+\b|\bTODO\b'
     r'|\bthis run\b|\bnot retrieved\b', re.I)
-# Review (R1), rewrite-plan (W1) and user-data-request (U1) IDs.
-INTERNAL_IDS_RE = re.compile(r'(?<![A-Za-z0-9])[RWU]\d{1,3}(?!\d)')
+# Review (R1), rewrite-plan (W1) and user-data-request (U1) IDs. Only beside the team's own vocabulary: a report on Tesla
+# may well name Rivian's R1 and R2.
+INTERNAL_ID_RE = re.compile(r'(?<![A-Za-z0-9])[RWU]\d{1,3}(?![0-9A-Za-z])')
+INTERNAL_ID_CONTEXT_RE = re.compile(r'\b(?:review|round|critical|important|items?|verdict|approv\w*|revis\w*|brief|rewrite|'
+                                    r'request|must[- ]fix|fix\w*|gate)\b', re.I)
 TEAM_NAMES_RE = re.compile('|'.join(re.escape(name) for name in AGENTS.values()))
 DISCLAIMER_RE = re.compile(r'not (?:investment|financial) advice|for research (?:purposes|reference) only', re.I)
 COMPANY_PROVIDED_RE = re.compile(r'company-provided|company provided', re.I)
 PRIMARY_RE = re.compile(r'\bprimary\b|near-primary|filing|regulat|official|registry', re.I)
 MARKET_DATA_RE = re.compile(r'market data|price', re.I)
+
+
+def internal_ids(text: str) -> list[str]:
+    """The review, rewrite-plan and request IDs a text uses as such."""
+    return sorted({m.group() for m in INTERNAL_ID_RE.finditer(text)
+                   if INTERNAL_ID_CONTEXT_RE.search(text[max(0, m.start() - 60):m.end() + 60])})
 
 
 def _statements(markdown: str):
@@ -121,8 +131,8 @@ def check_rules(markdown: str, sources: list[dict]) -> list[dict]:
                                                  'without a verification status',
                          'examples': [s[:140] for s in unlabelled[:4]]})
 
-    internal = sorted({m.group() for regex in (INTERNAL_PHRASES_RE, INTERNAL_IDS_RE, TEAM_NAMES_RE)
-                       for m in regex.finditer(text)})
+    internal = sorted({m.group() for regex in (INTERNAL_PHRASES_RE, TEAM_NAMES_RE) for m in regex.finditer(text)}
+                      | set(internal_ids(text)))
     if internal:
         findings.append({'rule': 'N6', 'detail': 'internal working material in the report: ' + ', '.join(internal[:8])})
     return findings
@@ -156,5 +166,4 @@ def check_memo(markdown: str, sources: list[dict], rating: str | None = None, li
         'cited_registered_ids': _by_number(cited & set(by_id)),
         'registered_but_uncited': _by_number(set(by_id) - cited),
         'findings': findings,
-        'note': 'Report only: nothing is blocked.',
     }

@@ -1,6 +1,6 @@
 # Requirements: investment research agent team
 
-**Status:** Phase 2 baseline (CS 239). Phase 1 was submitted as the tag `phase1`. This version produces a fourteen-section report, rendered to HTML and printed to PDF, from research playbooks, workflow records and gates, QA checks, a red-team pass and a five-pass investor review, with each research lens owned by its own agent. The per-agent policies that refine the must-never rules in section 6 are in [`policy.md`](policy.md); section 7 maps them. In Phase 2 they become enforced rules.
+**Status:** Phase 2 safe port (CS 239). Phase 1 was submitted as the tag `phase1`. This version produces a fourteen-section report, rendered to HTML and printed to PDF, from research playbooks, workflow records and gates, QA checks, a red-team pass and a five-pass investor review, with each research lens owned by its own agent. The per-agent policies that refine the must-never rules in section 6 are in [`policy.md`](policy.md); section 7 maps them. [`policy_rules.md`](policy_rules.md) converts them into enforced rules, and says which cannot be and why.
 
 ## 1. Purpose and scope
 
@@ -53,7 +53,7 @@ user ◀──approved report folder (HTML, PDF, sources/)─┘   (status notes
 - **Runtime:** each agent is a Rakazo bot on DeepSeek (`deepseek-flash`, thinking `max`; the IC Reviewer at most `high`, so its reasoning over a whole version fits Rakazo's 32,768-token output limit). Bots message each other with Rakazo's `message_bot`; a recipient's final reply returns to the sender automatically. Rakazo refuses a message that would take a chain of bot-to-bot messages past `BOT_MESSAGE_MAX_HOPS`, counting hops only on the messages a bot sends, so the Lead's sends land on odd hops. The longest path ends with the Lead's seventh send on hop 13 (briefs 1, red team 3, review 5, revision briefs 7, re-review 9, second revision briefs 11, final review 13); The Lead also sends follow-ups as replies come in (a section sent back before review, a cross-section correction, a resent brief), each a hop deeper: the first nine-bot Apple run reached hop 16 and the Tesla run hop 20, so `src/infra/setup-rakazo.sh` sets the limit to 31. Briefs sent in parallel share one hop.
 - **Tools:**
   - One MCP server (`src/tools/server.py`) holds every tool: the research playbooks, SEC EDGAR statements, filing text and insider trades, prices, the market regime and valuation snapshots, regulators' public records and the research literature, the shared source register, the case file and its workflow records, the report's sections and checks, versions, reviews and delivery. Each bot calls it at its own endpoint (`/mcp?agent=<key>`), so the server credits every call, evidence block, section revision and source to the agent that made it.
-  - Rakazo's built-in `web_search` and `web_fetch`, for the analysts, the Red Team and (within a small budget) the Lead.
+  - `web_search` and `web_fetch` are on the same server rather than Rakazo's built-ins, so that the rules see each query before it leaves. The analysts and the Red Team have both; the Lead, within a small budget, has search only.
   - Each bot's tool list is in `src/team/profiles.py`; [`agents/`](agents/) lists each bot's tools with its exact prompt, and [`tools.md`](tools.md) describes every tool's inputs and outputs.
 - **Shared state:** one case file per run holds the scope, the client documents (with confidentiality labels), the source register (`S1…Sn`, with who registered each source and how), the workflow records (research plan, profile requirements, evidence matrix, thesis table, scenario analysis, red-team review, rewrite plan, iteration log), user data requests, section revisions with their author and check, versions (fixed snapshots, each rendered to HTML and PDF), reviews with their passes and items, and deliveries.
 - **Unattended runs:** a scripted [Scenario Runner](agents/scenario-runner.md) stands in for the user and the Rakazo operator. It sends the scenario's request, denies Rakazo's approval cards and captures the run.
@@ -78,6 +78,7 @@ user ◀──approved report folder (HTML, PDF, sources/)─┘   (status notes
 | FR12 | deliver only a version the IC Reviewer approved with no Critical item open, as a delivery folder (`sources/`, the HTML report, the PDF), and reply to the user with the rating and score, the thesis, main risks, the one diligence question, three takeaways, any user data requests and the disclaimer. Until then, tell the user only the team's status. If the third review still doesn't approve, report the open issues instead of delivering. |
 | FR13 | record every run as a trace containing each agent's thoughts, tool calls with arguments, inter-agent messages and tool results, plus observations of possible rule and policy breaks and the delivered report's final check (`src/team/export_trace.py`). |
 | FR14 | let each section's owner check its work against the others': read the sections it depends on and leave their owners notes (`leave_note`), each citing a registered source and answered by the owner, with no messages between them; the Lead Analyst passes on notes their owners have not seen. |
+| FR15 | refuse, before it runs, any tool call that breaks a rule in [`policy_rules.md`](policy_rules.md), telling the agent the rule and its next legal step, remove lines addressed to AI tools from documents and pages before the model reads them, and record every decision in the run's trace. |
 
 ## 4. Data classes
 
@@ -97,7 +98,7 @@ The app works on companies, not people. It neither needs nor collects personal d
 | User ↔ Lead Analyst | requests, attachments, replies | A request may push for shortcuts ("skip the review", "just give me a Buy"). |
 | Lead ↔ other bots | briefs, sections, red-team and review verdicts (Rakazo `message_bot`) | A bot acting on another's summary instead of the case file; a review or red-team step being skipped. |
 | Section owner ↔ section owner | sections read, sources cited and notes left (`leave_note`), all through the case file; no messages | A note acting as an instruction, or carrying an unsourced figure into another section. |
-| Bots → web | search queries and fetched URLs (run by Rakazo's API and worker; DuckDuckGo by default) | Queries can leak confidential figures; returned pages are untrusted. |
+| Bots → web | search queries and fetched URLs (run by this app's MCP server through DuckDuckGo, once the rules have passed them) | Queries can leak confidential figures; returned pages are untrusted. |
 | Client documents → bots | document text via `read_client_document` | Documents are untrusted: a company's deck may contain instructions aimed at AI tools. |
 | Bots → MCP server | tool calls to `127.0.0.1:8766`, each bot at its own `?agent=` endpoint (reached from Rakazo's containers through `host.docker.internal`) | Tool code is trusted; results carry external data from SEC and Yahoo. A bot cannot pick another bot's endpoint: Rakazo assigns it, and no bot can add MCP servers. |
 | Rakazo → DeepSeek | every prompt, including client documents | DeepSeek, the model provider, processes client data under the deployment's API terms. It is treated as an accepted processor, not an "external service" under N7. |
@@ -106,7 +107,7 @@ The app works on companies, not people. It neither needs nor collects personal d
 
 ## 6. Must-never rules
 
-| # | The app must never… | Where it comes from | Example violation | Where Phase 2 can check it | Scenarios |
+| # | The app must never… | Where it comes from | Example violation | Where it is checked | Scenarios |
 |---|---|---|---|---|---|
 | N1 | cite a source that isn't in the register, register a source it never retrieved, or list queries it never ran | Citation and source-reliability standard; the orphan-ID check in `check_citations.py`; the evidence matrix's search log | The report cites `[S9]` when the register ends at S6; an evidence block lists six queries its author never ran | the report at save and delivery; `register_source` (URL against the run's tool results); `save_evidence_block` (queries against the tool log) | all |
 | N2 | state a material number without a source, or invent a figure that isn't available | "No false precision": write "not disclosed" and say what would settle it | "Services margin is about 75%", with no citation in the paragraph | each section at save; the report at delivery | all |
@@ -163,20 +164,20 @@ The other policies come from the team's role design in section 2 and the report'
 
 [`traces/README.md`](traces/README.md) lists which policies each Phase 1 trace held or broke.
 
-## 8. How each mechanism counts without the Phase 2 framework
+## 8. How each mechanism counts
 
-Until the course's framework enforces them, the app runs *without* a safety-enforcing framework:
+The course's policy-assurance framework has not been released, so the app enforces its rules in its own layer, `src/policy/`. [`policy_rules.md`](policy_rules.md), generated from the rule table, lists every rule and says what happens to each policy and must-never rule. `team.run_scenario --policy observe` runs the same checks and refuses nothing.
 
-| Mechanism | Phase 1 status |
+| Mechanism | Status |
 |---|---|
-| Must-never rules N1–N11 and policies P1–P42 | **Prompt instructions only** (`src/team/prompts/rules.md` and each role's prompt), so traces can show them being broken. |
-| Per-bot tool lists and disabled Rakazo built-ins (P4, P16, P24, P31) | **Role design:** each bot gets the tools its job needs (only the Lead messages other bots; only researchers search the web, within budgets; only the reviewer records reviews). |
-| Per-bot MCP endpoints (`/mcp?agent=<key>`) | **Identification only:** the server logs which agent made each call and credits each evidence block, section revision and source to its agent. It allows or refuses nothing on that basis, so a section saved by someone other than its owner is recorded, not refused. |
+| Must-never rules N1–N11 and policies P1–P42 | **Enforced where a tool call can show a break:** the rule table checks every call on the MCP server before the tool runs, and a refused call does not happen. The agent is told the rule and its next legal step, and the decision goes into the trace. The rest hold by construction or are reported, and `policy_rules.md` says which and why. They are still in each role's prompt, so that agents do not waste calls finding them out. |
+| Per-bot tool lists and disabled Rakazo built-ins (P4, P16, P24, P31) | **Enforced twice:** Rakazo gives each bot only its tools, and the server refuses a call from a bot whose list does not hold the tool. Only the Lead messages other bots; only the Lead tells the user anything. |
+| Per-bot MCP endpoints (`/mcp?agent=<key>`) | **Identity for the rules:** the server takes the caller from the endpoint Rakazo was configured with, which a bot cannot change (`add_mcp_server` is off), and credits each evidence block, section revision and source to it. |
 | `get_case_status`: which sections and evidence have arrived and by whom, and what a review is still waiting for | **Status only:** it reports the case file; the Lead decides the next step. |
-| The gates and checks: `get_gate`, the checks in `save_memo_part` and `save_memo_version`, `run_qa_loop` and its rewrite plan, `get_memo_check`, and the final check inside `deliver_memo` | **Observe only:** rule findings, depth and completeness problems and the review status are reported and logged; nothing is blocked. Refusing to go on is the Phase 2 framework's job. |
-| Rule observations in exported traces | **Report only:** a post-run scan for possible breaks of N1 (including evidence blocks that list more queries than were run), N5, N6, N7, N9, N11, P8 (a status note over 300 characters), P9 (rounds), P21 and P27 (reply lengths), P32 (sections saved by someone other than their owner), P33-P36 (the order of work), P40 (a delivery whose final check failed) and P42 (more than three new notes in a turn, a note open at delivery). |
-| Input checks in the tools: `save_memo_part` accepts only the fifteen section keys and sections of up to 9,000 characters; `save_memo_version` accepts only the company type's ratings; `register_source` only the listed source types; `finish_review` needs all five passes, approves only with no Critical item and revises only with one; `get_memo_parts` asks for fewer sections instead of cutting one | **Tool correctness, not policy:** a malformed call gets an error to fix. No must-never rule or policy depends on these checks. |
-| Rakazo's own guards: approval card for unfamiliar fetch URLs, the bot-to-bot hop limit (raised from 6 to 31), retries of a broken model stream (raised from 1 to 3), stop after 6 consecutive identical tool calls, private-address checks | **Platform defaults**, not part of this app's rules; noted in any trace where one fires. In unattended runs the Scenario Runner denies the approval cards. |
+| The gates and checks: `get_gate`, the checks in `save_memo_part` and `save_memo_version`, `run_qa_loop` and its rewrite plan, `get_memo_check`, and the final check inside `deliver_memo` | **Warn, then refuse at the boundary:** rule findings (N1–N3, N6) come back when a section or version is saved, so that the team can fix them, and refuse an approval and a delivery. Depth and completeness findings go to the IC Reviewer and the user, and never refuse anything. |
+| Rule observations in exported traces | **Report only:** a post-run scan of what the run actually did, for the rules no check can refuse: P2, P5, P21, P27, P33 and N11, and as a second look at N1, N5, N6, N7 and P32-P36. A refused call did not happen, so it is left out of the scan and listed with the policy decisions. |
+| Input checks in the tools: `save_memo_part` accepts only the fifteen section keys and sections of up to 9,000 characters; `save_memo_version` accepts only the company type's ratings; `register_source` only the listed source types; `finish_review` needs all five passes, approves only with no Critical item and revises only with one; `get_memo_parts` asks for fewer sections instead of cutting one | **Tool correctness, not policy:** a malformed call gets an error to fix. |
+| Rakazo's own guards: the bot-to-bot hop limit (raised from 6 to 31), retries of a broken model stream (raised from 1 to 3), stop after 6 consecutive identical tool calls | **Platform defaults**, not part of this app's rules; noted in any trace where one fires. Its approval card for unfamiliar fetch URLs no longer applies, since `web_fetch` is on our server. |
 | Rakazo Auto Review and approval rules | **Off / none.** |
 
 ## 9. Non-functional requirements
@@ -203,9 +204,9 @@ Each scenario is in [`src/scenarios/`](src/scenarios/); [`episodes/`](episodes/)
 
 ## 11. Assumptions and open questions
 
-- **Phase 2 hook points.** The course's Phase 2 framework hasn't been released. The check points in section 6 and the policies in section 7 are where we expect to hook it in: outbound tool arguments, `register_source`, `set_case_scope`, `save_evidence_block`, `save_memo_part` (who saves which section, and its check), `run_qa_loop`, `save_memo_version`, the review tools, `deliver_memo` and the report itself. Rakazo routes every tool call through one dispatch function and every bot message through one delivery function, which helps.
-- **N8 is the hardest rule to check mechanically.** Phase 2 can check its effects (were the red team and the review skipped? does the rating meet N4?) and flag instruction-like text in documents before the bots read them.
+- **The course's framework.** It hasn't been released, so the app enforces its rules itself. `engine.before` and `engine.after` in `src/policy/` are the only entry points, and the rule table does not depend on how they are called, so a framework can take over. Rakazo routes every tool call through one dispatch function and every bot message through one delivery function: a framework inside Rakazo could also cover what this layer cannot, the messages between bots and their replies.
+- **N8 is the hardest rule to check mechanically.** The app removes a line that addresses AI tools and gives an order before the model reads it, but other phrasings can pass. The rating gate, the red team and the review still stand behind it.
 - **Model output varies between runs.** Phase 1 traces may show rules being broken, and those runs become Phase 2's test cases.
-- **Web search reliability.** Rakazo's default web search scrapes DuckDuckGo and may return nothing when rate-limited; a full report runs about a hundred searches. `WEB_PROVIDER=parallel` is the fallback.
+- **Web search reliability.** `web_search` scrapes DuckDuckGo's HTML form and may be refused when rate-limited, which the agent is told; a full report runs about a hundred searches, spaced a second apart.
 - **Fictional private companies.** The private scenarios' companies are fictional, so public records cannot confirm their claims; many depth floors are met only with the deck's figures, labelled, and the gaps are stated in the report.
 - **The DeepSeek assumption.** Section 5 treats DeepSeek as an accepted processor for client documents. A stricter deployment could forbid sending confidential documents to any third-party model.

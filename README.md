@@ -8,7 +8,7 @@ CS 239 (UCLA, Fall 2026) final project by Zhexiang Li. Nine AI agents on [Rakazo
 
 Its policies come from the evidence and QA standards the report is held to: the playbooks in [`src/team/playbooks/`](src/team/playbooks/) and the checks in [`src/tools/qa/`](src/tools/qa/).
 
-**Phase 1** (submitted as the tag `phase1`) ran with a four-agent team and without a safety-enforcing framework: the policies were prompt instructions, and the traces show where the agents kept them and where they broke them. **This version** keeps that setup and completes the report: an executive summary and fourteen sections, each researched and saved as evidence before it is drafted, checked as it is saved, challenged by the red team and reviewed in up to three rounds, then rendered to HTML and PDF. In **Phase 2** the scenarios run with the course's policy-assurance framework enforcing the policies.
+**Phase 1** (submitted as the tag `phase1`) ran with a four-agent team and without a safety-enforcing framework: the policies were prompt instructions, and the traces show where the agents kept them and where they broke them. **This version** is the safe port. The team and the report are complete: an executive summary and fourteen sections, each researched and saved as evidence before it is drafted, challenged by the red team, reviewed in up to three rounds and rendered to HTML and PDF. The policies are now rules: every tool call passes a rule table before it runs, and a call that breaks one is refused. The course's policy-assurance framework has not been released, so this is the app's own enforcement layer ([`src/policy/`](src/policy/)), written so that its rule table can move to the framework.
 
 ## Where everything is
 
@@ -16,15 +16,16 @@ Its policies come from the evidence and QA standards the report is held to: the 
 |---|---|
 | What the app does and the tasks it supports | [`app.md`](app.md) |
 | Policies, P1–P42, by agent: permission, capability, lifecycle, information flow and isolation | [`policy.md`](policy.md) (the guidelines' name; [`policies.md`](policies.md) is the same file under the course page's name) |
+| The policies as enforced rules, and what happens to each policy | [`policy_rules.md`](policy_rules.md) |
 | Each tool's inputs and outputs | [`tools.md`](tools.md) |
 | Each agent: the nine LLM agents' tools and exact system prompts, and the scripted Scenario Runner's logic | [`agents/`](agents/) |
 | Example episodes from Phase 1, one per scenario, with the policies involved | [`episodes/`](episodes/) |
 | Requirements: what the app does and must never do (N1–N11), and how they map to policies | [`requirements.md`](requirements.md) |
 | Source code, with setup and run instructions | [`src/`](src/) and [`src/README.md`](src/README.md) |
 | Test cases | [`tests/`](tests/) and [`tests/README.md`](tests/README.md) |
-| Baseline traces of the nine-bot team, with their rule observations | [`traces/phase2-baseline/`](traces/phase2-baseline/README.md) |
+| Phase 2 traces, one compliant run and two with violations intercepted, and which policies each triggered | [`traces/phase2/`](traces/phase2/) and [`traces/README.md`](traces/README.md) |
+| The same scenarios before enforcement | [`traces/phase2-baseline/`](traces/phase2-baseline/README.md) |
 | Phase 1 traces, and which policies each scenario triggered | [`traces/phase1/`](traces/phase1/) and [`traces/README.md`](traces/README.md) |
-| Phase 2 enforcement and its traces | to come (Phase 2 starts 2026-11-12) |
 | Five-minute demo video (Phase 1) | [youtu.be/5v6sdI-pl0E](https://youtu.be/5v6sdI-pl0E) |
 
 ## Quick start

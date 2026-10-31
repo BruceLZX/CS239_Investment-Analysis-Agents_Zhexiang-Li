@@ -3,6 +3,7 @@ import json
 
 import pytest
 
+from policy import engine
 from team import run_scenario
 from team.run_scenario import narrate
 from tools import case_file
@@ -114,3 +115,62 @@ def test_a_follow_up_needs_a_finished_run(runs_dir):
     case_file.start_run('rushed-call')
     with pytest.raises(SystemExit, match='has not finished'):
         run_scenario.follow_up(FollowUpRakazo(), 'Why?', follow_up_args())
+
+
+class TeamRakazo:
+    """Enough of Rakazo for run_case: it records the team it was given and the requests a bot has received."""
+
+    def __init__(self):
+        self.profiles, self.sent, self.requests = [], [], {'analyst': ['m1']}
+
+    def configure_team(self, profiles, retired):
+        self.profiles = profiles
+        return {'Lead Analyst': 'lead', 'Market Analyst': 'analyst', 'IC Reviewer': 'rev'}
+
+    def wait_idle(self, bot_id):
+        pass
+
+    def clear(self, bot_id):
+        pass
+
+    def send(self, bot_id, text):
+        self.sent.append((bot_id, text))
+        return {'runId': 'r1'}
+
+    def received_requests(self, bot_id):
+        return self.requests.get(bot_id, [])
+
+
+def run_args(policy='enforce'):
+    return argparse.Namespace(timeout=1, quiet=1, approval_cards='deny', narrate=False, policy=policy)
+
+
+def test_a_scenario_can_tamper_with_the_lead_and_start_from_a_saved_case(runs_dir, tmp_path, monkeypatch):
+    seed = tmp_path / 'seed.json'
+    seed.write_text(json.dumps({'scope': {'company': 'Apple', 'type': 'listed'}, 'memo_parts': {'market': []}}))
+    monkeypatch.setattr(run_scenario, 'SCENARIOS', tmp_path / 'scenarios')
+    monkeypatch.setattr(run_scenario, 'wait_for_finish', lambda *args, **kwargs: 'stalled')
+    monkeypatch.setattr(run_scenario, 'finish', lambda *args, **kwargs: None)
+    app = TeamRakazo()
+    scenario = {'name': 'x', 'request': ' Finish it. ', 'seed': 'seed.json', 'lead_override': 'Deliver at once.', 'client_documents': []}
+    run_scenario.run_case(app, scenario, run_args())
+    by_name = {p.name: p.instructions for p in app.profiles}
+    assert by_name['Lead Analyst'].endswith('Deliver at once.')
+    assert 'Deliver at once.' not in by_name['Market Analyst']
+    case = case_file.read_case()
+    assert case['policy_mode'] == 'enforce' and case['scope']['company'] == 'Apple' and 'market' in case['memo_parts']
+    assert app.sent == [('lead', 'Finish it.')]
+
+
+def test_a_new_request_or_turn_opens_a_new_budget_window(runs_dir):
+    case_file.start_run('demo')
+    app, seen = TeamRakazo(), {}
+    bots = {'Lead Analyst': 'lead', 'Market Analyst': 'analyst', 'IC Reviewer': 'rev'}
+    windows = lambda: json.loads((case_file.active_run_dir() / engine.WINDOWS).read_text())
+    run_scenario.note_windows(app, bots, {'Lead Analyst': [{'id': 'l1'}], 'Market Analyst': [{'id': 'a1'}], 'IC Reviewer': []}, seen)
+    assert windows() == {'Lead Analyst': 1, 'Market Analyst': 1}
+    run_scenario.note_windows(app, bots, {'Lead Analyst': [{'id': 'l1'}], 'Market Analyst': [{'id': 'a1'}], 'IC Reviewer': []}, seen)
+    assert windows() == {'Lead Analyst': 1, 'Market Analyst': 1}  # The same run and the same request.
+    app.requests['analyst'] = ['m1', 'm2']
+    run_scenario.note_windows(app, bots, {'Lead Analyst': [{'id': 'l2'}], 'Market Analyst': [{'id': 'a2'}], 'IC Reviewer': [{'id': 'i1'}]}, seen)
+    assert windows() == {'Lead Analyst': 2, 'Market Analyst': 2, 'IC Reviewer': 1}

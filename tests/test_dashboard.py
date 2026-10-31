@@ -326,3 +326,12 @@ def test_exchanges_between_agents_show_on_the_page_and_in_the_trace(runs):
 def test_a_note_is_summarized_by_where_it_goes():
     assert server._summary('leave_note', {'section': 'financials', 'note': 'x'}) == 'for financials'
     assert server._summary('leave_note', {'answers': 'N1', 'note': 'x'}) == 'answering N1'
+
+
+def test_the_user_reads_what_went_through_tell_user(runs):
+    run = runs / 'r1'
+    case = json.loads((run / 'case.json').read_text())
+    case['user_messages'] = [{'text': 'The analysts are working.', 'at': '2026-10-26T10:00:30+00:00'}]
+    (run / 'case.json').write_text(json.dumps(case))
+    replies = [e for e in server.snapshot(run)['conversation'] if e['kind'] == 'reply']
+    assert [(e['from'], e['to'], e['text']) for e in replies] == [('Lead Analyst', 'User', 'The analysts are working.')]

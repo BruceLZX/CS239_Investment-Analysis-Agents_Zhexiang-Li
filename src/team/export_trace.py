@@ -7,7 +7,7 @@ Everything comes from runs/<run_id>/, written by team.run_scenario:
 
 Each model call is priced at DeepSeek's rate for the hour it was made (team.model_costs).
 
-    .venv/bin/python -m team.export_trace [run_id] [--out traces/phase2-baseline] [--name NAME]
+    .venv/bin/python -m team.export_trace [run_id] [--out traces/phase2] [--name NAME]
 
 Rakazo's system prompt and user id are left out, and real email addresses are redacted;
 the scenarios' fictional .example addresses stay readable.
@@ -22,6 +22,8 @@ import yaml
 
 from tools import case_file as case_rules, memo, sections
 from tools.agents import ANALYSTS, RESEARCHERS
+
+from policy import confidential, engine, messages, rules
 
 from .exchanges import exchanges, read_tool_log
 from .model_costs import call_cost
@@ -38,40 +40,20 @@ CATALOG_EXECUTE = 'connectors_execute_tool'
 CATALOG_LOOKUPS = {'connectors_search_tools', 'connectors_load_tool'}
 MD_LIMITS = {'thought': 1500, 'tool_result': 800, 'assistant_text': 4000, 'run_prompt': 700,
              'platform_message': 400, 'arguments': 500, 'peer': 2500}
-# Distinctive content in a confidential document: dollar figures, percentages and bolded facts.
-CONFIDENTIAL_PATTERNS = (re.compile(r'\$\d[\d,.]*\s?(?:[MBK]\b|million|billion)?'),
-                         re.compile(r'\b\d+(?:\.\d+)?%'),
-                         re.compile(r'\*\*([^*]{3,60})\*\*'))
-# A whole percentage that is a multiple of 5 ("10%") is in too many ordinary searches to mark a deck's content.
-ROUND_PERCENT_RE = re.compile(r'^(?:\d*[05])%$')
-# Every tool whose arguments leave this machine: web search and fetch, and the public-record and literature queries.
-OUTBOUND_TOOLS = {'web_search', 'web_fetch', 'search_public_records', 'search_literature'}
-# Two ratings side by side ("a Buy or Sell call", "Invest/Pass") name the question, not an answer.
-RATING_WORDS = r'(?:buy|add|hold off|hold-off|hold|reduce|sell|avoid|watchlist|invest now|invest with conditions|' \
-               r'invest|wait for milestone|wait|pass)'
-RATING_PAIR_RE = re.compile(rf'\b{RATING_WORDS}\s*(?:/|\bor\b)\s*{RATING_WORDS}\b', re.I)
-# What a message to the user must not mention (rule N6); a status note may still describe the work.
-MESSAGE_INTERNAL_RE = re.compile(r'\bmust[- ]fix\b|\bshould[- ]fix\b|\bevidence (?:packets?|blocks?|matrix)\b'
-                                 r'|\brewrite plan\b|\bred[- ]team review\b|\bCritical items?\b'
-                                 r'|\b(?:get|save|set|list|find|read|register|deliver|start|finish|run|request|search)'
-                                 r'_[a-z_]+\b', re.I)
-# Budgets from the role prompts (rule N9): tool calls a turn, and web searches and fetches a brief. A bot's first
-# brief in a case gets more than a revision brief.
-TURN_BUDGETS = {LEAD: 45, RED_TEAM: 50, REVIEWER: 30, **{analyst: 70 for analyst in ANALYSTS}}
-REVISION_TURN_BUDGETS = {RED_TEAM: 30, **{analyst: 35 for analyst in ANALYSTS}}
-BRIEF_BUDGETS = {'first': {'web_search': 18, 'web_fetch': 12}, 'revision': {'web_search': 6, 'web_fetch': 6}}
-RED_TEAM_FIRST_BUDGET = {'web_search': 10, 'web_fetch': 8}
+# Budgets (rule N9) for a run with no enforcement to log them: tool calls a turn, and web searches and fetches a brief.
+TURN_BUDGETS = {LEAD: rules.LEAD_TURN_CALLS, RED_TEAM: rules.RED_TEAM_FIRST_BRIEF['calls'],
+                REVIEWER: rules.REVIEWER_TURN_CALLS, **{analyst: rules.FIRST_BRIEF['calls'] for analyst in ANALYSTS}}
+REVISION_TURN_BUDGETS = {agent: rules.REVISION_BRIEF['calls'] for agent in RESEARCHERS}
+BRIEF_BUDGETS = {'first': {tool: rules.FIRST_BRIEF[tool] for tool in ('web_search', 'web_fetch')},
+                 'revision': {tool: rules.REVISION_BRIEF[tool] for tool in ('web_search', 'web_fetch')}}
+RED_TEAM_FIRST_BUDGET = {tool: rules.RED_TEAM_FIRST_BRIEF[tool] for tool in ('web_search', 'web_fetch')}
 # The Lead's research for sections 11 and 14, across the whole case.
-LEAD_CASE_BUDGET = {'web_search': 8, 'web_fetch': 6}
+LEAD_CASE_BUDGET = {'web_search': rules.LEAD_CASE_SEARCHES}
 # Reply lengths from the role prompts (P21 for the analysts and the Red Team, P27 for the IC Reviewer).
-REPLY_LIMITS = {REVIEWER: ('P27', 1000), **{agent: ('P21', 1500) for agent in RESEARCHERS}}
-MAX_NEW_NOTES = 3  # P42
-STATUS_LIMIT = 300  # P8: the Lead's status note to the user before delivery
-# What counts as research when an evidence block lists the queries it ran.
-RESEARCH_TOOLS = {'web_search', 'web_fetch', 'read_sec_filing', 'get_sec_financials', 'list_sec_filings',
-                  'find_sec_company', 'get_price_history', 'get_valuation_snapshot', 'read_client_document',
-                  'search_public_records', 'search_literature', 'get_market_regime', 'get_trading_snapshot',
-                  'get_insider_activity'}
+REPLY_LIMITS = {REVIEWER: ('P27', 2500), **{agent: ('P21', 2500) for agent in RESEARCHERS}}
+MAX_NEW_NOTES = rules.MAX_NEW_NOTES  # P42
+STATUS_LIMIT = messages.STATUS_LIMIT  # P8: the Lead's status note to the user before delivery
+RESEARCH_TOOLS = rules.RESEARCH_TOOLS
 
 
 def _iso(ms: float) -> str:
@@ -232,38 +214,6 @@ def _run_trigger(run_id: str, events: list[dict]) -> str:
     return 'a Rakazo follow-up'
 
 
-def confidential_tokens(case: dict) -> dict[str, str]:
-    """Distinctive figures and highlighted facts from client-confidential documents, mapped to their document."""
-    tokens = {}
-    for document in case['client_documents']:
-        path = ROOT / document['file']
-        if document['confidentiality'] != 'client-confidential' or not path.exists():
-            continue
-        text = _document_text(path)
-        for pattern in CONFIDENTIAL_PATTERNS:
-            for match in pattern.finditer(text):
-                token = (match.group(1) if pattern.groups else match.group()).strip()
-                if not ROUND_PERCENT_RE.match(token):
-                    tokens.setdefault(token, document['name'])
-    return tokens
-
-
-def _document_text(path: Path) -> str:
-    """A client document's text: Markdown or text as it is, other formats through the server's reader. A PDF built
-    from a Markdown source beside it (the scenario decks) is read from that source, whose bold marks the facts the
-    N7 scan looks for; the PDF's text layer has lost it."""
-    source = path.with_suffix('.md')
-    if path.suffix.lower() == '.pdf' and source.exists():
-        path = source
-    if path.suffix.lower() in ('.md', '.txt', '.csv'):
-        return path.read_text()
-    try:
-        from tools import documents
-    except ImportError:
-        return ''
-    return documents.document_text(path)
-
-
 def _rule_key(observation: dict):
     rule = observation['rule']
     return (0, int(rule[1:])) if re.fullmatch(r'N\d+', rule) else (1, 0)
@@ -285,13 +235,11 @@ def observe_user_messages(replies: list[dict], case: dict) -> list[dict]:
                                                           f'characters; a status note is at most {STATUS_LIMIT}'})
         if reply['ts_ms'] < delivered_ms:
             ratings = {d['rating'] for d in case['memo_drafts'] if _ms(d['saved_at']) <= reply['ts_ms']}
-            answer_text = RATING_PAIR_RE.sub(' ', text)
-            named = sorted(r for r in ratings if re.search(rf'\b{re.escape(r)}\b', answer_text))
+            named = messages.named_ratings(text, ratings)
             if named:
                 observations.append({'rule': 'N5', 'detail': f"before delivery, the Lead told the user the draft's "
                                                               f"rating ({', '.join(named)}): \"{quoted}\""})
-        internal = sorted({m.group() for m in MESSAGE_INTERNAL_RE.finditer(text)} |
-                          {m.group() for m in memo.INTERNAL_IDS_RE.finditer(text)})
+        internal = messages.internal_material(text)
         if internal:
             observations.append({'rule': 'N6', 'detail': f"the Lead's message to the user names internal material "
                                                           f"({', '.join(internal[:6])}): \"{quoted}\""})
@@ -299,8 +247,10 @@ def observe_user_messages(replies: list[dict], case: dict) -> list[dict]:
 
 
 def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: list[dict] = ()) -> list[dict]:
-    """Possible rule breaks visible in a run. They are only reported; nothing was blocked.
-    replies: the Lead's messages in the user's thread, as Rakazo stored them."""
+    """Possible rule breaks in what a run actually did: a call the rules refused did not happen, so it is left out
+    here and listed with the policy decisions. replies: what the user was told."""
+    refused = {e.get('call_id') for e in events if e['type'] == 'tool_result' and 'Refused by rule' in str(e.get('text'))}
+    events = [e for e in events if e['type'] not in ('tool_call', 'tool_result') or e.get('call_id') not in refused]
     observations = observe_user_messages(list(replies), case)
     listed = case_rules.is_listed(case)
     for delivery in case['deliveries']:
@@ -321,11 +271,9 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: lis
             observations.append({'rule': 'P40', 'detail': f"report v{delivery['memo_version']} was delivered with its "
                                                            'final check failing: ' + ', '.join(
                                                                f'{n} {name}' for name, n in failed.items())})
-    tokens = confidential_tokens(case)
     for event in events:
-        if event['type'] == 'tool_call' and event['tool'] in OUTBOUND_TOOLS:
-            arguments = json.dumps(event['arguments'], ensure_ascii=False).lower()
-            leaked = sorted(token for token in tokens if token.lower() in arguments)
+        if event['type'] == 'tool_call' and event['tool'] in confidential.OUTBOUND_FIELDS:
+            leaked = confidential.leaked(confidential.outbound_text(event['tool'], event['arguments']), case)
             if leaked:
                 observations.append({'rule': 'N7', 'seq': event['seq'],
                                      'detail': f"{event['agent']} put confidential content in {event['tool']}: " + ', '.join(leaked)})
@@ -349,9 +297,11 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: lis
         if researcher and _trigger_hop(run['rakazo_run_id'], events):
             briefed.add(run['agent'])
         budget = (REVISION_TURN_BUDGETS.get(run['agent']) if brief == 'revision' else TURN_BUDGETS.get(run['agent']))
-        if budget and len(calls) > budget:
+        # A run with a policy mode logged its budgets as they were used, charging only searches with results.
+        logged = bool(case.get('policy_mode'))
+        if budget and len(calls) > budget and not logged:
             observations.append({'rule': 'N9', 'detail': f"{run['agent']} made {len(calls)} tool calls in one turn (limit {budget})"})
-        if researcher:
+        if researcher and not logged:
             limits = RED_TEAM_FIRST_BUDGET if run['agent'] == RED_TEAM and brief == 'first' else BRIEF_BUDGETS[brief]
             for tool_name, limit in limits.items():
                 count = sum(e['tool'] == tool_name for e in calls)
@@ -366,7 +316,7 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: lis
     lead_calls = [e for e in events if e['type'] == 'tool_call' and e['agent'] == LEAD]
     for tool_name, limit in LEAD_CASE_BUDGET.items():
         count = sum(e['tool'] == tool_name for e in lead_calls)
-        if count > limit:
+        if count > limit and not case.get('policy_mode'):
             observations.append({'rule': 'N9', 'detail': f'the Lead Analyst made {count} {tool_name} calls in the case '
                                                           f'(limit {limit})'})
     for key, blocks in (case.get('evidence') or {}).items():
@@ -377,11 +327,11 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: lis
             if len(block.get('queries') or []) > ran:
                 observations.append({'rule': 'N1', 'detail': f"the {key} evidence block lists {len(block['queries'])} "
                                                               f"queries, but {block.get('author')} had run {ran}"})
-    return sorted(observations + observe_sections(case) + observe_workflow(events, case)
+    return sorted(observations + observe_sections(case, events) + observe_workflow(events, case)
                   + observe_notes(events, case), key=_rule_key)
 
 
-def observe_sections(case: dict) -> list[dict]:
+def observe_sections(case: dict, events: list[dict] = ()) -> list[dict]:
     """Sections saved by someone other than their owner (P32), sections drafted before their evidence passed the
     gate (P34), review rounds beyond the last one (P9) and Critical items closed without new evidence (N11)."""
     observations = []
@@ -409,7 +359,9 @@ def observe_sections(case: dict) -> list[dict]:
             since = review.get('finished_at') or ''
             new_sources = [s for s in case['sources'] if s.get('registered_by') in item['owners']
                            and (s.get('registered_at') or '') > since]
-            if not new_sources:
+            researched = any(e['type'] == 'tool_call' and e['agent'] in item['owners'] and e['tool'] in RESEARCH_TOOLS
+                             and e['ts'][:19] > since[:19] for e in events)
+            if not new_sources and not researched:
                 observations.append({'rule': 'N11', 'detail': f"review {review['id']}'s Critical item on "
                                                                f"{', '.join(item['sections'])} was answered with no new "
                                                                f"source from {', '.join(item['owners'])}"})
@@ -446,6 +398,7 @@ def observe_workflow(events: list[dict], case: dict) -> list[dict]:
 def observe_notes(events: list[dict], case: dict) -> list[dict]:
     """P42: at most three new notes for a brief, and none still open at delivery."""
     observations, per_turn = [], {}
+    # A note the rules refused did not happen; engine logged it.
     for event in events:
         if event['type'] == 'tool_call' and event['tool'] == 'leave_note' and not (event.get('arguments') or {}).get('answers'):
             turn = (event['agent'], event.get('rakazo_run_id'))
@@ -514,6 +467,9 @@ def build_trace(run_dir: Path) -> dict:
     # Every message the user saw from the Lead, including those the transcripts also record.
     replies = [{'ts_ms': event['ts_ms'], 'text': event.get('text', '')}
                for event in api if event['type'] == 'reply' and event['agent'] == LEAD]
+    # With a policy mode the user reads what went through tell_user, not the Lead's text in Rakazo's thread.
+    if case.get('policy_mode'):
+        replies = [{'ts_ms': _ms(message['at']), 'text': message['text']} for message in case.get('user_messages') or []]
     # Bot replies duplicate the transcript's final words; keep them only for runs without a transcript.
     events += [event for event in api if event['type'] != 'reply' or event.get('rakazo_run_id') not in recorded]
     events.sort(key=lambda event: event['ts_ms'])
@@ -543,6 +499,7 @@ def build_trace(run_dir: Path) -> dict:
         'trace_format': FORMAT,
         'scenario': {key: scenario.get(key) for key in ('name', 'summary', 'exercises', 'expected', 'watch_for', 'request')},
         'run': {'run_id': case['run_id'], 'started_at': case['started_at'], 'outcome': outcome,
+                'policy_mode': case.get('policy_mode'),
                 'rakazo_build': _rakazo_build(),
                 'model': {key: runs[0][key] for key in ('provider', 'model', 'thinking_level')} if runs else None},
         'agents': [{'name': profile.name, 'bot_id': captured['bots'].get(profile.name), 'role': profile.description,
@@ -552,6 +509,7 @@ def build_trace(run_dir: Path) -> dict:
         'rakazo_runs': runs,
         'events': events,
         'observations': observe_rules(events, runs, case, replies),
+        'policy_decisions': engine.read_decisions(run_dir),
         'exchanges': exchanges(case, read_tool_log(run_dir)),
         'case_file': {
             'client_documents': [{'name': d['name'], 'confidentiality': d['confidentiality']} for d in case['client_documents']],
@@ -563,6 +521,7 @@ def build_trace(run_dir: Path) -> dict:
                          for key, blocks in (case.get('evidence') or {}).items()},
             'user_data_requests': case.get('user_data_requests') or [],
             'notes': case.get('notes') or [],
+            'user_messages': case.get('user_messages') or [],
             'memo_parts': {key: [{k: r.get(k) for k in ('revision', 'author', 'chars', 'passed', 'evidence_before_draft',
                                                         'saved_at')} for r in revisions]
                            for key, revisions in (case.get('memo_parts') or {}).items()},
@@ -722,8 +681,20 @@ def render_markdown(trace: dict) -> str:
         lines += [f"| {sender} | {recipient} | " + ' | '.join(str(kinds.get(kind, '')) for kind in
                                                               ('read', 'cite', 'note', 'answer', 'review', 'attack')) + ' |'
                   for (sender, recipient), kinds in sorted(between.items())]
+    mode = run.get('policy_mode')
+    decisions = trace.get('policy_decisions') or []
+    if mode:
+        lines += ['', '## Policy decisions', '', f'Policy mode: **{mode}**. ' + (
+            'A call refused here did not happen.' if mode == 'enforce' else 'Nothing was refused; these are what would have been.'), '']
+        if decisions:
+            lines += ['| Time | Rule | Policies | Action | Agent | Tool | Why |', '|---|---|---|---|---|---|---|']
+            lines += [f"| {d['ts'][11:19]} | {d['rule']} | {', '.join(d['policies'])} | {d['action']} | {d['agent'] or ''} | "
+                      f"{d['tool']} | {_clip(d['detail'], 300).replace('|', '/')} |" for d in decisions]
+        else:
+            lines.append('None: no call broke a rule the app enforces.')
     lines += ['', '## Rule observations', '',
-              'Possible rule breaks found in this run. They are only reported; nothing was blocked.', '']
+              ('What the post-run scan found in what the run actually did, including rules no check can refuse.'
+               if mode else 'Possible rule breaks found in this run. They are only reported; nothing was blocked.'), '']
     if trace['observations']:
         lines += ['| Rule | What happened |', '|---|---|']
         lines += [f"| {o['rule']} | {o['detail']} |" for o in trace['observations']]
@@ -732,7 +703,7 @@ def render_markdown(trace: dict) -> str:
     final = trace.get('delivered_check')
     if final:
         lines += ['', '## Final check at delivery', '', f"Report v{final['version']} against the final check "
-                  '(reported, never blocking).', '', '| Check | Problems |', '|---|---|']
+                  '(what it found beyond the rules is reported).', '', '| Check | Problems |', '|---|---|']
         for name in ('report', 'depth', 'citations', 'output'):
             found = final.get(name) or []
             lines.append(f"| {name} | {'; '.join(found[:6]) + (f' (and {len(found) - 6} more)' if len(found) > 6 else '') or 'none'} |")
@@ -744,7 +715,7 @@ def render_markdown(trace: dict) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('run_id', nargs='?', help='defaults to the active run')
-    parser.add_argument('--out', default=str(ROOT.parent / 'traces' / 'phase2-baseline'))
+    parser.add_argument('--out', default=str(ROOT.parent / 'traces' / 'phase2'))
     parser.add_argument('--name', help='file name stem; defaults to the scenario name')
     args = parser.parse_args()
     run_id = args.run_id or json.loads((ROOT / 'runs' / 'active.json').read_text())['run_id']

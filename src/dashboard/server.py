@@ -163,6 +163,12 @@ def _summary(tool: str, arguments: dict) -> str:
     if tool in ('save_memo_part', 'save_evidence_block'):
         size = f" ({len(arguments.get('markdown') or ''):,} characters)" if tool == 'save_memo_part' else ''
         return f"{arguments.get('section', '')}{size}"
+    if tool == 'web_search':
+        return arguments.get('query', '')
+    if tool == 'web_fetch':
+        return arguments.get('url', '')
+    if tool == 'tell_user':
+        return arguments.get('message', '')[:120]
     if tool == 'leave_note':
         return f"answering {arguments['answers']}" if arguments.get('answers') else f"for {arguments.get('section', '')}"
     if tool == 'read_playbook':
@@ -303,6 +309,10 @@ def snapshot(run_dir: Path, rakazo: Rakazo | None = None) -> dict:
     except FileNotFoundError:
         scenario = {}
     entries = conversation(messages)
+    if case.get('user_messages'):  # The user reads what went through tell_user, not the Lead's text in its thread.
+        entries = sorted([e for e in entries if e['kind'] != 'reply'] + [
+            {'ts': _ms(message['at']), 'id': f'tell-{i}', 'text': message['text'], 'kind': 'reply', 'from': LEAD, 'to': 'User'}
+            for i, message in enumerate(case['user_messages'])], key=lambda entry: entry['ts'])
     view = {
         'run_id': case['run_id'], 'scenario': case['scenario'],
         'request': (case.get('request') or scenario.get('request') or '').strip(),

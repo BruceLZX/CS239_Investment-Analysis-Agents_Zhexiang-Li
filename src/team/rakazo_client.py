@@ -163,6 +163,12 @@ class Rakazo:
                                   'detail': block.get('detail'), 'actions': [a['id'] for a in block.get('actions') or []]})
         return cards
 
+    def received_requests(self, bot_id: str) -> list[str]:
+        """The IDs of the recent requests from other bots in a bot's thread."""
+        snapshot = self.rpc('threads/get', {'botId': bot_id})
+        return [message['id'] for message in snapshot['messages'] for block in message.get('blocks') or []
+                if block.get('kind') == 'bot_message_received' and (block.get('intent') or 'request') == 'request']
+
     def answer_card(self, bot_id: str, card: dict, answer: str) -> None:
         self.rpc('threads/answer', {'botId': bot_id, 'runId': card['run_id'], 'messageId': card['message_id'],
                                     'answer': answer})

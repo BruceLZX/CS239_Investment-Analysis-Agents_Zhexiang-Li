@@ -7,8 +7,8 @@
 **Talks to:** the Lead Analyst only. It answers the Lead Analyst's request to attack the thesis and its revision briefs; Rakazo returns its reply automatically. It leaves the owners of other sections notes in the case file (`leave_note`).
 
 **Tools:**
-- MCP server (`src/tools/server.py`), at the bot's own endpoint `/mcp?agent=red_team`: `read_client_document`, `read_playbook`, `register_source`, `list_sources`, `save_evidence_block`, `get_evidence_matrix`, `get_gate`, `get_memo_parts`, `save_memo_part`, `get_memo_check`, `request_user_data`, `get_workflow_doc`, `leave_note`, `save_red_team_review`, `list_sec_filings`, `read_sec_filing`
-- Rakazo built-in: `web_search`, `web_fetch`
+- MCP server (`src/tools/server.py`), at the bot's own endpoint `/mcp?agent=red_team`: `read_client_document`, `read_playbook`, `register_source`, `list_sources`, `save_evidence_block`, `get_evidence_matrix`, `get_gate`, `get_memo_parts`, `save_memo_part`, `get_memo_check`, `request_user_data`, `get_workflow_doc`, `leave_note`, `web_search`, `web_fetch`, `save_red_team_review`, `list_sec_filings`, `read_sec_filing`
+- Rakazo built-in: none
 - Every other Rakazo built-in tool is switched off for this bot.
 
 **Policies:** P15–P22, P29–P32, P34, P35, P39 and P42 in [policy.md](../policy.md).
@@ -47,7 +47,9 @@ A revision brief lists review items for section 10: handle each as the analysts 
 
 ## Budget
 
-At most 50 tool calls, 10 web searches and 8 fetches for a first brief; 30 tool calls, 6 searches and 6 fetches for a revision. Fetch only URLs your own searches returned (`web_fetch` with maxChars 8000).
+At most 60 tool calls, 10 searches that return results and 8 fetches for a first brief; 45 tool calls, 6 searches and 6 fetches for a revision. Use `web_fetch` with maxChars 8000. Out of budget, save what you have and state the gaps.
+
+The server enforces the team's rules: a call it refuses says which rule and what to do next, so do that rather than trying the same call again.
 
 ## The writing standard for every section
 - **Shape** (analysis_core.md "Section Writing Contract"): open with the section plan's thesis sentence, a judgement about the company; then paragraphs that go claim, evidence [S#], interpretation, investor implication, confidence or open question. Cover judgement, evidence, mechanism, comparison (peers, benchmark, base rate or history), counter-evidence, investor implication, confidence and diligence questions, without showing those as labels: no "Economic mechanism:", "Investor implication:" or "{section} judgement" headings. Use content-specific micro-headings ("### Cash conversion is weaker than profit") only where they help.

@@ -10,8 +10,10 @@ import json
 
 import pytest
 
+from policy import confidential, engine
 from team import check_trace, export_trace
 from team.export_trace import build_trace, observe_notes, render_markdown
+from tools import case_file
 
 BOTS = {'Lead Analyst': 'bot-lead', 'Market Analyst': 'bot-res', 'IC Reviewer': 'bot-rev'}
 DECK = 'Orrin Fieldworks Series A deck'
@@ -378,12 +380,12 @@ def test_long_replies_and_overstated_queries_are_observed():
            'ended_at': '2026-10-26T10:10:00+00:00'}
     events = [{'type': 'tool_call', 'tool': 'web_search', 'agent': 'Market Analyst', 'rakazo_run_id': 'r1',
                'arguments': {'query': 'robots'}, 'seq': 1, 'ts': '2026-10-26T10:01:00.000+00:00'},
-              {'type': 'assistant_text', 'agent': 'Market Analyst', 'rakazo_run_id': 'r1', 'text': 'x' * 1600}]
+              {'type': 'assistant_text', 'agent': 'Market Analyst', 'rakazo_run_id': 'r1', 'text': 'x' * 2600}]
     case = {'deliveries': [], 'memo_drafts': [], 'sources': [], 'client_documents': [], 'reviews': [],
             'evidence': {'market': [{'author': 'Market Analyst', 'saved_at': '2026-10-26T10:05:00+00:00',
                                      'queries': ['robots', 'harvest market', 'labor costs', 'yields']}]}}
     details = {o['rule']: o['detail'] for o in export_trace.observe_rules(events, [run], case)}
-    assert details['P21'] == 'Market Analyst replied with 1,600 characters (limit 1,500)'
+    assert details['P21'] == 'Market Analyst replied with 2,600 characters (limit 2,500)'
     assert details['N1'] == 'the market evidence block lists 4 queries, but Market Analyst had run 1'
 
 
@@ -413,8 +415,8 @@ def test_calls_through_rakazos_tool_catalog_count_as_the_tool_they_ran():
 def test_round_percentages_do_not_mark_a_decks_content(tmp_path, monkeypatch):
     # "10%" from a deck's option-pool term matched an analyst's search about test accuracy.
     (tmp_path / 'deck.md').write_text('Option pool of 10% post-money. Accuracy **98.7%** across **K261734** sites, 51% margin.')
-    monkeypatch.setattr(export_trace, 'ROOT', tmp_path)
-    tokens = export_trace.confidential_tokens({'client_documents': [
+    monkeypatch.setattr(case_file, 'ROOT', tmp_path)
+    tokens = confidential.tokens({'client_documents': [
         {'name': 'Deck', 'file': 'deck.md', 'confidentiality': 'client-confidential'}]})
     assert {'98.7%', 'K261734', '51%'} <= set(tokens) and '10%' not in tokens
 
@@ -448,3 +450,37 @@ def test_too_many_new_notes_in_a_turn_are_observed():
     case = {'deliveries': [], 'notes': []}
     assert observe_notes([note] * 3 + [answer] * 2 + [{**note, 'rakazo_run_id': 'r2'}], case) == []
     assert observe_notes([note] * 4, case) == [{'rule': 'P42', 'detail': 'Market Analyst left 4 new notes in one turn'}]
+
+
+def test_a_refused_call_did_not_happen_and_the_decision_joins_the_trace(run_dir):
+    case = json.loads((run_dir / 'case.json').read_text())
+    case['policy_mode'] = 'enforce'
+    case['user_messages'] = [{'text': 'The analysts are working.', 'at': '2026-10-26T10:01:00+00:00'}]
+    (run_dir / 'case.json').write_text(json.dumps(case))
+    (run_dir / engine.LOG).write_text(json.dumps({
+        'ts': '2026-10-26T10:02:00+00:00', 'rule': 'N7', 'policies': ['P20'], 'action': 'refused', 'agent': 'Market Analyst',
+        'tool': 'web_search', 'detail': 'this web_search would send non-public content ($48,000).'}) + '\n')
+    trace = build_trace(run_dir)
+    assert trace['run']['policy_mode'] == 'enforce' and trace['policy_decisions'][0]['rule'] == 'N7'
+    markdown = render_markdown(trace)
+    assert '## Policy decisions' in markdown and 'Policy mode: **enforce**' in markdown
+    assert '| N7 | P20 | refused | Market Analyst | web_search |' in markdown
+    assert 'nothing was blocked' not in markdown
+    # What the user was told is what went through tell_user, so the Lead's long text in its thread is no P8 break.
+    assert not [o for o in trace['observations'] if o['rule'] == 'P8']
+    assert check_trace.problems({**trace, 'policy_decisions': []}) == check_trace.problems(trace)
+    missing = {key: value for key, value in trace.items() if key != 'policy_decisions'}
+    assert 'a run with a policy mode but no policy decisions' in check_trace.problems(missing)
+
+
+def test_a_refused_call_is_left_out_of_the_scan():
+    events = [{'type': 'tool_call', 'tool': 'web_search', 'agent': 'Market Analyst', 'call_id': 'c1', 'rakazo_run_id': 'r1',
+               'arguments': {'query': 'K261734 status'}, 'seq': 1, 'ts': '2026-10-26T10:01:00.000+00:00'},
+              {'type': 'tool_result', 'tool': 'web_search', 'agent': 'Market Analyst', 'call_id': 'c1', 'rakazo_run_id': 'r1',
+               'text': 'Refused by rule N7: this web_search would send non-public content.', 'seq': 2, 'ts': '2026-10-26T10:01:00.100+00:00'}]
+    case = {'deliveries': [], 'memo_drafts': [], 'sources': [], 'reviews': [], 'evidence': {}, 'policy_mode': 'enforce',
+            'client_documents': [{'name': 'Deck', 'file': 'fixtures/vantelle_deck.pdf', 'confidentiality': 'client-confidential',
+                                  'confidential_terms': ['K261734']}]}
+    assert not [o for o in export_trace.observe_rules(events, [], case) if o['rule'] == 'N7']
+    executed = [{**events[0]}]
+    assert [o['rule'] for o in export_trace.observe_rules(executed, [], case) if o['rule'] == 'N7'] == ['N7']

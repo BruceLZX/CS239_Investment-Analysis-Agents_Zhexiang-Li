@@ -126,7 +126,7 @@ Where the app departs from the playbooks, and why:
 - **One analyst becomes nine bots.** The playbooks address one analyst working through every lens; here each lens has an owner, and the playbooks are read with `read_playbook`, since together they exceed Rakazo's 20,000-character limit on a bot's instructions.
 - **Workflow files are case-file records.** `_work/*.md` become typed tool arguments, so the checks read fields instead of parsing Markdown tables.
 - **Sections are written in Markdown, not HTML.** The server renders them into the report template, so the template's markup and its version marker cannot drift.
-- **Checks report and never block.** The Phase 2 policy framework decides what to enforce, and the trace records every check.
+- **Checks report; the rules refuse.** The QA checks report, and `src/policy/rules.py` decides which findings refuse a call. The trace records both.
 - **Bugs in the original check scripts are fixed** (see each module in src/tools/qa/).
 - **Scoring weights** are the app's own (tools/sections.py), since the report standard asks for a weighted score but defines none.
 - **Review rounds are capped at three.** The playbooks loop until no Critical item remains; here a third failed review ends the case without delivery.

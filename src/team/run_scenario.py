@@ -10,6 +10,7 @@ A request of your own runs like a scenario with no attached documents. A follow-
 Lead Analyst in the latest run once it has finished, and the run is captured again afterwards.
 """
 import argparse
+from dataclasses import replace
 from datetime import datetime
 import json
 import os
@@ -18,11 +19,12 @@ import time
 
 import yaml
 
+from policy import engine as policy
 from tools import case_file
 from tools.env import load_env
 
 from .capture import capture_run
-from .profiles import LEAD, RETIRED, team_profiles
+from .profiles import LEAD, RETIRED, REVIEWER, team_profiles
 from .rakazo_client import WAITING_STATUSES, Rakazo
 
 SCENARIOS = Path(__file__).resolve().parents[1] / 'scenarios'
@@ -93,15 +95,31 @@ def review_failed(case: dict) -> bool:
     return case_file.final_review_failed(case)
 
 
+def note_windows(app: Rakazo, bot_ids: dict[str, str], in_flight: dict[str, list], seen: dict[str, set]) -> None:
+    """Tell the server when a budget window opens, which it cannot see from tool calls: a request an analyst or the Red
+    Team receives, a new turn of the Lead or the IC Reviewer."""
+    changed = False
+    for name, runs in in_flight.items():
+        if not runs:
+            continue
+        ids = {run['id'] for run in runs} if name in (LEAD, REVIEWER) else set(app.received_requests(bot_ids[name]))
+        if ids - seen.setdefault(name, set()):
+            seen[name] |= ids
+            changed = True
+    if changed:
+        policy.write_windows(case_file.active_run_dir(), {name: len(ids) for name, ids in seen.items() if ids})
+
+
 def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet: float, cards: str,
                     narrated: set | None = None) -> str:
     """Wait until the memo is delivered, or fails its final review, and every bot is idle; or the team goes quiet."""
     deadline = time.monotonic() + timeout
-    idle_since, warned, last_busy = None, set(), None
+    idle_since, warned, last_busy, windows = None, set(), None, {}
     while time.monotonic() < deadline:
         if narrated is not None:
             narrate(app, bot_ids, narrated)
         in_flight = {name: app.runs_in_flight(bot_id) for name, bot_id in bot_ids.items()}
+        note_windows(app, bot_ids, in_flight, windows)
         for name, runs in in_flight.items():
             if any(run['status'] in WAITING_STATUSES for run in runs):
                 handle_cards(app, name, bot_ids[name], cards, warned)
@@ -137,12 +155,18 @@ def finish(app: Rakazo, bot_ids: dict[str, str], outcome: dict) -> None:
 
 
 def run_case(app: Rakazo, scenario: dict, args) -> None:
-    bot_ids = app.configure_team(team_profiles(), RETIRED)
+    profiles = team_profiles()
+    # A scenario may tamper with the Lead's instructions, to test what the rules do with a compromised agent.
+    if scenario.get('lead_override'):
+        profiles = [replace(p, instructions=f"{p.instructions}\n\n{scenario['lead_override'].strip()}") if p.name == LEAD
+                    else p for p in profiles]
+    bot_ids = app.configure_team(profiles, RETIRED)
     for bot_id in bot_ids.values():
         app.wait_idle(bot_id)
         app.clear(bot_id)  # Each run replays earlier messages, so every scenario starts clean.
     request = scenario['request'].strip()
-    run_id = case_file.start_run(scenario['name'], scenario.get('client_documents', []), request)
+    seed = json.loads((SCENARIOS.parent / scenario['seed']).read_text()) if scenario.get('seed') else None
+    run_id = case_file.start_run(scenario['name'], scenario.get('client_documents', []), request, args.policy, seed)
     sent = app.send(bot_ids[LEAD], request)
     print(f'Run {run_id}: sent the request to {LEAD} (Rakazo run {sent["runId"]}).', flush=True)
     outcome = wait_for_finish(app, bot_ids, args.timeout, args.quiet, args.approval_cards,
@@ -183,6 +207,8 @@ def main() -> None:
     parser.add_argument('--approval-cards', choices=['deny', 'wait'], default='deny',
                         help="Rakazo approval cards (e.g. fetching a site the bot's search didn't return): "
                              'deny them for unattended runs (logged), or wait for someone to answer in the app')
+    parser.add_argument('--policy', choices=['enforce', 'observe'], default='enforce',
+                        help='enforce refuses what the rules forbid; observe only logs what they would have refused')
     parser.add_argument('--narrate', action='store_true',
                         help='print the conversation live: the request, the Lead\'s replies and messages between bots')
     args = parser.parse_args()

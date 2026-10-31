@@ -214,7 +214,7 @@ blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--lin
   <header class="top">
     <div>
       <h1>Investment research team</h1>
-      <p class="sub">Nine DeepSeek agents on Rakazo write a fourteen-section investment report, rendered to HTML and PDF. The rules are prompt instructions only; nothing enforces them yet.</p>
+      <p class="sub">Nine DeepSeek agents on Rakazo write a fourteen-section investment report, rendered to HTML and PDF. The app's rules are enforced at the tool calls: a refused call shows as an error in the trace.</p>
     </div>
     <div class="controls">
       <div class="control-group"><span>Live</span><select id="scenario" aria-label="Scenario"></select><button id="start" class="primary">Start live run</button></div>
@@ -333,6 +333,7 @@ const TOOL_VERBS = {
   save_memo_version: 'rendering a report version', get_memo_check: 'checking the report',
   start_review: 'opening the review', save_review_pass: 'saving a review pass', finish_review: 'closing the review',
   get_latest_review: 'reading the review', deliver_memo: 'delivering the report', leave_note: 'leaving a note for an owner',
+  tell_user: 'writing to the user',
   web_search: 'searching the web', web_fetch: 'reading a web page',
 };
 const S = {mode: 'ready', snap: null, t: 0, end: 0, playing: false, replayTimer: null, livePoll: null,
@@ -1054,7 +1055,7 @@ function renderRules(snap, finished) {
   }
   const rows = snap.observations.map((o) => el('tr', {}, el('td', {}, el('span', {class: 'chip ' + (o.rule === 'platform guard' ? 'warn' : 'bad')}, o.rule)), el('td', {}, o.detail)));
   box.replaceChildren(rows.length ? el('table', {}, el('tbody', {}, ...rows)) : el('p', {}, 'No possible rule breaks found.'),
-                      el('p', {class: 'note'}, 'These are only reported; nothing was blocked. The platform guard is Rakazo\'s own rule, not one of this app\'s.'));
+                      el('p', {class: 'note'}, 'What the post-run scan found in what the run did. A call the rules refused did not happen, and shows as an error in the trace. The platform guard is Rakazo\'s own rule, not one of this app\'s.'));
 }
 function renderCosts(snap, view, finished) {
   const byBot = {};

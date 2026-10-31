@@ -14,7 +14,8 @@ Run every command below from this folder (`src/`).
 ```
 team/          bot prompts and profiles, Rakazo client, scenario runner, trace export and checks, the agents' exchanges, replay
 team/playbooks the research playbooks; the bots read them with read_playbook
-tools/         the MCP server: SEC statements, filing text, prices, valuation, source register, case file, workflow records,
+policy/        the rule table (rules.py), and the engine that applies it to every tool call
+tools/         the MCP server: web search and fetch, SEC statements, filing text, prices, valuation, source register, case file, workflow records,
                report sections, versions, reviews and delivery
 tools/qa/      the QA checks: depth, report completeness, citations, evidence, register, workflow, output
 tools/templates the HTML report template; tools/report.py renders it and tools/pdf.py prints it
@@ -34,7 +35,7 @@ runs/          created at run time and gitignored: per-run case files, tool logs
 - **DeepSeek API key:** the bots run on DeepSeek (`deepseek-flash` with thinking `max`). You give the key to Rakazo once with `team.connect_model`; Rakazo stores it encrypted, and it never enters this repository. The Phase 1 runs (on `deepseek-v4-pro`) cost $0.25–0.85 each and the four-bot Phase 2 baseline $0.29–0.61; a nine-bot run of the full report is estimated at $1.5–2.5 at DeepSeek's peak rate and half that off-peak. Traces and the dashboard price each call for the hour it was made (`team/model_costs.py`), since Rakazo's own estimate always uses the peak rate.
 - **SEC EDGAR:** free. SEC's fair-access policy requires a contact in the User-Agent (`SEC_USER_AGENT`).
 - **Yahoo Finance's chart endpoint:** price context, used at low volume; no key needed.
-- **Web search:** Rakazo's built-in `web_search` scrapes DuckDuckGo by default; no key needed.
+- **Web search:** `web_search` on the MCP server scrapes DuckDuckGo's HTML form; no key needed.
 
 ## Environment
 
@@ -76,17 +77,18 @@ Then run a scenario, export its trace and check it. For example:
 ```bash
 .venv/bin/python -m team.run_scenario public-equity-memo
 .venv/bin/python -m team.export_trace
-.venv/bin/python -m team.check_trace ../traces/phase2-baseline/public-equity-memo.json
+.venv/bin/python -m team.check_trace ../traces/phase2/public-equity-memo.json
 ```
 
-- **`run_scenario <name>`** runs one of `public-equity-memo`, `confidential-startup`, `manipulated-deck` or `rushed-call`. It creates or updates the nine bots (and archives the Research Analyst from the earlier three-bot team), clears their threads, sends the scenario's request to the Lead Analyst, waits for the report (expect 60–95 minutes; the runner gives up after 150), and copies Rakazo's transcripts into `runs/<run_id>/`. Each version's HTML, PDF and Markdown are in `runs/<run_id>/versions/`, and the delivered report folder in `runs/<run_id>/delivery/`. Instead of a scenario name:
+- **`run_scenario <name>`** runs one of `public-equity-memo`, `confidential-startup`, `manipulated-deck`, `rushed-call` or `compromised-lead`, which gives the Lead a tampered instruction and starts from a saved case. It creates or updates the nine bots (and archives the Research Analyst from the earlier three-bot team), clears their threads, sends the scenario's request to the Lead Analyst, waits for the report (expect 60–95 minutes; the runner gives up after 150), and copies Rakazo's transcripts into `runs/<run_id>/`. Each version's HTML, PDF and Markdown are in `runs/<run_id>/versions/`, and the delivered report folder in `runs/<run_id>/delivery/`. Instead of a scenario name:
   - `--request "…"` runs a request of your own, with no attached documents (scenario name `custom`);
   - `--follow-up "…"` asks the Lead Analyst a question about the latest run once it has finished; the run is captured again afterwards, so the question and answer join its record.
 
   Options:
+  - `--policy observe` logs what the rules would refuse and refuses nothing (the default is `enforce`);
   - `--narrate` prints the conversation between the bots as it happens;
   - `--approval-cards wait` leaves Rakazo's approval cards for you to answer (the default denies them, so unattended runs don't stall).
-- **`export_trace [run_id]`** turns a run (default: the latest) into `../traces/phase2-baseline/<scenario>.json` and `.md`. Use `--out` to write somewhere else (the Phase 1 traces are in `../traces/phase1/`).
+- **`export_trace [run_id]`** turns a run (default: the latest) into `../traces/phase2/<scenario>.json` and `.md`. Use `--out` to write somewhere else (the Phase 1 traces are in `../traces/phase1/`).
 - **`check_trace`** confirms that a trace holds everything the course asks for: each agent's thoughts, tool calls with arguments, tool results and inter-agent messages.
 
 To watch a run in the browser instead, start the dashboard and open http://127.0.0.1:8770:
@@ -118,7 +120,9 @@ The tests run offline, so they spend no tokens. They use recorded SEC and Yahoo 
 
 ## Phase 1 and Phase 2
 
-Phase 1 ran, and this version still runs, **without** a safety-enforcing framework: the policies exist only as instructions in the bots' prompts. The gates and QA checks, the section and version checks and the review-gate record observe and log, but never block. Exported traces list possible rule breaks under "Rule observations". In Phase 2 the same scenarios are replayed with the course's policy-assurance framework enforcing the policies; [`../requirements.md`](../requirements.md) names where each rule can be checked.
+Phase 1 ran with no safety-enforcing framework: the policies existed only as instructions in the bots' prompts. Phase 2 enforces them. Every tool call passes the rule table in `policy/rules.py` before it runs, and a call that breaks a rule is refused: the agent is told the rule and its next legal step, and the decision goes to the run's `policy_log.jsonl` and into its trace. [`../policy_rules.md`](../policy_rules.md) lists every rule, and says what happens to each policy, including those the layer cannot stop. The course's own framework has not been released; `policy/engine.py`'s `before` and `after` are the only entry points, for it to take over.
+
+Run `.venv/bin/python -m policy.docs` after changing the rule table.
 
 ## Data
 

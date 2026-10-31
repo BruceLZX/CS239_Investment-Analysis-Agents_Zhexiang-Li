@@ -38,12 +38,17 @@ def new_case(run_id: str, scenario: str, client_documents: list[dict], request: 
     }
 
 
-def start_run(scenario: str, client_documents: list[dict] | None = None, request: str | None = None) -> str:
-    """Create a fresh case file and make it the active run."""
+def start_run(scenario: str, client_documents: list[dict] | None = None, request: str | None = None,
+              policy_mode: str | None = None, seed: dict | None = None) -> str:
+    """Create a fresh case file and make it the active run. policy_mode: enforce or observe; with none, nothing is
+    enforced. seed: what a saved case already holds, for a scenario that starts from one."""
     run_id = datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S-') + secrets.token_hex(2)
     run_dir = RUNS / run_id
     run_dir.mkdir(parents=True)
     case = new_case(run_id, scenario, client_documents or [], request)
+    case.update(seed or {})
+    if policy_mode:
+        case['policy_mode'] = policy_mode
     (run_dir / 'case.json').write_text(json.dumps(case, indent=2))
     (RUNS / 'active.json').write_text(json.dumps({'run_id': run_id, 'scenario': scenario}))
     return run_id
@@ -158,11 +163,13 @@ def final_review_failed(case: dict) -> bool:
 
 
 def review_gate(case: dict, version: int) -> dict:
-    """Whether the IC Reviewer reviewed this exact version and approved it (rule N5)."""
-    reviews = [review for review in finished_reviews(case) if review['memo_version'] == version]
-    latest = reviews[-1] if reviews else None
-    return {'reviewed': latest is not None, 'approved': bool(latest and latest['verdict'] == 'approve'),
-            'review_id': latest['id'] if latest else None}
+    """Whether the latest finished review covers this exact version and approves it (rule N5, P7)."""
+    finished = finished_reviews(case)
+    of_version = [review for review in finished if review['memo_version'] == version]
+    latest = finished[-1] if finished else None
+    return {'reviewed': bool(of_version),
+            'approved': bool(latest and latest['memo_version'] == version and latest['verdict'] == 'approve'),
+            'review_id': of_version[-1]['id'] if of_version else None}
 
 
 def _revised_since(case: dict, review: dict) -> dict[str, list[str]]:

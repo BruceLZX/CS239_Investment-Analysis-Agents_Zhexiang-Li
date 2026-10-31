@@ -152,6 +152,7 @@ def mcp_connection(agent: str) -> MCPConnection:
 WRITER_TOOLS = ('read_client_document', 'read_playbook', 'register_source', 'list_sources', 'save_evidence_block',
                 'get_evidence_matrix', 'get_gate', 'get_memo_parts', 'save_memo_part', 'get_memo_check',
                 'request_user_data', 'get_workflow_doc', 'leave_note')
+WEB_TOOLS = ('web_search', 'web_fetch')  # On our MCP server, not Rakazo's built-ins, so the rules see each query first.
 SEC_READING = ('find_sec_company', 'list_sec_filings', 'read_sec_filing')
 # A bot with more than 20 MCP tools gets them from Rakazo only through a search, load and execute catalog, which
 # hides each real call from the trace behind connectors_execute_tool and costs extra calls: DIRECT_TOOL_LIMIT in
@@ -173,8 +174,8 @@ ANALYSTS = {
                    SEC_READING + ('get_sec_financials', 'get_price_history')),
     VALUATION: ('Researches and writes the report\'s funding history and valuation and exit strategy sections from '
                 'prices, peer multiples, rounds and precedent exits.', 'valuation_analyst.md',
-                ('read_sec_filing', 'get_sec_financials', 'get_price_history',
-                 'get_valuation_snapshot', 'get_trading_snapshot', 'get_market_regime', 'get_insider_activity')),
+                ('read_sec_filing', 'get_sec_financials', 'get_valuation_snapshot', 'get_trading_snapshot',
+                 'get_market_regime')),
     REGULATORY: ('Researches regulators\' and courts\' records and policy for the whole report, writes its ESG section '
                  'and files user data requests for records behind a login.', 'regulatory_analyst.md',
                  SEC_READING + ('search_public_records',)),
@@ -192,21 +193,21 @@ def team_profiles() -> list[BotProfile]:
               'the user.',
         _instructions('lead_analyst.md', LEAD), model, mcp_connection(LEAD),
         mcp_tools=('get_case_status', 'set_case_scope', 'read_client_document', 'read_playbook', 'register_source',
-                   'list_sources', 'save_research_plan', 'save_profile_requirements', 'save_thesis_table',
-                   'save_scenario_analysis', 'save_evidence_block', 'get_evidence_matrix', 'get_workflow_doc',
-                   'get_memo_parts', 'save_memo_part', 'run_qa_loop', 'save_memo_version', 'get_latest_review',
-                   'deliver_memo', 'get_market_regime'),
-        disabled_builtin_tools=_disabled('message_bot', 'web_search', 'web_fetch'))]
+                   'save_research_plan', 'save_profile_requirements', 'save_thesis_table', 'save_scenario_analysis',
+                   'save_evidence_block', 'get_workflow_doc', 'get_memo_parts', 'save_memo_part', 'run_qa_loop',
+                   'save_memo_version', 'get_latest_review', 'deliver_memo', 'get_market_regime', 'web_search',
+                   'tell_user'),
+        disabled_builtin_tools=_disabled('message_bot'))]
     for name, (description, prompt_file, data_tools) in ANALYSTS.items():
         profiles.append(BotProfile(
             name, description, _instructions(prompt_file, name, workflow=True), model, mcp_connection(name),
-            mcp_tools=WRITER_TOOLS + data_tools, disabled_builtin_tools=_disabled('web_search', 'web_fetch')))
+            mcp_tools=WRITER_TOOLS + WEB_TOOLS + data_tools, disabled_builtin_tools=_disabled()))
     profiles.append(BotProfile(
         RED_TEAM, 'Attacks the thesis before review: researches the case against it, writes the report\'s risk '
                   'assessment and the red-team review.',
         _instructions('red_team_analyst.md', RED_TEAM), model, mcp_connection(RED_TEAM),
-        mcp_tools=WRITER_TOOLS + ('save_red_team_review', 'list_sec_filings', 'read_sec_filing'),
-        disabled_builtin_tools=_disabled('web_search', 'web_fetch')))
+        mcp_tools=WRITER_TOOLS + WEB_TOOLS + ('save_red_team_review', 'list_sec_filings', 'read_sec_filing'),
+        disabled_builtin_tools=_disabled()))
     profiles.append(BotProfile(
         REVIEWER, 'Reviews each report version like a skeptical investment committee partner, in five '
                   'passes, and approves it or returns Critical and Important items to each section\'s owner.',

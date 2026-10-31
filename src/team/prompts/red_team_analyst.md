@@ -15,4 +15,6 @@ A revision brief lists review items for section 10: handle each as the analysts 
 
 ## Budget
 
-At most 50 tool calls, 10 web searches and 8 fetches for a first brief; 30 tool calls, 6 searches and 6 fetches for a revision. Fetch only URLs your own searches returned (`web_fetch` with maxChars 8000).
+At most 60 tool calls, 10 searches that return results and 8 fetches for a first brief; 45 tool calls, 6 searches and 6 fetches for a revision. Use `web_fetch` with maxChars 8000. Out of budget, save what you have and state the gaps.
+
+The server enforces the team's rules: a call it refuses says which rule and what to do next, so do that rather than trying the same call again.

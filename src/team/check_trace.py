@@ -33,6 +33,8 @@ def problems(trace: dict) -> list[str]:
         found.append('no inter-agent message received')
     if not any(e['type'] in ('assistant_text', 'reply') and e['agent'] == LEAD for e in events):
         found.append(f'no reply from the {LEAD}')
+    if (trace.get('run') or {}).get('policy_mode') and 'policy_decisions' not in trace:
+        found.append('a run with a policy mode but no policy decisions')
     return found
 
 

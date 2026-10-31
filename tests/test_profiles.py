@@ -37,11 +37,14 @@ def test_each_writer_gets_the_standards_for_exactly_its_own_sections():
 def test_only_the_lead_messages_other_bots_and_only_researchers_search_the_web():
     for name, profile in by_name().items():
         builtins = set(profiles.BUILTIN_TOOLS) - set(profile.disabled_builtin_tools)
-        assert ('message_bot' in builtins) == (name == profiles.LEAD), name
-        if name == profiles.REVIEWER:
-            assert builtins == set()
+        assert builtins == ({'message_bot'} if name == profiles.LEAD else set()), name
+        # Search and fetch are on our MCP server, so the rules see each query before it leaves.
+        if name == profiles.LEAD:
+            assert 'web_search' in profile.mcp_tools and 'web_fetch' not in profile.mcp_tools
+        elif name == profiles.REVIEWER:
+            assert not {'web_search', 'web_fetch'} & set(profile.mcp_tools)
         else:
-            assert {'web_search', 'web_fetch'} <= builtins, name
+            assert {'web_search', 'web_fetch'} <= set(profile.mcp_tools), name
 
 
 def test_the_analysts_share_the_workflow_and_the_writers_tools():
