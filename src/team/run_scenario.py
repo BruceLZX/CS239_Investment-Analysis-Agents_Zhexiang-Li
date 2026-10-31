@@ -99,31 +99,38 @@ def review_failed(case: dict) -> bool:
     return case_file.final_review_failed(case)
 
 
-def note_windows(app: Rakazo, bot_ids: dict[str, str], in_flight: dict[str, list], seen: dict[str, set]) -> None:
+def note_windows(app: Rakazo, bot_ids: dict[str, str], in_flight: dict[str, list], seen: dict[str, set],
+                 resent: set[str]) -> None:
     """Tell the server when a budget window opens, which it cannot see from tool calls: a request an analyst or the Red
-    Team receives, a new turn of the Lead or the IC Reviewer."""
+    Team receives, a new turn of the Lead or the IC Reviewer. A brief sent again before the analyst's first reply, as
+    when a model error cuts its run off, is still a first brief (P17)."""
     changed = False
     for name, runs in in_flight.items():
         if not runs:
             continue
         ids = {run['id'] for run in runs} if name in (LEAD, REVIEWER) else set(app.received_requests(bot_ids[name]))
         if ids - seen.setdefault(name, set()):
+            if seen[name] and name not in (LEAD, REVIEWER) and not app.has_reported(bot_ids[name]):
+                resent.add(name)
+            else:
+                resent.discard(name)
             seen[name] |= ids
             changed = True
     if changed:
-        policy.write_windows(case_file.active_run_dir(), {name: len(ids) for name, ids in seen.items() if ids})
+        windows = {name: len(ids) for name, ids in seen.items() if ids}
+        policy.write_windows(case_file.active_run_dir(), {**windows, 'first_brief': sorted(resent)})
 
 
 def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet: float, cards: str,
                     narrated: set | None = None) -> str:
     """Wait until the memo is delivered, or fails its final review, and every bot is idle; or the team goes quiet."""
     deadline = time.monotonic() + timeout
-    idle_since, warned, last_busy, windows, resumes = None, set(), None, {}, 0
+    idle_since, warned, last_busy, windows, resent, resumes = None, set(), None, {}, set(), 0
     while time.monotonic() < deadline:
         if narrated is not None:
             narrate(app, bot_ids, narrated)
         in_flight = {name: app.runs_in_flight(bot_id) for name, bot_id in bot_ids.items()}
-        note_windows(app, bot_ids, in_flight, windows)
+        note_windows(app, bot_ids, in_flight, windows, resent)
         for name, runs in in_flight.items():
             if any(run['status'] in WAITING_STATUSES for run in runs):
                 handle_cards(app, name, bot_ids[name], cards, warned)
@@ -149,7 +156,9 @@ def wait_for_finish(app: Rakazo, bot_ids: dict[str, str], timeout: float, quiet:
                 idle_since, idle = None, 0
             if idle >= quiet:
                 return 'stalled'
-        time.sleep(5)
+        # A brief's first tool call comes about two seconds after it arrives. Until its window opens, that call counts
+        # against the brief before it, and is refused if that one had used up its budget.
+        time.sleep(1)
     return 'timed out'
 
 

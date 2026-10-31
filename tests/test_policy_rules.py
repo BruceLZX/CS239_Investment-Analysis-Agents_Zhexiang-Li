@@ -389,6 +389,31 @@ def test_only_searches_that_return_results_cost_budget(monkeypatch):
     assert call('web_search', {'query': 'found'}, MARKET)['budget'] == '1 of 18 used for this brief'
 
 
+def test_a_brief_runs_out_of_fetches_and_searches_by_making_them(monkeypatch):
+    enforcing()
+    monkeypatch.setattr(web, 'fetch', lambda url, max_chars=8000: {'url': url, 'title': 'T', 'text': 'A page.'})
+    monkeypatch.setattr(web, 'search', lambda query, max_results=8: [{'title': 't', 'url': 'https://a.example', 'snippet': ''}])
+    for n in range(1, 13):
+        assert call('web_fetch', {'url': f'https://a.example/{n}'}, MARKET)['budget'] == f'{n} of 12 used for this brief'
+    assert 'your 12 web_fetch calls' in refused('web_fetch', {'url': 'https://a.example/13'}, MARKET)
+    for n in range(1, 19):
+        assert call('web_search', {'query': f'q{n}'}, MARKET)['budget'] == f'{n} of 18 used for this brief'
+    assert 'your 18 web_search calls' in refused('web_search', {'query': 'q19'}, MARKET)
+
+
+def test_a_call_that_fails_costs_no_budget(monkeypatch):
+    enforcing()
+    def refuses(query, max_results=8):
+        raise ValueError('The search provider is refusing requests right now.')
+    monkeypatch.setattr(web, 'search', refuses)
+    with caller(MARKET):
+        assert call_tool(server.server, 'web_search', {'query': 'one'}).is_error
+    assert state()['used'][MARKET].get('calls', 0) == 0
+    monkeypatch.setattr(web, 'search', lambda query, max_results=8: [])
+    call('web_search', {'query': 'two'}, MARKET)
+    assert state()['used'][MARKET]['calls'] == 1
+
+
 def test_a_brief_out_of_searches_is_refused_research_but_never_saving():
     enforcing()
     with (case_file.active_run_dir() / engine.STATE).open('w') as out:
@@ -412,6 +437,18 @@ def test_a_new_brief_opens_a_new_smaller_budget():
     with (case_file.active_run_dir() / engine.STATE).open('w') as out:
         json.dump({'window': {MARKET: 2}, 'used': {MARKET: {'web_search': 6}}}, out)
     assert 'your 6 web_search calls' in refused('web_search', {'query': 'one more'}, MARKET)
+
+
+def test_a_brief_sent_again_after_a_model_error_opens_a_new_first_brief(monkeypatch):
+    enforcing()
+    monkeypatch.setattr(web, 'search', lambda query, max_results=8: [{'title': 't', 'url': 'https://a.example', 'snippet': ''}])
+    with (case_file.active_run_dir() / engine.STATE).open('w') as out:
+        json.dump({'window': {MARKET: 1}, 'used': {MARKET: {'web_search': 18, 'calls': 110}}}, out)
+    engine.write_windows(case_file.active_run_dir(), {MARKET: 2, 'first_brief': [MARKET]})
+    assert call('web_search', {'query': 'again'}, MARKET)['budget'] == '1 of 18 used for this brief'
+    with (case_file.active_run_dir() / engine.STATE).open('w') as out:
+        json.dump({'window': {MARKET: 2}, 'used': {MARKET: {'calls': 110}}}, out)
+    assert 'your 110 tool calls' in refused('list_sources', {}, MARKET)
 
 
 def test_the_lead_has_eight_searches_in_the_whole_case():

@@ -24,7 +24,8 @@ Every step below is fixed in code. The runner never reads or judges what the bot
 3. **Clear every bot's thread,** because Rakazo replays earlier messages into each run; every scenario starts clean.
 4. **Start the case:** a new `runs/<run_id>/case.json` holding the scenario's client documents, marked active so the MCP server's tools read and write it.
 5. **Send the request** to the Lead Analyst, as the user.
-6. **Every 5 seconds**, read each bot's runs in progress and decide:
+6. **Every second**, read each bot's runs in progress and decide:
+   - **A bot has a new request or turn:** write the counts to `runs/<run_id>/policy_windows.json`, so that the MCP server opens a new budget window. A brief sent again before an analyst's first reply, as when a model error cuts its run off, is marked as still a first brief (P17). The check runs this often because a brief's first tool call comes about two seconds after it arrives.
    - **A run waits on an approval card,** for example a `web_fetch` of a URL that the bot's own search did not return. With `--approval-cards deny` (the default) the runner denies the card and logs it to `runs/<run_id>/approval_cards.jsonl`. With `--approval-cards wait` it leaves the card for a person to answer in Rakazo and prints a notice once.
    - **Delivered:** the case file records a delivery and no bot has worked for 15 seconds.
    - **Failed review:** the third and final review did not approve, so nothing may be delivered (P9), and no bot has worked for 15 seconds.

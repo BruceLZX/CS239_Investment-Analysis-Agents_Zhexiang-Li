@@ -121,7 +121,7 @@ class TeamRakazo:
     """Enough of Rakazo for run_case: it records the team it was given and the requests a bot has received."""
 
     def __init__(self):
-        self.profiles, self.sent, self.requests = [], [], {'analyst': ['m1']}
+        self.profiles, self.sent, self.requests, self.reported = [], [], {'analyst': ['m1']}, set()
 
     def configure_team(self, profiles, retired):
         self.profiles = profiles
@@ -139,6 +139,9 @@ class TeamRakazo:
 
     def received_requests(self, bot_id):
         return self.requests.get(bot_id, [])
+
+    def has_reported(self, bot_id):
+        return bot_id in self.reported
 
 
 def run_args(policy='enforce'):
@@ -165,15 +168,34 @@ def test_a_scenario_can_replace_the_leads_instructions_and_start_from_a_saved_ca
 def test_a_new_request_or_turn_opens_a_new_budget_window(runs_dir):
     case_file.start_run('demo')
     app, seen = TeamRakazo(), {}
+    app.reported.add('analyst')
     bots = {'Lead Analyst': 'lead', 'Market Analyst': 'analyst', 'IC Reviewer': 'rev'}
     windows = lambda: json.loads((case_file.active_run_dir() / engine.WINDOWS).read_text())
-    run_scenario.note_windows(app, bots, {'Lead Analyst': [{'id': 'l1'}], 'Market Analyst': [{'id': 'a1'}], 'IC Reviewer': []}, seen)
-    assert windows() == {'Lead Analyst': 1, 'Market Analyst': 1}
-    run_scenario.note_windows(app, bots, {'Lead Analyst': [{'id': 'l1'}], 'Market Analyst': [{'id': 'a1'}], 'IC Reviewer': []}, seen)
-    assert windows() == {'Lead Analyst': 1, 'Market Analyst': 1}  # The same run and the same request.
+    run_scenario.note_windows(app, bots, {'Lead Analyst': [{'id': 'l1'}], 'Market Analyst': [{'id': 'a1'}], 'IC Reviewer': []}, seen, set())
+    assert windows() == {'Lead Analyst': 1, 'Market Analyst': 1, 'first_brief': []}
+    run_scenario.note_windows(app, bots, {'Lead Analyst': [{'id': 'l1'}], 'Market Analyst': [{'id': 'a1'}], 'IC Reviewer': []}, seen, set())
+    assert windows() == {'Lead Analyst': 1, 'Market Analyst': 1, 'first_brief': []}  # The same run and the same request.
     app.requests['analyst'] = ['m1', 'm2']
-    run_scenario.note_windows(app, bots, {'Lead Analyst': [{'id': 'l2'}], 'Market Analyst': [{'id': 'a2'}], 'IC Reviewer': [{'id': 'i1'}]}, seen)
-    assert windows() == {'Lead Analyst': 2, 'Market Analyst': 2, 'IC Reviewer': 1}
+    run_scenario.note_windows(app, bots, {'Lead Analyst': [{'id': 'l2'}], 'Market Analyst': [{'id': 'a2'}], 'IC Reviewer': [{'id': 'i1'}]}, seen, set())
+    assert windows() == {'Lead Analyst': 2, 'Market Analyst': 2, 'IC Reviewer': 1, 'first_brief': []}
+
+
+def test_a_brief_sent_again_before_the_first_reply_stays_a_first_brief(runs_dir):
+    case_file.start_run('demo')
+    app, seen, resent = TeamRakazo(), {}, set()
+    bots, working = {'Market Analyst': 'analyst'}, {'Market Analyst': [{'id': 'a1'}]}
+    windows = lambda: json.loads((case_file.active_run_dir() / engine.WINDOWS).read_text())
+    run_scenario.note_windows(app, bots, working, seen, resent)
+    assert windows() == {'Market Analyst': 1, 'first_brief': []}
+    app.requests['analyst'] = ['m1', 'm2']  # A model error cut the first run off, and the Lead sends the brief again.
+    run_scenario.note_windows(app, bots, working, seen, resent)
+    assert windows() == {'Market Analyst': 2, 'first_brief': ['Market Analyst']}
+    app.reported.add('analyst')  # Its reply changes nothing for a brief still under way.
+    run_scenario.note_windows(app, bots, working, seen, resent)
+    assert windows() == {'Market Analyst': 2, 'first_brief': ['Market Analyst']}
+    app.requests['analyst'] = ['m1', 'm2', 'm3']  # The next brief is a revision.
+    run_scenario.note_windows(app, bots, working, seen, resent)
+    assert windows() == {'Market Analyst': 3, 'first_brief': []}
 
 
 class QuietRakazo:

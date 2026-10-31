@@ -42,7 +42,9 @@ def _context(tool: str, agent: str | None, arguments: dict) -> tuple[Call, str, 
     if agent and state.setdefault('window', {}).get(agent) != window:
         state['window'][agent] = window
         state.setdefault('used', {})[agent] = {}
-    return Call(agent, tool, arguments, case, state, window), mode, run_dir
+    # A brief sent again before the analyst's first reply opens a new window, of a first brief's size (P17).
+    size = 1 if agent in windows.get('first_brief', ()) else window
+    return Call(agent, tool, arguments, case, state, size), mode, run_dir
 
 
 def _save_state(run_dir: Path, state: dict) -> None:
@@ -82,9 +84,6 @@ def before(tool: str, agent: str | None, arguments: dict) -> None:
             if rule.action == 'refuse once':
                 call.state.setdefault('refused_once', []).append(once_key)
             refusal = refusal or f"Refused by rule {rule.id}: {text}"
-        if not refusal or mode != ENFORCE:
-            used = call.state.setdefault('used', {}).setdefault(agent or '', {})
-            used['calls'] = used.get('calls', 0) + 1
         _save_state(run_dir, call.state)
     if refusal and mode == ENFORCE:
         raise Refused(refusal)
@@ -96,7 +95,8 @@ def _returned_results(result) -> bool:
 
 
 def after(tool: str, agent: str | None, arguments: dict, result):
-    """Count the call, remember what it retrieved, and take instructions out of what it returned."""
+    """Count the call, remember what it retrieved, and take instructions out of what it returned. A call that failed
+    never gets here, so it costs no budget."""
     with case_file._lock:
         context = _context(tool, agent, arguments)
         if not context:
@@ -104,7 +104,8 @@ def after(tool: str, agent: str | None, arguments: dict, result):
         call, mode, run_dir = context
         state = call.state
         used = state.setdefault('used', {}).setdefault(agent or '', {})
-        if tool in ('web_search', 'web_fetch') and _returned_results(result):
+        used['calls'] = used.get('calls', 0) + 1
+        if tool == 'web_fetch' or (tool == 'web_search' and _returned_results(result)):
             used[tool] = used.get(tool, 0) + 1
             if agent == rules.LEAD and tool == 'web_search':
                 state['lead_searches'] = state.get('lead_searches', 0) + 1
@@ -166,9 +167,9 @@ def _quarantined(run_dir: Path, mode: str, agent: str | None, tool: str, result)
     return {**result, 'text': cleaned} if isinstance(result, dict) else cleaned
 
 
-def write_windows(run_dir: Path, windows: dict[str, int]) -> None:
+def write_windows(run_dir: Path, windows: dict) -> None:
     """Called by the runner: the server sees tool calls, not messages, so only the runner knows when a brief or a turn
-    begins. Each agent's count opens a new budget window when it rises."""
+    begins. Each agent's count opens a new budget window when it rises; those named under first_brief are still on one."""
     temporary = run_dir / f'{WINDOWS}.tmp'
     temporary.write_text(json.dumps(windows))
     temporary.replace(run_dir / WINDOWS)

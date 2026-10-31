@@ -60,6 +60,17 @@ def test_the_reviewers_thinking_is_capped(monkeypatch):
     assert thinking()['IC Reviewer'] == 'max'
 
 
+def test_a_bot_has_reported_only_once_it_has_answered_a_request(tmp_path):
+    # A run cut off by a model error sends only a status, and the brief sent after it is still a first brief.
+    blocks = [{'kind': 'bot_message_received', 'intent': 'request'},
+              {'kind': 'bot_message_sent', 'intent': 'status', 'text': 'Could not complete the delegated request: terminated'}]
+    app = Rakazo('http://127.0.0.1:5174', session_file=tmp_path / '.session.json')
+    app.rpc = lambda route, data=None: {'messages': [{'blocks': blocks}]}
+    assert not app.has_reported('bot-market')
+    blocks.append({'kind': 'bot_message_sent', 'intent': 'result', 'text': 'Both sections are saved.'})
+    assert app.has_reported('bot-market')
+
+
 def test_reading_a_thread_stops_when_its_cursor_comes_round_again(tmp_path):
     # The runner reads every thread between checks for approval cards; a cursor that repeated would hold it there.
     pages = {None: (['m3', 'm4'], 'c1'), 'c1': (['m1', 'm2'], 'c2'), 'c2': (['m1', 'm2'], 'c1')}

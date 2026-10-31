@@ -26,7 +26,7 @@ NEVER_OUT_OF_BUDGET = {'save_memo_part', 'save_evidence_block', 'register_source
                        'save_memo_version', 'deliver_memo', 'set_case_scope', 'start_review', 'save_review_pass',
                        'finish_review'}
 # Tool calls a window, and web searches and fetches a brief. A window is a brief for those who get briefs, and a turn
-# for the Lead and the IC Reviewer. Only searches that return results count.
+# for the Lead and the IC Reviewer. A call that fails costs nothing, and only searches that return results count.
 FIRST_BRIEF = {'calls': 110, 'web_search': 18, 'web_fetch': 12}
 REVISION_BRIEF = {'calls': 45, 'web_search': 6, 'web_fetch': 6}
 RED_TEAM_FIRST_BRIEF = {'calls': 60, 'web_search': 10, 'web_fetch': 8}

@@ -96,4 +96,6 @@ Besides refusing calls, rule N8 removes each line addressed to AI tools from `re
 
 - **Messages between bots and their replies** (P2, P21, P27). Rakazo delivers `message_bot` and returns a bot's reply inside its own process. An approval rule could pause `message_bot`, but its card omits the message, so the trace export reports these instead.
 - **The Lead's own text in Rakazo's thread.** The user reads what passes `tell_user`, on this app's dashboard, but Rakazo's own interface still shows the Lead's raw text in its thread.
+- **A finding told in words alone** (P8). `tell_user` refuses a rating, a figure, a grade or a long note before delivery, but it cannot tell whether a short note's words give a finding away.
+- **Retries of a failing call** (P17). A call that fails costs no budget, because the cause is often outside the agent, such as a search provider refusing requests. So only the run's own timeout limits those retries.
 - **Judgement calls** (N10, N11, P26, P38, P39, P41). A check cannot tell whether a section should have asked the user for a record, so these stay with the IC Reviewer and the trace export.

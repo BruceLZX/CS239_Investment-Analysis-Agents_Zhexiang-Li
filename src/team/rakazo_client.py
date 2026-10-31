@@ -174,6 +174,12 @@ class Rakazo:
         return [message['id'] for message in snapshot['messages'] for block in message.get('blocks') or []
                 if block.get('kind') == 'bot_message_received' and (block.get('intent') or 'request') == 'request']
 
+    def has_reported(self, bot_id: str) -> bool:
+        """Whether the bot has answered a request. A run cut off by a model error sends only a status."""
+        snapshot = self.rpc('threads/get', {'botId': bot_id})
+        return any(block.get('kind') == 'bot_message_sent' and block.get('intent') == 'result'
+                   for message in snapshot['messages'] for block in message.get('blocks') or [])
+
     def answer_card(self, bot_id: str, card: dict, answer: str) -> None:
         self.rpc('threads/answer', {'botId': bot_id, 'runId': card['run_id'], 'messageId': card['message_id'],
                                     'answer': answer})
