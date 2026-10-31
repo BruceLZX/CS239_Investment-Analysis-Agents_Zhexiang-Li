@@ -27,7 +27,7 @@ The course's policy-assurance framework has not been released, so these rules ru
 | P25 | P11, P12, P13, P25, P37 | A version with rule findings is not approved. | `finish_review` | refuse |
 | N5 | P7 | A version is delivered only when the latest review covers it and approves. | `deliver_memo` | refuse |
 | P40 | P11, P12, P13, P40 | A version with rule findings is not delivered. | `deliver_memo` | refuse |
-| N5 | P8 | Until delivery, the user gets status only: no rating, and no long notes. | `tell_user` | refuse |
+| N5 | P8 | Until delivery, the user gets status only: no rating, no figures and no long notes. | `tell_user` | refuse |
 | N6 | P13 | A message to the user holds no internal working material. | `tell_user` | refuse |
 
 A rule marked "refuse once" lets the second attempt through and records it, because the evidence or the section it asks for may be impossible to get, and a refusal with no way forward would stall the run.

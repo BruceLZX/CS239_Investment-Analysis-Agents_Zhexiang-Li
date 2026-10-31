@@ -233,6 +233,13 @@ def observe_user_messages(replies: list[dict], case: dict) -> list[dict]:
         if reply['ts_ms'] < min(delivered_ms, failed_ms) and len(text) > STATUS_LIMIT:
             observations.append({'rule': 'P8', 'detail': f'before delivery, the Lead sent the user {len(text):,} '
                                                           f'characters; a status note is at most {STATUS_LIMIT}'})
+        if reply['ts_ms'] < min(delivered_ms, failed_ms):
+            scores = {d['composite_score'] for d in case['memo_drafts'] if d.get('composite_score')
+                      and _ms(d['saved_at']) <= reply['ts_ms']}
+            figures = messages.named_figures(text, scores)
+            if figures:
+                observations.append({'rule': 'P8', 'detail': f"before delivery, the Lead gave the user figures "
+                                                              f"({', '.join(figures[:6])}): \"{quoted}\""})
         if reply['ts_ms'] < delivered_ms:
             ratings = {d['rating'] for d in case['memo_drafts'] if _ms(d['saved_at']) <= reply['ts_ms']}
             named = messages.named_ratings(text, ratings)
@@ -326,6 +333,7 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: lis
             # A block saved after a review may repeat earlier queries, so count the author's research up to the block.
             ran = sum(e['type'] == 'tool_call' and e['agent'] == block.get('author') and e['tool'] in RESEARCH_TOOLS
                       and e['ts'][:19] <= block['saved_at'][:19] for e in events)
+            ran += case.get('seeded_research', {}).get(block.get('author'), 0)
             if len(block.get('queries') or []) > ran:
                 observations.append({'rule': 'N1', 'detail': f"the {key} evidence block lists {len(block['queries'])} "
                                                               f"queries, but {block.get('author')} had run {ran}"})

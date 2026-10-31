@@ -283,12 +283,33 @@ def test_a_status_note_is_short_and_says_nothing_of_the_rating():
     assert [m['text'] for m in case_file.read_case()['user_messages']] == ['The analysts are revising three sections.']
 
 
+def test_a_status_note_gives_no_figure_or_grade_until_delivery():
+    enforcing()
+    deliverable()
+    for note, figure in (('Critical: $212 DCF vs $284 at 29x.', '$212'), ('Counterpoint has shipments up 3.1% in China.', '3.1%'),
+                         ('The market is worth $20bn.', '$20bn'), ('A multiple of 39.5x on earnings.', '39.5x'),
+                         ('The review gave it grade B.', 'grade B'), ('The composite came to 6.0 this round.', '6.0')):
+        assert figure in refused('tell_user', {'message': note}, LEAD), note
+    assert call('tell_user', {'message': 'Version 2 is saved; round 2 of 3 is under way on 9 sections.'}, LEAD)['sent'] is True
+
+
+def test_the_message_that_a_report_failed_review_may_give_figures():
+    enforcing()
+    deliverable('revise')
+    update_case(reviews=[{**case_file.read_case()['reviews'][0], 'id': f'R{n}', 'round': n} for n in (1, 2, 3)])
+    assert case_file.final_review_failed(case_file.read_case())
+    assert call('tell_user', {'message': 'It did not pass: the $212 base case is not supported.'}, LEAD)['sent'] is True
+
+
 def test_after_delivery_the_report_can_be_told_but_internal_material_cannot():
     enforcing()
     deliverable('approve')
     call('deliver_memo', {'version': 1}, LEAD)
-    assert call('tell_user', {'message': 'Rated Watchlist. ' + 'The thesis is this. ' * 40}, LEAD)['sent'] is True
-    assert 'internal working material' in refused('tell_user', {'message': 'Approved after save_memo_version.'}, LEAD)
+    assert call('tell_user', {'message': 'Rated Watchlist at $270. ' + 'The thesis is this. ' * 40}, LEAD)['sent'] is True
+    for message in ('Approved after save_memo_version.', 'The review had 3 Critical and 7 Important fixes.',
+                    'Every QA check passes.'):
+        assert 'internal working material' in refused('tell_user', {'message': message}, LEAD), message
+    assert call('tell_user', {'message': 'The 3 important risks are below.'}, LEAD)['sent'] is True
 
 
 def test_a_rival_product_named_like_a_review_id_is_not_internal_material():

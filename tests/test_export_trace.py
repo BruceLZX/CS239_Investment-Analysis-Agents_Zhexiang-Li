@@ -495,3 +495,18 @@ def test_a_case_started_from_a_saved_one_is_not_held_to_what_came_before_it():
                'seq': 1, 'ts': '2026-10-26T10:05:00.000+00:00'}]
     rules = [o['rule'] for o in export_trace.observe_rules(events, [], case)]
     assert 'N1' not in rules and 'P35' not in rules
+    # A block re-saved in this run may repeat the research behind the saved one.
+    case['evidence']['market'] = [{**block, 'saved_at': '2026-10-26T10:10:00+00:00'}]
+    assert 'N1' in [o['rule'] for o in export_trace.observe_rules(events, [], case)]
+    case['seeded_research'] = {'Market Analyst': 3}
+    assert 'N1' not in [o['rule'] for o in export_trace.observe_rules(events, [], case)]
+
+
+def test_a_status_note_with_a_figure_is_observed_before_delivery_only():
+    case = {'deliveries': [{'delivered_at': '2026-10-26T12:00:00+00:00'}], 'reviews': [],
+            'memo_drafts': [{'rating': 'Watchlist', 'composite_score': '6.0', 'saved_at': '2026-10-26T10:00:00+00:00'}]}
+    def observed(ts):
+        replies = [{'text': 'The base case is $212.', 'ts_ms': export_trace._ms(ts)}]
+        return [o['rule'] for o in export_trace.observe_user_messages(replies, case)]
+    assert observed('2026-10-26T11:00:00+00:00') == ['P8']
+    assert observed('2026-10-26T13:00:00+00:00') == []

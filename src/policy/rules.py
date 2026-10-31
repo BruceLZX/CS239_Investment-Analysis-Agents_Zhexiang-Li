@@ -360,7 +360,7 @@ def clean_before_delivery(call: Call) -> str | None:
 
 # What the user is told
 
-@rule('N5', ('P8',), ('tell_user',), 'Until delivery, the user gets status only: no rating, and no long notes.')
+@rule('N5', ('P8',), ('tell_user',), 'Until delivery, the user gets status only: no rating, no figures and no long notes.')
 def status_only(call: Call) -> str | None:
     found = [detail for rule_id, detail in messages.problems(str(call.args.get('message') or ''), call.case)
              if rule_id in ('N5', 'P8')]
