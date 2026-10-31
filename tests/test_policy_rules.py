@@ -329,6 +329,12 @@ def test_an_evidence_block_lists_no_more_queries_than_its_author_ran():
     assert call('save_evidence_block', evidence_block(2), MARKET)['section'] == 'market'
 
 
+def test_a_case_started_from_a_saved_one_counts_the_research_behind_its_blocks():
+    enforcing(seeded_from='earlier', seeded_research={MARKET: 2})
+    assert call('save_evidence_block', evidence_block(2), MARKET)['section'] == 'market'
+    assert 'lists 3 queries' in refused('save_evidence_block', evidence_block(3), MARKET)
+
+
 # P19: what may be fetched
 
 def test_a_url_from_a_client_document_is_not_fetched_unless_a_search_returned_it(tmp_path, monkeypatch):

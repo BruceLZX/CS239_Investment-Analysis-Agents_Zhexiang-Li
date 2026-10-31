@@ -484,3 +484,14 @@ def test_a_refused_call_is_left_out_of_the_scan():
     assert not [o for o in export_trace.observe_rules(events, [], case) if o['rule'] == 'N7']
     executed = [{**events[0]}]
     assert [o['rule'] for o in export_trace.observe_rules(executed, [], case) if o['rule'] == 'N7'] == ['N7']
+
+
+def test_a_case_started_from_a_saved_one_is_not_held_to_what_came_before_it():
+    block = {'author': 'Market Analyst', 'saved_at': '2026-10-26T09:00:00+00:00', 'queries': ['a', 'b', 'c']}
+    case = {'deliveries': [], 'memo_drafts': [], 'sources': [], 'client_documents': [], 'evidence': {'market': [block]},
+            'started_at': '2026-10-26T10:00:00+00:00', 'seeded_from': 'earlier', 'workflow': {},
+            'reviews': [{'id': 'R1', 'verdict': None}]}
+    events = [{'type': 'tool_call', 'tool': 'start_review', 'agent': 'IC Reviewer', 'rakazo_run_id': 'r1', 'arguments': {},
+               'seq': 1, 'ts': '2026-10-26T10:05:00.000+00:00'}]
+    rules = [o['rule'] for o in export_trace.observe_rules(events, [], case)]
+    assert 'N1' not in rules and 'P35' not in rules

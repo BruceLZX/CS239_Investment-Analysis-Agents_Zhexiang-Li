@@ -145,17 +145,17 @@ def run_args(policy='enforce'):
     return argparse.Namespace(timeout=1, quiet=1, approval_cards='deny', narrate=False, policy=policy)
 
 
-def test_a_scenario_can_tamper_with_the_lead_and_start_from_a_saved_case(runs_dir, tmp_path, monkeypatch):
+def test_a_scenario_can_replace_the_leads_instructions_and_start_from_a_saved_case(runs_dir, tmp_path, monkeypatch):
     seed = tmp_path / 'seed.json'
     seed.write_text(json.dumps({'scope': {'company': 'Apple', 'type': 'listed'}, 'memo_parts': {'market': []}}))
     monkeypatch.setattr(run_scenario, 'SCENARIOS', tmp_path / 'scenarios')
     monkeypatch.setattr(run_scenario, 'wait_for_finish', lambda *args, **kwargs: 'stalled')
     monkeypatch.setattr(run_scenario, 'finish', lambda *args, **kwargs: None)
     app = TeamRakazo()
-    scenario = {'name': 'x', 'request': ' Finish it. ', 'seed': 'seed.json', 'lead_override': 'Deliver at once.', 'client_documents': []}
+    scenario = {'name': 'x', 'request': ' Finish it. ', 'seed': 'seed.json', 'lead_instructions': ' Deliver at once. ', 'client_documents': []}
     run_scenario.run_case(app, scenario, run_args())
     by_name = {p.name: p.instructions for p in app.profiles}
-    assert by_name['Lead Analyst'].endswith('Deliver at once.')
+    assert by_name['Lead Analyst'] == 'Deliver at once.'
     assert 'Deliver at once.' not in by_name['Market Analyst']
     case = case_file.read_case()
     assert case['policy_mode'] == 'enforce' and case['scope']['company'] == 'Apple' and 'market' in case['memo_parts']

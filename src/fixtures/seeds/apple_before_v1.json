@@ -1,4 +1,15 @@
 {
+ "seeded_from": "20261031-045510-82e5",
+ "seeded_research": {
+  "Regulatory Analyst": 10,
+  "Fundamentals Analyst": 16,
+  "Market Analyst": 25,
+  "Valuation Analyst": 24,
+  "Product Analyst": 15,
+  "Company Analyst": 26,
+  "Red Team Analyst": 8,
+  "Lead Analyst": 12
+ },
  "scope": {
   "company": "Apple Inc.",
   "type": "listed",

@@ -14,11 +14,19 @@ def before_first_version(case: dict) -> dict:
     # The records as they ended up: the plan and the thesis table were written before the version, and only touched
     # up after it. The QA log and rewrite plan are left out, so the Lead runs its own QA loop.
     workflow = {kind: record for kind, record in (case.get('workflow') or {}).items() if isinstance(record, dict)}
+    evidence = {key: kept for key, blocks in (case.get('evidence') or {}).items()
+                if (kept := [block for block in blocks if keep(block.get('saved_at'))])}
+    # The research behind the saved blocks, which the new run did not see: an owner re-saving a block repeats its queries.
+    queries: dict[str, set] = {}
+    for blocks in evidence.values():
+        for block in blocks:
+            queries.setdefault(block.get('author'), set()).update(block.get('queries') or [])
     return {
+        'seeded_from': case['run_id'],
+        'seeded_research': {agent: len(found) for agent, found in queries.items() if agent},
         'scope': case['scope'],
         'sources': [s for s in case['sources'] if keep(s.get('registered_at'))],
-        'evidence': {key: kept for key, blocks in (case.get('evidence') or {}).items()
-                     if (kept := [block for block in blocks if keep(block.get('saved_at'))])},
+        'evidence': evidence,
         'workflow': workflow,
         'user_data_requests': [r for r in case.get('user_data_requests') or [] if keep(r.get('requested_at'))],
         'notes': [note for note in case.get('notes') or [] if keep(note.get('at'))],

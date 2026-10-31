@@ -321,6 +321,8 @@ def observe_rules(events: list[dict], runs: list[dict], case: dict, replies: lis
                                                           f'(limit {limit})'})
     for key, blocks in (case.get('evidence') or {}).items():
         for block in blocks:
+            if block['saved_at'][:19] < case.get('started_at', '')[:19]:
+                continue  # From the saved case this one started from, whose research this run did not see.
             # A block saved after a review may repeat earlier queries, so count the author's research up to the block.
             ran = sum(e['type'] == 'tool_call' and e['agent'] == block.get('author') and e['tool'] in RESEARCH_TOOLS
                       and e['ts'][:19] <= block['saved_at'][:19] for e in events)
@@ -377,6 +379,8 @@ def observe_workflow(events: list[dict], case: dict) -> list[dict]:
     def first(tool: str, agent: str | None = None, after: str = '') -> str | None:
         return next((e['ts'] for e in calls if e['tool'] == tool and (agent is None or e['agent'] == agent)
                      and e['ts'] > after), None)
+    if case.get('seeded_from'):  # The saved case this one started from already holds the plan and the red-team review.
+        return _version_order(case, first)
     brief = first('message_bot', LEAD)
     plan = first('save_research_plan', LEAD)
     if brief and (not plan or plan > brief):
@@ -385,7 +389,11 @@ def observe_workflow(events: list[dict], case: dict) -> list[dict]:
     red_team = first('save_red_team_review', RED_TEAM)
     if review and (not red_team or red_team > review):
         observations.append({'rule': 'P35', 'detail': 'the first review started before the red-team review was saved'})
-    previous = ''
+    return observations + _version_order(case, first)
+
+
+def _version_order(case: dict, first) -> list[dict]:
+    observations, previous = [], ''
     for version in case['memo_drafts']:
         loop = first('run_qa_loop', LEAD, previous)
         if not loop or loop[:19] > version['saved_at'][:19]:

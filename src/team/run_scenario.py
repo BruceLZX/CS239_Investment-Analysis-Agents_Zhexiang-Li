@@ -156,10 +156,10 @@ def finish(app: Rakazo, bot_ids: dict[str, str], outcome: dict) -> None:
 
 def run_case(app: Rakazo, scenario: dict, args) -> None:
     profiles = team_profiles()
-    # A scenario may tamper with the Lead's instructions, to test what the rules do with a compromised agent.
-    if scenario.get('lead_override'):
-        profiles = [replace(p, instructions=f"{p.instructions}\n\n{scenario['lead_override'].strip()}") if p.name == LEAD
-                    else p for p in profiles]
+    # A scenario may replace the Lead's instructions, to test what the rules do with a compromised agent. Adding a line
+    # is not enough: in a live run, a Lead told to skip the review kept to the rules in the rest of its prompt.
+    if scenario.get('lead_instructions'):
+        profiles = [replace(p, instructions=scenario['lead_instructions'].strip()) if p.name == LEAD else p for p in profiles]
     bot_ids = app.configure_team(profiles, RETIRED)
     for bot_id in bot_ids.values():
         app.wait_idle(bot_id)

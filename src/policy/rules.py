@@ -204,7 +204,8 @@ def retrieved_source(call: Call) -> str | None:
 @rule('N1', ('P18',), ('save_evidence_block',), 'An evidence block lists only queries its author ran.')
 def ran_the_queries(call: Call) -> str | None:
     listed = len(call.args.get('queries') or [])
-    ran = call.state.get('research', {}).get(call.agent or '', 0)
+    # A case started from a saved one holds research this run did not see.
+    ran = call.state.get('research', {}).get(call.agent or '', 0) + call.case.get('seeded_research', {}).get(call.agent or '', 0)
     if call.agent and listed > ran:
         return (f'this block lists {listed} queries, and you have run {ran} searches or data calls in this case. List '
                 'only what you ran, and run more if the gate needs it.')
