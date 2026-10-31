@@ -125,7 +125,7 @@ These come from the team's evidence and QA standards.
 
 ## Full system prompt in a submitted run
 
-Verbatim from Rakazo's transcript of this bot's first turn in the recorded `public-equity-memo` run (`20261031-045510-82e5`); it was the same in every turn of that run. The ids are Rakazo bot ids. The memory section is empty because no bot has memory tools.
+Verbatim from Rakazo's transcript of this bot's first turn in the recorded `public-equity-memo` run (`20261031-045510-82e5`); it was the same in every turn of that run. The instructions above have had small wording edits since that run, with no change to the workflow, and the report has since become English-only, so this recording still shows bilingual section titles. The ids are Rakazo bot ids. The memory section is empty because no bot has memory tools.
 
 ````text
 Fundamentals Analyst
