@@ -1,6 +1,6 @@
 # Tests
 
-382 offline tests. They spend no tokens and need neither Rakazo nor a network:
+383 offline tests. They spend no tokens and need neither Rakazo nor a network:
 - **SEC, Yahoo, FRED and the public registries:** recorded responses in `fixtures/` (trimmed from real ones) stand in for the live services, with a synthetic 10-K page for the filing reader and synthetic filings and charts for the valuation snapshot.
 - **Client documents:** the scenario decks in `src/fixtures/`, and Word, PowerPoint, Excel and PDF files each test builds.
 - **The case file:** every test points it at a temporary `runs/` folder (`conftest.py`), so no test writes into a live run's tool log.

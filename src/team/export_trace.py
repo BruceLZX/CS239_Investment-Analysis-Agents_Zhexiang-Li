@@ -163,8 +163,11 @@ def transcript_events(run: dict, agent: str) -> tuple[list[dict], dict]:
                 usage['model_calls'] += 1
         elif role == 'toolResult':
             tool = catalog.get(message.get('toolCallId')) or MCP_PREFIX_RE.sub('', message.get('toolName', ''))
+            text = _text_of(message.get('content'))
+            # An MCP tool's result reaches the bot as the text of the whole response, so its failure is flagged inside.
+            failed = bool(message.get('isError')) or text.rstrip().endswith('"isError":true}')
             events.append({**base, 'type': 'tool_result', 'tool': tool, 'call_id': message.get('toolCallId'),
-                           'is_error': bool(message.get('isError')), 'text': _text_of(message.get('content'))})
+                           'is_error': failed, 'text': text})
     return events, usage
 
 

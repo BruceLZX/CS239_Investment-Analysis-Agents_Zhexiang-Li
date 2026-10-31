@@ -412,6 +412,18 @@ def test_calls_through_rakazos_tool_catalog_count_as_the_tool_they_ran():
     assert events[1]['arguments'] == {} and events[1]['tool_full_name'] == 'connectors_execute_tool'
 
 
+def test_a_refused_call_counts_as_an_error():
+    # An MCP tool's result reaches the bot as the text of the whole response, so the transcript's own flag stays false.
+    refusal = '{"content":[{"type":"text","text":"Error executing tool deliver_memo: Refused by rule N5: no review."}],"isError":true}'
+    run = {'run_id': 'run-x', 'model': 'deepseek-flash', 'messages': [
+        (ms('2026-10-29T20:00:01+00:00'), assistant(call('c1', 'deliver_memo', {'version': 1}))),
+        (ms('2026-10-29T20:00:02+00:00'), tool_result('c1', 'deliver_memo', refusal)),
+        (ms('2026-10-29T20:00:03+00:00'), assistant(call('c2', 'get_case_status', {}))),
+        (ms('2026-10-29T20:00:04+00:00'), tool_result('c2', 'get_case_status', '{"content":[],"isError":false}'))]}
+    events, _ = export_trace.transcript_events(run, 'Lead Analyst')
+    assert [e['is_error'] for e in events if e['type'] == 'tool_result'] == [True, False]
+
+
 def test_round_percentages_do_not_mark_a_decks_content(tmp_path, monkeypatch):
     # "10%" from a deck's option-pool term matched an analyst's search about test accuracy.
     (tmp_path / 'deck.md').write_text('Option pool of 10% post-money. Accuracy **98.7%** across **K261734** sites, 51% margin.')
