@@ -223,7 +223,7 @@ def deliverable(verdict=None, version=1, findings=()):
     reviews = [{'id': 'R1', 'memo_version': version, 'round': 1, 'verdict': verdict, 'items': [], 'passes': {},
                 'finished_at': '2026-10-30T10:00:00+00:00'}] if verdict else []
     update_case(memo_drafts=[{'version': 1, 'rating': 'Watchlist', 'parts': {}, 'cover': {'company': 'Apple', 'industry': 'x'},
-                              'saved_at': '2026-10-30T09:00:00+00:00', 'composite_score': '6.0', 'changed_parts': [],
+                              'data_as_of': '2026-10-28', 'saved_at': '2026-10-30T09:00:00+00:00', 'composite_score': '6.0', 'changed_parts': [],
                               'files': {'html': str(html), 'markdown': str(case_file.active_run_dir() / 'report.md')},
                               'check': {'passed': True, 'rule_findings': list(findings)}}], reviews=reviews)
 

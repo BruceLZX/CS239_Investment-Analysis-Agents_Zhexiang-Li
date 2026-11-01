@@ -283,6 +283,21 @@ def test_sections_evidence_and_review_items_reach_the_page(runs, client):
     assert client.get('/api/runs/r1/report/v2.html').status_code == 404
 
 
+def test_a_delivered_version_shows_the_report_the_user_received(runs, client):
+    version = runs / 'r1' / 'versions' / 'v1'
+    version.mkdir(parents=True)
+    (version / 'report.html').write_text('<html>as saved</html>')
+    delivered = runs / 'r1' / 'delivery' / 'report.html'
+    delivered.parent.mkdir()
+    delivered.write_text('<html>as delivered</html>')
+    case = json.loads((runs / 'r1' / 'case.json').read_text())
+    case['deliveries'] = [{'memo_version': 1, 'html': str(delivered)}]
+    (runs / 'r1' / 'case.json').write_text(json.dumps(case))
+    assert client.get('/api/runs/r1/report/v1.html').text == '<html>as delivered</html>'
+    delivered.unlink()
+    assert client.get('/api/runs/r1/report/v1.html').text == '<html>as saved</html>'
+
+
 def test_the_new_tools_get_short_summaries():
     assert server._summary('save_memo_part', {'section': 'financials', 'markdown': 'x' * 3200}) == \
         'financials (3,200 characters)'

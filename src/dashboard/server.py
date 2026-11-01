@@ -354,13 +354,15 @@ def page(request):
 
 
 def version_report(request):
-    """A saved version's HTML report or PDF, as the server rendered it."""
+    """A saved version's HTML report or PDF, as the server rendered it, or as the user received it once delivered."""
     run_id, version, kind = (request.path_params['run_id'], request.path_params['version'],
                              request.path_params['kind'])
     path = case_file.RUNS / run_id / 'versions' / f'v{version}' / f'report.{kind}'
     if not RUN_ID_RE.match(run_id) or kind not in ('html', 'pdf') or not path.is_file():
         return JSONResponse({'error': f'No {kind} report for version {version} of run {run_id}.'}, status_code=404)
-    return FileResponse(path)
+    deliveries = json.loads((case_file.RUNS / run_id / 'case.json').read_text()).get('deliveries') or []
+    delivered = [Path(d[kind]) for d in deliveries if d['memo_version'] == version and d.get(kind)]
+    return FileResponse(delivered[-1] if delivered and delivered[-1].is_file() else path)
 
 
 def state(request):

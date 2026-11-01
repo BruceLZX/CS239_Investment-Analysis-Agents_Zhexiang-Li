@@ -437,6 +437,44 @@ def test_delivery_writes_the_folder_and_records_the_gate(runs_dir, tmp_path, mon
     assert record['memo_version'] == 1 and (case_file.active_run_dir() / 'memo_v1.md').exists()
 
 
+def reviewed(version: int, verdict: str, *important: str) -> None:
+    review_id = call('start_review', {'memo_version': version}, REVIEWER)['review_id']
+    items = [{'severity': 'Important', 'sections': ['financials'], 'issue': issue, 'action': 'Fix it.'} for issue in important]
+    for n in range(1, 6):
+        call('save_review_pass', {'review_id': review_id, 'pass_number': n, 'items': items if n == 1 else []}, REVIEWER)
+    call('finish_review', {'review_id': review_id, 'verdict': verdict, 'grade': 'B', 'top_three': [], 'ready': 'Yes'}, REVIEWER)
+
+
+@pytest.mark.parametrize('left_open, listed', [(('Attach rate has no source.',), True), ((), False)])
+def test_a_delivered_report_lists_only_what_its_own_review_left_open(runs_dir, monkeypatch, left_open, listed):
+    # Rendered when a version was saved, the list repeated the review before the approving one, fixed items and all.
+    printed = {}
+
+    def record_pdf(html_path: Path, pdf_path: Path, timeout: int = 180) -> dict:
+        printed[pdf_path.name] = html_path.read_text()
+        pdf_path.write_bytes(b'%PDF-1.4 stand-in')
+        return {'pdf': str(pdf_path)}
+
+    monkeypatch.setattr(report, 'write_pdf', record_pdf)
+    listed_case()
+    save('financials', FINANCIALS)
+    call('save_memo_version', VERSION, LEAD)
+    reviewed(1, 'revise', 'Debt maturities are missing.')
+    call('save_memo_version', VERSION, LEAD)
+    reviewed(2, 'approve', *left_open)
+    versions = case_file.active_run_dir() / 'versions'
+    assert 'Debt maturities are missing.' not in (versions / 'v2' / 'report.html').read_text()
+    before = (versions / 'v2' / 'report.html').read_text()
+
+    folder = Path(call('deliver_memo', {'version': 2}, LEAD)['folder'])
+    html = (folder / 'NorthwindDevices_Investment_Report.html').read_text()
+    assert printed['NorthwindDevices_Investment_Report.pdf'] == html  # the PDF says the same
+    assert 'Debt maturities are missing.' not in html
+    assert ('Areas for further diligence' in html) is listed
+    assert ('financials: Attach rate has no source.' in html) is listed
+    assert (versions / 'v2' / 'report.html').read_text() == before  # a version never changes
+
+
 def a_case_with_a_source() -> str:
     case_file.start_run('demo')
     return call('register_source', SOURCE, 'Valuation Analyst')['id']

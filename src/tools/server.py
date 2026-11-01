@@ -927,16 +927,18 @@ def _cover(case: dict, tagline: str, business_summary: str, industry: str, headq
             'business_summary': business_summary, 'industry': industry, 'headquarters': headquarters, 'stage': stage}
 
 
-def _further_diligence(case: dict) -> list[str]:
-    """Important review items still open, which the appendix lists as areas for further diligence."""
-    review = case_file.finished_reviews(case)[-1] if case_file.finished_reviews(case) else None
-    return [f"{', '.join(i['sections'])}: {i['issue']}" for i in (review or {}).get('items') or []
+def _further_diligence(case: dict, version: int) -> list[str]:
+    """The Important items of the version's own review, which its delivered report lists as areas for further
+    diligence."""
+    reviews = [review for review in case_file.finished_reviews(case) if review['memo_version'] == version]
+    return [f"{', '.join(i['sections'])}: {i['issue']}" for i in (reviews[-1]['items'] if reviews else [])
             if i['severity'] == 'Important']
 
 
-def _render(case: dict, texts: dict[str, str], cover: dict, data_as_of: str, composite: str) -> str:
+def _render(case: dict, texts: dict[str, str], cover: dict, data_as_of: str, composite: str,
+            further: list[str] | None = None) -> str:
     return report.render_report(texts, case['sources'], report.Cover(**cover), data_as_of, composite or '',
-                                case.get('user_data_requests') or [], _further_diligence(case))
+                                case.get('user_data_requests') or [], further)
 
 
 @tool(WRITE)
@@ -1183,9 +1185,10 @@ def get_latest_review() -> str:
 def deliver_memo(version: int = 0) -> dict:
     """Deliver a report version to the user: run the final check (report QA, citations, the delivery
     folder's contract) and write the delivery folder: sources/ with the client's documents, the HTML report and its
-    PDF. version 0 means the latest. It is refused unless the latest finished review covers that version and approves
-    it, and the version has no rule finding. Returns the delivery record: the review gate and the final check, whose
-    other findings are reported to the user."""
+    PDF. The report lists the Important items its review left open as areas for further diligence. version 0 means the
+    latest. It is refused unless the latest finished review covers that version and approves it, and the version has
+    no rule finding. Returns the delivery record: the review gate and the final check, whose other findings are
+    reported to the user."""
     with open_case() as case:
         saved = _version(case, version)
         gate = case_file.review_gate(case, saved['version'])
@@ -1202,13 +1205,11 @@ def deliver_memo(version: int = 0) -> dict:
                 shutil.copy2(path, folder / 'sources' / path.name)
         stem = report.report_file_name(cover['company'])
         html_path, pdf_path = folder / f'{stem}.html', folder / f'{stem}.pdf'
-        shutil.copy2(saved['files']['html'], html_path)
-        if saved['files'].get('pdf') and Path(saved['files']['pdf']).exists():
-            shutil.copy2(saved['files']['pdf'], pdf_path)
-            pdf = {'pdf': str(pdf_path)}
-        else:
-            pdf = report.write_pdf(html_path, pdf_path)
-        html_text = html_path.read_text()
+        # A version is rendered before its review, so only now can its report list what the review left open.
+        html_text = _render(case, texts, cover, saved['data_as_of'], saved.get('composite_score') or '',
+                            _further_diligence(case, saved['version']))
+        html_path.write_text(html_text)
+        pdf = report.write_pdf(html_path, pdf_path)
         depth = check_depth.check_report_depth(html_text, texts, case_file.is_listed(case))
         final = {
             'report': check_report.check_report(html_text, pdf_path, case_file.is_listed(case),
