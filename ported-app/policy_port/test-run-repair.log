@@ -1,0 +1,18 @@
+test_01_scope_freezes_and_session_recovers (policy_port.test_port.PortTests.test_01_scope_freezes_and_session_recovers) ... ok
+test_02_section_ownership_and_unknown_section (policy_port.test_port.PortTests.test_02_section_ownership_and_unknown_section) ... ok
+test_03_original_evidence_refusal_once_exception (policy_port.test_port.PortTests.test_03_original_evidence_refusal_once_exception) ... ok
+test_04_message_bounds_unrelated_input_and_case_isolation (policy_port.test_port.PortTests.test_04_message_bounds_unrelated_input_and_case_isolation) ... ok
+test_05_notes_retain_sources_routing_answers_and_errors (policy_port.test_port.PortTests.test_05_notes_retain_sources_routing_answers_and_errors) ... ok
+test_06_missing_prerequisites_and_roles (policy_port.test_port.PortTests.test_06_missing_prerequisites_and_roles) ... ok
+test_07_actual_report_review_reads_delivery (policy_port.test_port.PortTests.test_07_actual_report_review_reads_delivery) ... ok
+test_08_compare_original_effects_and_offline_visible_model (policy_port.test_port.PortTests.test_08_compare_original_effects_and_offline_visible_model) ... ok
+test_09_final_failure_length_exception (policy_port.test_port.PortTests.test_09_final_failure_length_exception) ... ok
+test_10_delegated_confidentiality_and_public_search (policy_port.test_port.PortTests.test_10_delegated_confidentiality_and_public_search) ... ok
+test_11_frozen_item_limit_gap_and_original_critical_guard (policy_port.test_port.PortTests.test_11_frozen_item_limit_gap_and_original_critical_guard) ... ok
+test_12_mcp_client_success_and_refusal_shapes (policy_port.test_port.PortTests.test_12_mcp_client_success_and_refusal_shapes) ... Tool 'tell_user' failed: 'Error executing tool tell_user: Refused by rule P8: {"decision": "blocked", "reasonCodes": ["P8"], "reasonType": "explicit_deny", "requestId": "88092987-9bb2-4def-8fbd-8c89b1978bb6"}'
+ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 11.009s
+
+OK

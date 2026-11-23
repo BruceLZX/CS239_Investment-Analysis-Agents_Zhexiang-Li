@@ -1,0 +1,105 @@
+{
+ "totalCount": 1906,
+ "studies": [
+  {
+   "protocolSection": {
+    "identificationModule": {
+     "nctId": "NCT06848361",
+     "briefTitle": "Helping Adults With Type 2 Diabetes Use Their Health Data for Healthy Diabetes Self-Management"
+    },
+    "statusModule": {
+     "overallStatus": "ACTIVE_NOT_RECRUITING",
+     "startDateStruct": {
+      "date": "2025-04-28"
+     },
+     "primaryCompletionDateStruct": {
+      "date": "2026-12"
+     },
+     "lastUpdatePostDateStruct": {
+      "date": "2026-10-29"
+     }
+    },
+    "sponsorCollaboratorsModule": {
+     "leadSponsor": {
+      "name": "Ann-Marie Rosland"
+     }
+    },
+    "designModule": {
+     "studyType": "INTERVENTIONAL",
+     "phases": [
+      "NA"
+     ],
+     "enrollmentInfo": {
+      "count": 80
+     }
+    }
+   }
+  },
+  {
+   "protocolSection": {
+    "identificationModule": {
+     "nctId": "NCT06274749",
+     "briefTitle": "Effects of Urolithin A Supplementation on Glucose Metabolism in Healthy Adults 55 >= Years Old: A Randomized Triple-Masked Controlled Clinical Trial"
+    },
+    "statusModule": {
+     "overallStatus": "RECRUITING",
+     "startDateStruct": {
+      "date": "2026-11-03"
+     },
+     "primaryCompletionDateStruct": {
+      "date": "2027-03-31"
+     },
+     "lastUpdatePostDateStruct": {
+      "date": "2026-10-29"
+     }
+    },
+    "sponsorCollaboratorsModule": {
+     "leadSponsor": {
+      "name": "National Institute on Aging (NIA)"
+     }
+    },
+    "designModule": {
+     "studyType": "INTERVENTIONAL",
+     "phases": [
+      "NA"
+     ],
+     "enrollmentInfo": {
+      "count": 180
+     }
+    }
+   }
+  },
+  {
+   "protocolSection": {
+    "identificationModule": {
+     "nctId": "NCT07637656",
+     "briefTitle": "Discovering Determinants of Food Intake by Application of Artificial Intelligence to Complex, High-Dimensional Data"
+    },
+    "statusModule": {
+     "overallStatus": "NOT_YET_RECRUITING",
+     "startDateStruct": {
+      "date": "2026-11-03"
+     },
+     "primaryCompletionDateStruct": {
+      "date": "2037-07-01"
+     },
+     "lastUpdatePostDateStruct": {
+      "date": "2026-10-29"
+     }
+    },
+    "sponsorCollaboratorsModule": {
+     "leadSponsor": {
+      "name": "National Institute of Diabetes and Digestive and Kidney Diseases (NIDDK)"
+     }
+    },
+    "designModule": {
+     "studyType": "OBSERVATIONAL",
+     "enrollmentInfo": {
+      "count": 800
+     }
+    }
+   }
+  }
+ ],
+ "nextPageToken": "ZVJ76sWHmqU2wRk2CJf6_LLvzILMOc8od7KrgP4bmzeRuv4-LXvIFvHRzo5F0CuQbc4MS74"
+}

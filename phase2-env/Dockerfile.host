@@ -1,0 +1,43 @@
+# The Linux host for `policyweave port` on an arm64 Mac. PolicyWeave's installer supports only Linux x86_64:
+# it runs Soufflé under prlimit on the host, mounts the coding CLI into Docker and relays model requests through a
+# Unix socket, none of which Docker Desktop on macOS provides. This image is native arm64 and runs its own dockerd.
+
+# Soufflé 2.5, built as the official x86_64 package is: 64-bit words, with ffi, openmp, ncurses, sqlite and zlib.
+FROM debian:bookworm AS souffle
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git ca-certificates build-essential cmake bison flex libffi-dev libncurses-dev libsqlite3-dev zlib1g-dev \
+        mcpp python3 \
+    && rm -rf /var/lib/apt/lists/*
+RUN git clone --depth 1 --branch 2.5 https://github.com/souffle-lang/souffle.git /src/souffle
+WORKDIR /src/souffle
+RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSOUFFLE_DOMAIN_64BIT=ON -DSOUFFLE_ENABLE_TESTING=OFF \
+        -DCMAKE_INSTALL_PREFIX=/opt/souffle/usr \
+    && cmake --build build -j"$(nproc)" \
+    && cmake --install build
+
+FROM python:3.12-slim-bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git ca-certificates curl util-linux iptables procps xz-utils mcpp \
+        libffi8 libgomp1 libncurses6 libtinfo6 libsqlite3-0 libstdc++6 libgcc-s1 zlib1g \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=souffle /opt/souffle /opt/souffle
+# Docker's static engine and CLI, from the official Docker-in-Docker image.
+COPY --from=docker:27-dind /usr/local/bin/ /usr/local/bin/
+COPY --from=docker:27-dind /usr/local/libexec/docker/cli-plugins/ /usr/local/libexec/docker/cli-plugins/
+# The same Codex release PolicyWeave pins for x86_64 (rust-v0.164.0), in its aarch64 build. PolicyWeave mounts the
+# directory holding `codex` into the coding container, so it sits alone in /opt/codex-bin.
+ADD --checksum=sha256:29a507a2a3fd8f6cd94b96b762d281d299d15d7902dee6132d314b78cf9108eb \
+    https://github.com/openai/codex/releases/download/rust-v0.164.0/codex-aarch64-unknown-linux-musl.tar.gz /tmp/codex.tar.gz
+RUN mkdir -p /opt/codex-bin && tar -xzf /tmp/codex.tar.gz -C /opt/codex-bin \
+    && mv /opt/codex-bin/codex-aarch64-unknown-linux-musl /opt/codex-bin/codex && rm /tmp/codex.tar.gz
+# Codex runs its shell and file tools through this host; without it every tool call fails closed and the coding
+# stages write nothing. It ships as a separate asset of the same release.
+ADD --checksum=sha256:0e0bdde24d5b31b05519693635baa9c4f2dc4fe7eee31c67b92155f190dd32d2 \
+    https://github.com/openai/codex/releases/download/rust-v0.164.0/codex-code-mode-host-aarch64-unknown-linux-musl.tar.gz /tmp/cmh.tar.gz
+RUN tar -xzf /tmp/cmh.tar.gz -C /tmp && install -m 755 /tmp/codex-code-mode-host-aarch64-unknown-linux-musl \
+        /opt/codex-bin/codex-code-mode-host && rm /tmp/cmh.tar.gz /tmp/codex-code-mode-host-aarch64-unknown-linux-musl \
+    && useradd -m -u 1000 -s /bin/sh pw
+ENV PATH="/opt/codex-bin:/opt/souffle/usr/bin:${PATH}" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+VOLUME /var/lib/docker
+ENTRYPOINT ["dockerd-entrypoint.sh"]
+CMD []

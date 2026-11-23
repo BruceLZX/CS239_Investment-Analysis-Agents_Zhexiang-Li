@@ -1,0 +1,54 @@
+{
+ "Count": 8,
+ "Message": "Results returned successfully",
+ "results": [
+  {
+   "Manufacturer": "Tesla, Inc.",
+   "NHTSACampaignNumber": "25V359000",
+   "parkIt": false,
+   "parkOutSide": false,
+   "overTheAirUpdate": false,
+   "ReportReceivedDate": "30/05/2025",
+   "Component": "VISIBILITY:WINDSHIELD WIPER/WASHER:LINKAGES",
+   "Summary": "Tesla, Inc. (Tesla) is recalling certain 2026 Model Y vehicles. The hose connector may block the windshield washer nozzles, preventing washer fluid from reaching the windshield. As such, these vehicles fail to comply with the requirements of Federal Motor Vehicle Safety Standard (FMVSS) number 104, \"Windshield Wiping and Washing Systems.\"",
+   "Consequence": "The inability to clean the windshield reduces the driver’s visibility and increases the risk of a crash.",
+   "Remedy": "Tesla service will inspect and replace the wiper arm elbow connector as necessary, free of charge. Owner notification letters were mailed July 25, 2025. Owners may contact Tesla customer service at 1-877-798-3752. Tesla's number for this recall is SB-25-20-001.",
+   "Notes": null,
+   "ModelYear": "2026",
+   "Make": "TESLA",
+   "Model": "MODEL Y"
+  },
+  {
+   "Manufacturer": "Tesla, Inc.",
+   "NHTSACampaignNumber": "25V410000",
+   "parkIt": false,
+   "parkOutSide": false,
+   "overTheAirUpdate": false,
+   "ReportReceivedDate": "18/06/2025",
+   "Component": "SEATS:CRITICAL FASTENERS",
+   "Summary": "Tesla, Inc. (Tesla) is recalling certain 2026 Model 3 and Model Y vehicles. The fasteners attaching the seat back to the seat bottom may have been improperly tightened.",
+   "Consequence": "The seat may not properly restrain the occupant, increasing the risk of injury during a crash.",
+   "Remedy": "Tesla Service Centers will inspect and tighten or replace the seat assembly fasteners as necessary, free of charge. Owner notification letters were mailed August 16, 2025. Owners may contact Tesla customer service at 1-877-798-3752. Tesla's number for this recall is SB-25-13-003.",
+   "Notes": null,
+   "ModelYear": "2026",
+   "Make": "TESLA",
+   "Model": "MODEL Y"
+  },
+  {
+   "Manufacturer": "Tesla, Inc.",
+   "NHTSACampaignNumber": "25V490000",
+   "parkIt": false,
+   "parkOutSide": false,
+   "overTheAirUpdate": false,
+   "ReportReceivedDate": "28/07/2025",
+   "Component": "ELECTRICAL SYSTEM:HORN",
+   "Summary": "Tesla, Inc. (Tesla) is recalling certain 2026 Model Y vehicles. The ring terminal of the horn ground wire may be improperly secured, allowing the circuit to open and preventing the horn from sounding.",
+   "Consequence": "An inoperable horn may prevent the driver from alerting other drivers as needed, increasing the risk of a crash.",
+   "Remedy": "Tesla service will replace the steering wheel, free of charge. Owner notification letters were be mailed September 23, 2025. Owners may contact Tesla customer service at 1-877-798-3752. Tesla's number for this recall is SB-25-17-009.",
+   "Notes": null,
+   "ModelYear": "2026",
+   "Make": "TESLA",
+   "Model": "MODEL Y"
+  }
+ ]
+}

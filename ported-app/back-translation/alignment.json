@@ -1,0 +1,454 @@
+{
+  "links": [
+    {
+      "sentenceId": "sentence:0:3",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:4:167",
+      "procedureIds": [
+        "message_permission"
+      ]
+    },
+    {
+      "sentenceId": "sentence:169:172",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:173:606",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:608:611",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:612:1062",
+      "procedureIds": [
+        "section_ownership",
+        "version_authors"
+      ]
+    },
+    {
+      "sentenceId": "sentence:1063:1215",
+      "procedureIds": [
+        "version_permission",
+        "delivery_permission",
+        "start_permission",
+        "pass_permission",
+        "approve_permission",
+        "revise_permission",
+        "reject_permission",
+        "red_team_record"
+      ]
+    },
+    {
+      "sentenceId": "sentence:1217:1220",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:1221:1719",
+      "procedureIds": [
+        "scope_permission",
+        "lead_part_permission",
+        "version_permission",
+        "delivery_permission",
+        "message_permission"
+      ]
+    },
+    {
+      "sentenceId": "sentence:1721:1724",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:1725:2027",
+      "procedureIds": [
+        "scope_once"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2029:2032",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:2033:2374",
+      "procedureIds": [
+        "version_sections",
+        "version_authors",
+        "version_thesis",
+        "version_scenarios",
+        "red_team_record",
+        "qa_execution"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2376:2379",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:2380:2671",
+      "procedureIds": [
+        "delivery_approval"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2673:2676",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:2677:2999",
+      "procedureIds": [
+        "message_length"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3001:3004",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:3005:3221",
+      "procedureIds": [
+        "version_review_lock",
+        "review_round_limit"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3222:3334",
+      "procedureIds": [
+        "delivery_final_failure",
+        "message_length"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3336:3340",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:3341:3794",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:3796:3800",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:3801:4064",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:4066:4070",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:4071:4268",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:4270:4274",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:4275:4509",
+      "procedureIds": [
+        "message_length"
+      ]
+    },
+    {
+      "sentenceId": "sentence:4511:4515",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:4516:4743",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:4745:4749",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:4750:4942",
+      "procedureIds": [
+        "message_permission"
+      ]
+    },
+    {
+      "sentenceId": "sentence:4944:4948",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:4949:6034",
+      "procedureIds": [
+        "researcher_part_permission",
+        "note_permission",
+        "red_team_record"
+      ]
+    },
+    {
+      "sentenceId": "sentence:6036:6040",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:6041:6254",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:6255:6368",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:6370:6374",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:6375:6629",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:6631:6635",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:6636:6765",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:6767:6771",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:6772:7088",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:7090:7094",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:7095:7264",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:7266:7270",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:7271:7565",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:7567:7571",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:7572:7767",
+      "procedureIds": [
+        "start_permission",
+        "pass_permission",
+        "approve_permission",
+        "revise_permission",
+        "reject_permission",
+        "review_start_evidence",
+        "message_permission"
+      ]
+    },
+    {
+      "sentenceId": "sentence:7769:7773",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:7774:8072",
+      "procedureIds": [
+        "start_permission",
+        "pass_permission",
+        "approve_permission",
+        "revise_permission",
+        "reject_permission"
+      ]
+    },
+    {
+      "sentenceId": "sentence:8074:8078",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:8079:8397",
+      "procedureIds": [
+        "finish_passes",
+        "approval_findings"
+      ]
+    },
+    {
+      "sentenceId": "sentence:8399:8403",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:8404:8649",
+      "procedureIds": [
+        "pass_permission"
+      ]
+    },
+    {
+      "sentenceId": "sentence:8651:8655",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:8656:8814",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:8816:8820",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:8821:8964",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:8966:8970",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:8971:9253",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:9255:9259",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:9260:9485",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:9487:9491",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:9492:9726",
+      "procedureIds": [
+        "scope_permission",
+        "lead_part_permission",
+        "researcher_part_permission",
+        "version_permission",
+        "start_permission",
+        "pass_permission",
+        "approve_permission",
+        "revise_permission",
+        "reject_permission",
+        "delivery_permission",
+        "message_permission",
+        "note_permission"
+      ]
+    },
+    {
+      "sentenceId": "sentence:9728:9732",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:9733:9929",
+      "procedureIds": [
+        "section_ownership",
+        "version_authors"
+      ]
+    },
+    {
+      "sentenceId": "sentence:9931:9935",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:9936:10076",
+      "procedureIds": [
+        "plan_execution",
+        "profile_execution"
+      ]
+    },
+    {
+      "sentenceId": "sentence:10078:10082",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:10083:10342",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:10344:10348",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:10349:10524",
+      "procedureIds": [
+        "section_ownership",
+        "version_authors",
+        "red_team_record",
+        "review_start_evidence"
+      ]
+    },
+    {
+      "sentenceId": "sentence:10526:10530",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:10531:10683",
+      "procedureIds": [
+        "qa_execution"
+      ]
+    },
+    {
+      "sentenceId": "sentence:10685:10689",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:10690:11001",
+      "procedureIds": [
+        "finish_passes"
+      ]
+    },
+    {
+      "sentenceId": "sentence:11003:11007",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:11008:11325",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:11327:11331",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:11332:11560",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:11562:11566",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:11567:11860",
+      "procedureIds": [
+        "delivery_findings"
+      ]
+    },
+    {
+      "sentenceId": "sentence:11862:11866",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:11867:12077",
+      "procedureIds": [
+        "section_ownership",
+        "version_authors"
+      ]
+    },
+    {
+      "sentenceId": "sentence:12079:12083",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:12084:12501",
+      "procedureIds": [
+        "note_permission",
+        "note_length"
+      ]
+    }
+  ]
+}

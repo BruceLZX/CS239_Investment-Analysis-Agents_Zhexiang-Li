@@ -1,0 +1,284 @@
+// Frozen configuration: exactly the 26 supplied facts.
+PrincipalGroup("Lead Analyst", "lead_role").
+PrincipalGroup("Company Analyst", "company_role").
+PrincipalGroup("Product Analyst", "product_role").
+PrincipalGroup("Market Analyst", "market_role").
+PrincipalGroup("Fundamentals Analyst", "fundamentals_role").
+PrincipalGroup("Valuation Analyst", "valuation_role").
+PrincipalGroup("Regulatory Analyst", "regulatory_role").
+PrincipalGroup("Red Team Analyst", "red_team_role").
+PrincipalGroup("IC Reviewer", "reviewer_role").
+PrincipalGroup("company_role", "researcher_roles").
+PrincipalGroup("product_role", "researcher_roles").
+PrincipalGroup("market_role", "researcher_roles").
+PrincipalGroup("fundamentals_role", "researcher_roles").
+PrincipalGroup("valuation_role", "researcher_roles").
+PrincipalGroup("regulatory_role", "researcher_roles").
+PrincipalGroup("red_team_role", "researcher_roles").
+Capability("lead_role", "report_sections", "save_memo_part").
+Capability("researcher_roles", "report_sections", "save_memo_part").
+Capability("lead_role", "case", "set_case_scope").
+Capability("lead_role", "report", "save_memo_version").
+Capability("lead_role", "report", "deliver_memo").
+Capability("lead_role", "user_messages", "tell_user").
+Capability("reviewer_role", "reviews", "start_review").
+Capability("reviewer_role", "reviews", "save_review_pass").
+Capability("reviewer_role", "reviews", "finish_review").
+Capability("researcher_roles", "case_notes", "leave_note").
+
+// Gates consume complete, locked, immutable request snapshots under the frozen
+// producer contract. Q is the request-associated snapshot, not a content node.
+// Never publish partial snapshots after a read/validation failure. Field absence
+// does not certify clean content. No provenance mechanism is selected here.
+// Endpoint attribution is not authentication. No permission is added for the
+// seven producer actions; retain their original availability and guards.
+// P34 evidence-first/refuse-once, budgets, routing, content checks, validation,
+// PDF errors and other original guards remain delegated to the real callbacks.
+// Native reasons use the original policy/error vocabulary in the ToolError path.
+// A refusal must never execute a callback merely to recover an absence error.
+
+// Capability alone is insufficient: each gate also requires its configured role.
+Deny(Q, "P31") :- Request(Q, P, A), Capability(G, Scope, A), not Can(P, Scope, A).
+
+Allow(Q) :- Request(Q, P, "set_case_scope"), InGroup(P, "lead_role"),
+    Can(P, "case", "set_case_scope"), Field(Q, "case_id", C).
+Deny(Q, "P5") :- Request(Q, P, "set_case_scope"), Field(Q, "scope_record", S).
+
+// No unknown-section escape Allow: the native P32 refusal must preserve the
+// caller-safe original section-resolution error when resolution failed. Exact
+// dynamic error text cannot be reconstructed in this rule vocabulary.
+Allow(Q) :- Request(Q, P, "save_memo_part"),
+    Can(P, "report_sections", "save_memo_part"), InGroup(P, "lead_role"),
+    Field(Q, "case_id", C), Field(Q, "section_key", K), Field(Q, "owner", P).
+Allow(Q) :- Request(Q, P, "save_memo_part"),
+    Can(P, "report_sections", "save_memo_part"), InGroup(P, "researcher_roles"),
+    Field(Q, "case_id", C), Field(Q, "section_key", K), Field(Q, "owner", P).
+Deny(Q, "P32") :- Request(Q, P, "save_memo_part"), not Allow(Q).
+
+// P6/P33/P36: every slot must have its recorded configured owner's revision;
+// all three records must exist. Real QA/plan/profile executions must be by this
+// Lead, in this case, after the same number of saved versions. Check failure
+// inside a successfully returned QA operation still counts as running QA.
+
+Allow(Q) :- Request(Q, P, "save_memo_version"),
+    InGroup(P, "lead_role"),
+    Can(P, "report", "save_memo_version"),
+    Field(Q, "case_id", C),
+    Field(Q, "version_count", N),
+    Field(Q, "section_record", S0),
+    Field(S0, "section_key", "executive_summary"),
+    Field(S0, "owner", O0),
+    Field(S0, "author", O0),
+    Field(Q, "section_record", S1),
+    Field(S1, "section_key", "company_overview"),
+    Field(S1, "owner", O1),
+    Field(S1, "author", O1),
+    Field(Q, "section_record", S2),
+    Field(S2, "section_key", "team"),
+    Field(S2, "owner", O2),
+    Field(S2, "author", O2),
+    Field(Q, "section_record", S3),
+    Field(S3, "section_key", "technology_product"),
+    Field(S3, "owner", O3),
+    Field(S3, "author", O3),
+    Field(Q, "section_record", S4),
+    Field(S4, "section_key", "market"),
+    Field(S4, "owner", O4),
+    Field(S4, "author", O4),
+    Field(Q, "section_record", S5),
+    Field(S5, "section_key", "competition"),
+    Field(S5, "owner", O5),
+    Field(S5, "author", O5),
+    Field(Q, "section_record", S6),
+    Field(S6, "section_key", "business_model"),
+    Field(S6, "owner", O6),
+    Field(S6, "author", O6),
+    Field(Q, "section_record", S7),
+    Field(S7, "section_key", "financials"),
+    Field(S7, "owner", O7),
+    Field(S7, "author", O7),
+    Field(Q, "section_record", S8),
+    Field(S8, "section_key", "funding_valuation"),
+    Field(S8, "owner", O8),
+    Field(S8, "author", O8),
+    Field(Q, "section_record", S9),
+    Field(S9, "section_key", "strategy"),
+    Field(S9, "owner", O9),
+    Field(S9, "author", O9),
+    Field(Q, "section_record", S10),
+    Field(S10, "section_key", "risk"),
+    Field(S10, "owner", O10),
+    Field(S10, "author", O10),
+    Field(Q, "section_record", S11),
+    Field(S11, "section_key", "thesis"),
+    Field(S11, "owner", O11),
+    Field(S11, "author", O11),
+    Field(Q, "section_record", S12),
+    Field(S12, "section_key", "exit"),
+    Field(S12, "owner", O12),
+    Field(S12, "author", O12),
+    Field(Q, "section_record", S13),
+    Field(S13, "section_key", "esg"),
+    Field(S13, "owner", O13),
+    Field(S13, "author", O13),
+    Field(Q, "section_record", S14),
+    Field(S14, "section_key", "scoring"),
+    Field(S14, "owner", O14),
+    Field(S14, "author", O14),
+    Field(Q, "workflow_record", W0),
+    Field(W0, "workflow_kind", "thesis_table"),
+    Field(Q, "workflow_record", W1),
+    Field(W1, "workflow_kind", "scenario_analysis"),
+    Field(Q, "workflow_record", W2),
+    Field(W2, "workflow_kind", "red_team_review"),
+    Field(W2, "author", RT),
+    InGroup(RT, "red_team_role"),
+    Event(QA, P, "run_qa_loop"),
+    Field(QA, "case_id", C),
+    Field(QA, "outcome", "applied"),
+    Field(QA, "preceding_version_count", N),
+    Event(RP, P, "save_research_plan"),
+    Field(RP, "case_id", C),
+    Field(RP, "outcome", "applied"),
+    Field(RP, "preceding_version_count", N),
+    Event(PR, P, "save_profile_requirements"),
+    Field(PR, "case_id", C),
+    Field(PR, "outcome", "applied"),
+    Field(PR, "preceding_version_count", N).
+
+// P6 is a combined prerequisites refusal, not an assertion of which record is
+// absent. Missing event joins cannot be explained separately without helpers.
+Deny(Q, "P6") :- Request(Q, P, "save_memo_version"), not Allow(Q).
+Deny(Q, "P9") :- Request(Q, P, "save_memo_version"), Field(Q, "review_record", R),
+    not Field(R, "verdict", "approve"), not Field(R, "verdict", "revise"),
+    not Field(R, "verdict", "reject").
+
+// Resolved version numbers are actual _version results, including version 0.
+// First-review prerequisites do not block subsequent reviews of imported work.
+Allow(Q) :- Request(Q, P, "start_review"), InGroup(P, "reviewer_role"),
+    Can(P, "reviews", "start_review"), Field(Q, "case_id", C),
+    Field(Q, "memo_version", N), Field(Q, "review_record", Earlier),
+    Field(Earlier, "verdict", V).
+Allow(Q) :- Request(Q, P, "start_review"), InGroup(P, "reviewer_role"),
+    Can(P, "reviews", "start_review"), Field(Q, "case_id", C), Field(Q, "memo_version", N),
+    Field(Q, "workflow_record", W), Field(W, "workflow_kind", "red_team_review"),
+    Field(W, "author", RT), InGroup(RT, "red_team_role"),
+    Field(Q, "section_record", S), Field(S, "section_key", "risk"),
+    Field(S, "owner", RT), Field(S, "author", RT).
+Deny(Q, "P35") :- Request(Q, P, "start_review"), not Allow(Q).
+Deny(Q, "P9") :- Request(Q, P, "start_review"), Field(Q, "memo_version", N),
+    Field(Q, "review_record", R), Field(R, "memo_version", N), Field(R, "verdict", V).
+Deny(Q, "P9") :- Request(Q, P, "start_review"), Field(Q, "memo_version", N),
+    Field(Q, "review_record", R), Field(R, "memo_version", Other), Other != N,
+    not Field(R, "verdict", "approve"), not Field(R, "verdict", "revise"),
+    not Field(R, "verdict", "reject").
+Deny(Q, "P9") :- Request(Q, P, "start_review"), Field(Q, "review_record", R),
+    Field(R, "review_round", Round), Round >= 3, Field(R, "verdict", V).
+
+Allow(Q) :- Request(Q, P, "save_review_pass"), InGroup(P, "reviewer_role"),
+    Can(P, "reviews", "save_review_pass"), Field(Q, "case_id", C).
+
+// The finish snapshot resolves the referenced review's actual memo_version.
+// A review snapshot for that number supplies the five raw saved pass keys.
+Allow(Q) :- Request(Q, P, "finish_review"), InGroup(P, "reviewer_role"),
+    Can(P, "reviews", "finish_review"), Field(Q, "case_id", C),
+    Field(Q, "memo_version", N), Field(Q, "review_record", R), Field(R, "memo_version", N),
+    Field(R, "pass_number", 1), Field(R, "pass_number", 2), Field(R, "pass_number", 3),
+    Field(R, "pass_number", 4), Field(R, "pass_number", 5).
+Deny(Q, "P37") :- Request(Q, P, "finish_review"), not Allow(Q).
+// A verdict stands; prevent a second finish from changing it as well as a reset.
+Deny(Q, "P9") :- Request(Q, P, "finish_review"), Field(Q, "memo_version", N),
+    Field(Q, "review_record", R), Field(R, "memo_version", N), Field(R, "verdict", V).
+// Q's rule_finding rows are the frozen selected saved check, not live QA output.
+// The raw Parameter spelling is canonical here; whitespace/case variants remain
+// guarded by the original normalization and clean_before_approval check.
+Deny(Q, "P25") :- Request(Q, P, "finish_review"), Parameter(Q, "verdict", "approve"),
+    Field(Q, "rule_finding", Finding).
+
+// Delivery uses a real stored approval. Any later finished review supersedes it.
+// Positive approval is required; missing review/version never grants an error call.
+Allow(Q) :- Request(Q, P, "deliver_memo"), InGroup(P, "lead_role"),
+    Can(P, "report", "deliver_memo"), Field(Q, "case_id", C), Field(Q, "memo_version", N),
+    Field(Q, "review_record", R), Field(R, "memo_version", N), Field(R, "verdict", "approve"),
+    Field(R, "review_position", Position).
+Deny(Q, "N5") :- Request(Q, P, "deliver_memo"), not Allow(Q).
+Deny(Q, "N5") :- Request(Q, P, "deliver_memo"), Field(Q, "memo_version", N),
+    Field(Q, "review_record", R), Field(R, "memo_version", N), Field(R, "verdict", "approve"),
+    Field(R, "review_position", Position), Field(Q, "review_record", Later),
+    Field(Later, "verdict", V), Field(Later, "review_position", LaterPosition), LaterPosition > Position.
+Deny(Q, "P9") :- Request(Q, P, "deliver_memo"), Field(Q, "review_record", R),
+    Field(R, "review_round", Round), Round >= 3, Field(R, "verdict", V), V != "approve".
+Deny(Q, "P40") :- Request(Q, P, "deliver_memo"), Field(Q, "rule_finding", Finding).
+
+// Length is exact Unicode len, not a semantic status/content classifier.
+Allow(Q) :- Request(Q, P, "tell_user"), InGroup(P, "lead_role"),
+    Can(P, "user_messages", "tell_user"), Field(Q, "case_id", C),
+    Field(Q, "character_count", Length), Length >= 0, Length <= 300.
+// Only a locally recorded delivery of a reviewer-approved version lifts length.
+// This is neither proof of receipt nor of successful final PDF generation.
+Allow(Q) :- Request(Q, P, "tell_user"), InGroup(P, "lead_role"),
+    Can(P, "user_messages", "tell_user"), Field(Q, "case_id", C),
+    Field(Q, "character_count", Length), Length >= 0,
+    Field(Q, "delivery_record", D), Field(D, "memo_version", N),
+    Field(Q, "review_record", R), Field(R, "memo_version", N), Field(R, "verdict", "approve").
+// Preserve the final-failure path under original guards. This is deliberately
+// a P8 length exception only: it never bypasses N6 or authorizes any delivery.
+// The producer cannot identify which particular message reports final failure;
+// precise exception content remains a gap, not an assertion of message safety.
+Allow(Q) :- Request(Q, P, "tell_user"), InGroup(P, "lead_role"),
+    Can(P, "user_messages", "tell_user"), Field(Q, "case_id", C),
+    Field(Q, "character_count", Length), Length >= 0, Field(Q, "review_record", R),
+    Field(R, "review_round", Round), Round >= 3, Field(R, "verdict", V), V != "approve".
+Deny(Q, "P8") :- Request(Q, P, "tell_user"), not Allow(Q).
+
+Allow(Q) :- Request(Q, P, "leave_note"), InGroup(P, "researcher_roles"),
+    Can(P, "case_notes", "leave_note"), Field(Q, "case_id", C),
+    Field(Q, "character_count", Length), Length > 0, Length <= 600.
+Deny(Q, "P42") :- Request(Q, P, "leave_note"), not Allow(Q).
+
+// RULE-STAGE GAPS / binding mismatches (do not change frozen schemas to hide them):
+// P10: no company-type, source-register association, source type/date fields.
+// Native label/evidence joins cannot implement the planned structural gate.
+// Retain original rating vocabulary/heuristic checks; independent-label
+// correction and semantic filing identity/support/analysis remain unimplemented.
+// P7 edits / P9 requested revisions: no selected-version-object association,
+// review-item/section or revision-request link. A case_id/memo_version pair on
+// an arbitrary snapshot does not distinguish current parts from saved references.
+// Do not guess a version object, treat every section as requested, or demand all
+// sections change. Immutable saved references and original guards are retained;
+// additive edit/revision-completion checks are unimplemented gaps.
+// P25 history: review_scope uses an actual review identity; mutable review_record
+// objects are snapshot-specific. No stable review-ID link is frozen. There is
+// also no discriminator for a whole-version versus section-only check read.
+// Universal per-section successful read coverage needs a join/absence helper
+// unavailable without a new IDB. Do not substitute tool-name presence, a single
+// section, same-case history, or current-conversation history for exact reads.
+// Keep original coarser read guard; exact scoped reads/earlier-review conditions
+// remain gaps. The producer observations are task history, not model inputs.
+// P25/P37 Critical: severity is on item objects, but no review-to-item link is
+// frozen. Denying on any Critical in the case would also block valid re-reviews.
+// Retain original exact current-review Critical guard, not a new unscoped check.
+// P26 first-round ten-item limit: routed_item_count describes TWO collections,
+// with no frozen association identifying proposed vs retained-other-pass counts.
+// No native sum/arithmetic is admitted. Finite threshold pairs could compare
+// two linked counts, but cannot supply these missing collection identities.
+// This planned supported condition is unimplemented, not replaced by separate
+// ten-item bounds, a new combined count or magic Field rows.
+// Scope absence and saved-check absence depend on successful complete capture
+// and the original case lock; there is no completeness/clock field. Missing or
+// invalid prerequisites have no positive Allow, except delegated argument checks
+// on already authorized operations. Absence-specific dynamic original errors
+// cannot all be represented; never grant a callback solely to obtain such errors.
+// P8 final-failure message semantics, P13 internal material, P11/P12/N4 saved
+// findings and P34 gate/retry semantics retain original delegated heuristics.
+// Unknown or unavailable capture must never be described as clean or safe.
+// All unsupported/ambiguous inventory and binding-plan portions remain gaps:
+// missing message_bot/automatic reply/model input/output boundaries, exact brief
+// and turn accounting, authentication, semantic source/figure/confidentiality/
+// instruction judgments, user receipt, direct helper and cross-process bypasses.
+// No content lineage is manufactured from accumulated task exposure or citations.
+// DependsOn/Provenance would mean possible influence, never proven use, truth,
+// exact disclosure or approval. No absence of origins establishes cleanliness.
+// These rules do not claim complete mediation, exact delivered-content approval,
+// semantic revision resolution, or task success. Execution verification belongs
+// to the host's later stage; native initialization must use its unchanged limits.

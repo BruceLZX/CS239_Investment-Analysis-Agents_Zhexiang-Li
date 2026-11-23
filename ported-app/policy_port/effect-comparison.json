@@ -1,0 +1,13 @@
+[
+  {
+    "scenario": "scope replacement",
+    "baseline_company": "Other",
+    "protected_company": "Example",
+    "fixture": "offline development; baseline uses unchanged unwrapped candidate body"
+  },
+  {
+    "scenario": "P26 frozen binding mismatch",
+    "actual_first_round_important_items": 11,
+    "coverage": "unimplemented; original callback and frozen rules allow this"
+  }
+]

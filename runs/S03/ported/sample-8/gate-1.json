@@ -1,0 +1,4130 @@
+{
+  "format": "policyscope-trajectory",
+  "version": 1,
+  "traceId": "0667f37bcf9f42dfb5d3d2ff465eed0b",
+  "policy": {
+    "binding": {
+      "version": 1,
+      "id": "application-policy",
+      "context": "Reviewed local application policy.",
+      "predicates": {
+        "Request": {
+          "kind": "input",
+          "args": [
+            "Q",
+            "Principal",
+            "EventKind"
+          ],
+          "meaning": "Runtime-owned immutable request."
+        },
+        "Parameter": {
+          "kind": "input",
+          "args": [
+            "Q",
+            "Name",
+            "Value"
+          ],
+          "meaning": "Runtime-bound request argument."
+        },
+        "Allow": {
+          "kind": "derived",
+          "args": [
+            "Q"
+          ],
+          "meaning": "Explicit request permission."
+        },
+        "Deny": {
+          "kind": "derived",
+          "args": [
+            "Q",
+            "Reason"
+          ],
+          "meaning": "Explicit request refusal; overrides Allow."
+        },
+        "Capability": {
+          "kind": "input",
+          "args": [
+            "Principal",
+            "Scope",
+            "EventKind"
+          ],
+          "meaning": "Explicit operation grant on a resource or permission scope."
+        },
+        "PrincipalGroup": {
+          "kind": "input",
+          "args": [
+            "Principal",
+            "Group"
+          ],
+          "meaning": "Direct membership in a configured role or user group; a group can itself be a member. Supplied by trusted configuration or an authoritative identity source, never inferred from an agent-chosen name."
+        },
+        "ResourceGroup": {
+          "kind": "input",
+          "args": [
+            "Parent",
+            "Child"
+          ],
+          "meaning": "Permission-scope membership; grants on a parent apply to its descendants."
+        },
+        "InGroup": {
+          "kind": "derived",
+          "args": [
+            "Principal",
+            "Group"
+          ],
+          "meaning": "Direct or nested role/user-group membership from PrincipalGroup. Membership alone is not permission."
+        },
+        "Can": {
+          "kind": "derived",
+          "args": [
+            "Principal",
+            "Resource",
+            "EventKind"
+          ],
+          "meaning": "Grant including declared principal and resource memberships; not final authorization."
+        },
+        "Field": {
+          "kind": "input",
+          "args": [
+            "Object",
+            "Name",
+            "Value"
+          ],
+          "hostOnly": true,
+          "meaning": "Host-observed field or association of an application object or event. The binding defines cardinality, value type, fixed unit and optional observation-time field; never agent claims or hidden policy decisions."
+        },
+        "Event": {
+          "kind": "input",
+          "args": [
+            "Id",
+            "Principal",
+            "Kind"
+          ],
+          "key": [
+            "Id"
+          ],
+          "hostOnly": true,
+          "appendOnly": true,
+          "meaning": "An event observed by the host, with its ID, actor and kind; recording it does not imply permission or success."
+        }
+      },
+      "decision": {
+        "request": "Request",
+        "parameters": "Parameter",
+        "allow": "Allow",
+        "deny": "Deny"
+      },
+      "tests": [],
+      "configuration": [
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Lead Analyst",
+            "lead_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Company Analyst",
+            "company_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Product Analyst",
+            "product_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Market Analyst",
+            "market_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Fundamentals Analyst",
+            "fundamentals_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Valuation Analyst",
+            "valuation_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Regulatory Analyst",
+            "regulatory_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Red Team Analyst",
+            "red_team_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "IC Reviewer",
+            "reviewer_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "company_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "product_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "market_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "fundamentals_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "valuation_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "regulatory_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "red_team_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "report_sections",
+            "save_memo_part"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "researcher_roles",
+            "report_sections",
+            "save_memo_part"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "case",
+            "set_case_scope"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "report",
+            "save_memo_version"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "report",
+            "deliver_memo"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "user_messages",
+            "tell_user"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "reviewer_role",
+            "reviews",
+            "start_review"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "reviewer_role",
+            "reviews",
+            "save_review_pass"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "reviewer_role",
+            "reviews",
+            "finish_review"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "researcher_roles",
+            "case_notes",
+            "leave_note"
+          ]
+        }
+      ],
+      "invariants": [],
+      "mechanisms": [
+        "capability",
+        "observations"
+      ],
+      "observationContract": {
+        "fields": {
+          "case_id": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "scope_record": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "section_key": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "owner": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "section_record": {
+            "cardinality": "many",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "author": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "revision": {
+            "cardinality": "one",
+            "type": "number",
+            "unit": "revision",
+            "observedAt": null
+          },
+          "content_hash": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "workflow_kind": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "workflow_record": {
+            "cardinality": "many",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "version_count": {
+            "cardinality": "one",
+            "type": "number",
+            "unit": "version",
+            "observedAt": null
+          },
+          "preceding_version_count": {
+            "cardinality": "one",
+            "type": "number",
+            "unit": "version",
+            "observedAt": null
+          },
+          "memo_version": {
+            "cardinality": "one",
+            "type": "number",
+            "unit": "version",
+            "observedAt": null
+          },
+          "review_record": {
+            "cardinality": "many",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "review_position": {
+            "cardinality": "one",
+            "type": "number",
+            "unit": "list_index",
+            "observedAt": null
+          },
+          "review_round": {
+            "cardinality": "one",
+            "type": "number",
+            "unit": "round",
+            "observedAt": null
+          },
+          "verdict": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "pass_number": {
+            "cardinality": "many",
+            "type": "number",
+            "unit": "pass",
+            "observedAt": null
+          },
+          "severity": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "routed_item_count": {
+            "cardinality": "one",
+            "type": "number",
+            "unit": "item",
+            "observedAt": null
+          },
+          "rule_finding": {
+            "cardinality": "many",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "outcome": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "review_scope": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "returned_section": {
+            "cardinality": "many",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "returned_review": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "character_count": {
+            "cardinality": "one",
+            "type": "number",
+            "unit": "unicode_code_point",
+            "observedAt": null
+          },
+          "delivery_record": {
+            "cardinality": "many",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          },
+          "saved_at_text": {
+            "cardinality": "one",
+            "type": "symbol",
+            "unit": null,
+            "observedAt": null
+          }
+        }
+      },
+      "callContract": {
+        "set_case_scope": {
+          "company": "symbol",
+          "ticker": "json",
+          "company_type": "symbol",
+          "decision": "symbol"
+        },
+        "save_memo_part": {
+          "section": "symbol",
+          "markdown": "symbol"
+        },
+        "save_memo_version": {
+          "rating": "symbol",
+          "data_as_of": "symbol",
+          "tagline": "symbol",
+          "business_summary": "symbol",
+          "industry": "symbol",
+          "headquarters": "symbol",
+          "stage": "symbol"
+        },
+        "deliver_memo": {
+          "version": "number"
+        },
+        "start_review": {
+          "memo_version": "number"
+        },
+        "save_review_pass": {
+          "review_id": "symbol",
+          "pass_number": "number",
+          "items": "json",
+          "notes": "symbol"
+        },
+        "finish_review": {
+          "review_id": "symbol",
+          "verdict": "symbol",
+          "grade": "symbol",
+          "top_three": "json",
+          "ready": "symbol"
+        },
+        "tell_user": {
+          "message": "symbol"
+        },
+        "leave_note": {
+          "note": "symbol",
+          "section": "symbol",
+          "source_ids": "json",
+          "answers": "symbol"
+        },
+        "run_qa_loop": {},
+        "get_memo_parts": {
+          "sections_wanted": "json",
+          "version": "json"
+        },
+        "get_memo_check": {
+          "version": "json",
+          "section": "json"
+        },
+        "get_evidence_matrix": {
+          "sections_wanted": "json"
+        },
+        "get_latest_review": {},
+        "save_research_plan": {
+          "spines": "json",
+          "industry_map": "symbol",
+          "geo_lens": "symbol",
+          "policy_lens": "symbol",
+          "regulatory_databases": "json",
+          "gates_done": "json",
+          "hypothesis": "symbol"
+        },
+        "save_profile_requirements": {
+          "items_done": "json",
+          "evidence": "symbol"
+        }
+      }
+    },
+    "source": "// Frozen configuration: exactly the 26 supplied facts.\nPrincipalGroup(\"Lead Analyst\", \"lead_role\").\nPrincipalGroup(\"Company Analyst\", \"company_role\").\nPrincipalGroup(\"Product Analyst\", \"product_role\").\nPrincipalGroup(\"Market Analyst\", \"market_role\").\nPrincipalGroup(\"Fundamentals Analyst\", \"fundamentals_role\").\nPrincipalGroup(\"Valuation Analyst\", \"valuation_role\").\nPrincipalGroup(\"Regulatory Analyst\", \"regulatory_role\").\nPrincipalGroup(\"Red Team Analyst\", \"red_team_role\").\nPrincipalGroup(\"IC Reviewer\", \"reviewer_role\").\nPrincipalGroup(\"company_role\", \"researcher_roles\").\nPrincipalGroup(\"product_role\", \"researcher_roles\").\nPrincipalGroup(\"market_role\", \"researcher_roles\").\nPrincipalGroup(\"fundamentals_role\", \"researcher_roles\").\nPrincipalGroup(\"valuation_role\", \"researcher_roles\").\nPrincipalGroup(\"regulatory_role\", \"researcher_roles\").\nPrincipalGroup(\"red_team_role\", \"researcher_roles\").\nCapability(\"lead_role\", \"report_sections\", \"save_memo_part\").\nCapability(\"researcher_roles\", \"report_sections\", \"save_memo_part\").\nCapability(\"lead_role\", \"case\", \"set_case_scope\").\nCapability(\"lead_role\", \"report\", \"save_memo_version\").\nCapability(\"lead_role\", \"report\", \"deliver_memo\").\nCapability(\"lead_role\", \"user_messages\", \"tell_user\").\nCapability(\"reviewer_role\", \"reviews\", \"start_review\").\nCapability(\"reviewer_role\", \"reviews\", \"save_review_pass\").\nCapability(\"reviewer_role\", \"reviews\", \"finish_review\").\nCapability(\"researcher_roles\", \"case_notes\", \"leave_note\").\n\n// Gates consume complete, locked, immutable request snapshots under the frozen\n// producer contract. Q is the request-associated snapshot, not a content node.\n// Never publish partial snapshots after a read/validation failure. Field absence\n// does not certify clean content. No provenance mechanism is selected here.\n// Endpoint attribution is not authentication. No permission is added for the\n// seven producer actions; retain their original availability and guards.\n// P34 evidence-first/refuse-once, budgets, routing, content checks, validation,\n// PDF errors and other original guards remain delegated to the real callbacks.\n// Native reasons use the original policy/error vocabulary in the ToolError path.\n// A refusal must never execute a callback merely to recover an absence error.\n\n// Capability alone is insufficient: each gate also requires its configured role.\nDeny(Q, \"P31\") :- Request(Q, P, A), Capability(G, Scope, A), not Can(P, Scope, A).\n\nAllow(Q) :- Request(Q, P, \"set_case_scope\"), InGroup(P, \"lead_role\"),\n    Can(P, \"case\", \"set_case_scope\"), Field(Q, \"case_id\", C).\nDeny(Q, \"P5\") :- Request(Q, P, \"set_case_scope\"), Field(Q, \"scope_record\", S).\n\n// No unknown-section escape Allow: the native P32 refusal must preserve the\n// caller-safe original section-resolution error when resolution failed. Exact\n// dynamic error text cannot be reconstructed in this rule vocabulary.\nAllow(Q) :- Request(Q, P, \"save_memo_part\"),\n    Can(P, \"report_sections\", \"save_memo_part\"), InGroup(P, \"lead_role\"),\n    Field(Q, \"case_id\", C), Field(Q, \"section_key\", K), Field(Q, \"owner\", P).\nAllow(Q) :- Request(Q, P, \"save_memo_part\"),\n    Can(P, \"report_sections\", \"save_memo_part\"), InGroup(P, \"researcher_roles\"),\n    Field(Q, \"case_id\", C), Field(Q, \"section_key\", K), Field(Q, \"owner\", P).\nDeny(Q, \"P32\") :- Request(Q, P, \"save_memo_part\"), not Allow(Q).\n\n// P6/P33/P36: every slot must have its recorded configured owner's revision;\n// all three records must exist. Real QA/plan/profile executions must be by this\n// Lead, in this case, after the same number of saved versions. Check failure\n// inside a successfully returned QA operation still counts as running QA.\n\nAllow(Q) :- Request(Q, P, \"save_memo_version\"),\n    InGroup(P, \"lead_role\"),\n    Can(P, \"report\", \"save_memo_version\"),\n    Field(Q, \"case_id\", C),\n    Field(Q, \"version_count\", N),\n    Field(Q, \"section_record\", S0),\n    Field(S0, \"section_key\", \"executive_summary\"),\n    Field(S0, \"owner\", O0),\n    Field(S0, \"author\", O0),\n    Field(Q, \"section_record\", S1),\n    Field(S1, \"section_key\", \"company_overview\"),\n    Field(S1, \"owner\", O1),\n    Field(S1, \"author\", O1),\n    Field(Q, \"section_record\", S2),\n    Field(S2, \"section_key\", \"team\"),\n    Field(S2, \"owner\", O2),\n    Field(S2, \"author\", O2),\n    Field(Q, \"section_record\", S3),\n    Field(S3, \"section_key\", \"technology_product\"),\n    Field(S3, \"owner\", O3),\n    Field(S3, \"author\", O3),\n    Field(Q, \"section_record\", S4),\n    Field(S4, \"section_key\", \"market\"),\n    Field(S4, \"owner\", O4),\n    Field(S4, \"author\", O4),\n    Field(Q, \"section_record\", S5),\n    Field(S5, \"section_key\", \"competition\"),\n    Field(S5, \"owner\", O5),\n    Field(S5, \"author\", O5),\n    Field(Q, \"section_record\", S6),\n    Field(S6, \"section_key\", \"business_model\"),\n    Field(S6, \"owner\", O6),\n    Field(S6, \"author\", O6),\n    Field(Q, \"section_record\", S7),\n    Field(S7, \"section_key\", \"financials\"),\n    Field(S7, \"owner\", O7),\n    Field(S7, \"author\", O7),\n    Field(Q, \"section_record\", S8),\n    Field(S8, \"section_key\", \"funding_valuation\"),\n    Field(S8, \"owner\", O8),\n    Field(S8, \"author\", O8),\n    Field(Q, \"section_record\", S9),\n    Field(S9, \"section_key\", \"strategy\"),\n    Field(S9, \"owner\", O9),\n    Field(S9, \"author\", O9),\n    Field(Q, \"section_record\", S10),\n    Field(S10, \"section_key\", \"risk\"),\n    Field(S10, \"owner\", O10),\n    Field(S10, \"author\", O10),\n    Field(Q, \"section_record\", S11),\n    Field(S11, \"section_key\", \"thesis\"),\n    Field(S11, \"owner\", O11),\n    Field(S11, \"author\", O11),\n    Field(Q, \"section_record\", S12),\n    Field(S12, \"section_key\", \"exit\"),\n    Field(S12, \"owner\", O12),\n    Field(S12, \"author\", O12),\n    Field(Q, \"section_record\", S13),\n    Field(S13, \"section_key\", \"esg\"),\n    Field(S13, \"owner\", O13),\n    Field(S13, \"author\", O13),\n    Field(Q, \"section_record\", S14),\n    Field(S14, \"section_key\", \"scoring\"),\n    Field(S14, \"owner\", O14),\n    Field(S14, \"author\", O14),\n    Field(Q, \"workflow_record\", W0),\n    Field(W0, \"workflow_kind\", \"thesis_table\"),\n    Field(Q, \"workflow_record\", W1),\n    Field(W1, \"workflow_kind\", \"scenario_analysis\"),\n    Field(Q, \"workflow_record\", W2),\n    Field(W2, \"workflow_kind\", \"red_team_review\"),\n    Field(W2, \"author\", RT),\n    InGroup(RT, \"red_team_role\"),\n    Event(QA, P, \"run_qa_loop\"),\n    Field(QA, \"case_id\", C),\n    Field(QA, \"outcome\", \"applied\"),\n    Field(QA, \"preceding_version_count\", N),\n    Event(RP, P, \"save_research_plan\"),\n    Field(RP, \"case_id\", C),\n    Field(RP, \"outcome\", \"applied\"),\n    Field(RP, \"preceding_version_count\", N),\n    Event(PR, P, \"save_profile_requirements\"),\n    Field(PR, \"case_id\", C),\n    Field(PR, \"outcome\", \"applied\"),\n    Field(PR, \"preceding_version_count\", N).\n\n// P6 is a combined prerequisites refusal, not an assertion of which record is\n// absent. Missing event joins cannot be explained separately without helpers.\nDeny(Q, \"P6\") :- Request(Q, P, \"save_memo_version\"), not Allow(Q).\nDeny(Q, \"P9\") :- Request(Q, P, \"save_memo_version\"), Field(Q, \"review_record\", R),\n    not Field(R, \"verdict\", \"approve\"), not Field(R, \"verdict\", \"revise\"),\n    not Field(R, \"verdict\", \"reject\").\n\n// Resolved version numbers are actual _version results, including version 0.\n// First-review prerequisites do not block subsequent reviews of imported work.\nAllow(Q) :- Request(Q, P, \"start_review\"), InGroup(P, \"reviewer_role\"),\n    Can(P, \"reviews\", \"start_review\"), Field(Q, \"case_id\", C),\n    Field(Q, \"memo_version\", N), Field(Q, \"review_record\", Earlier),\n    Field(Earlier, \"verdict\", V).\nAllow(Q) :- Request(Q, P, \"start_review\"), InGroup(P, \"reviewer_role\"),\n    Can(P, \"reviews\", \"start_review\"), Field(Q, \"case_id\", C), Field(Q, \"memo_version\", N),\n    Field(Q, \"workflow_record\", W), Field(W, \"workflow_kind\", \"red_team_review\"),\n    Field(W, \"author\", RT), InGroup(RT, \"red_team_role\"),\n    Field(Q, \"section_record\", S), Field(S, \"section_key\", \"risk\"),\n    Field(S, \"owner\", RT), Field(S, \"author\", RT).\nDeny(Q, \"P35\") :- Request(Q, P, \"start_review\"), not Allow(Q).\nDeny(Q, \"P9\") :- Request(Q, P, \"start_review\"), Field(Q, \"memo_version\", N),\n    Field(Q, \"review_record\", R), Field(R, \"memo_version\", N), Field(R, \"verdict\", V).\nDeny(Q, \"P9\") :- Request(Q, P, \"start_review\"), Field(Q, \"memo_version\", N),\n    Field(Q, \"review_record\", R), Field(R, \"memo_version\", Other), Other != N,\n    not Field(R, \"verdict\", \"approve\"), not Field(R, \"verdict\", \"revise\"),\n    not Field(R, \"verdict\", \"reject\").\nDeny(Q, \"P9\") :- Request(Q, P, \"start_review\"), Field(Q, \"review_record\", R),\n    Field(R, \"review_round\", Round), Round >= 3, Field(R, \"verdict\", V).\n\nAllow(Q) :- Request(Q, P, \"save_review_pass\"), InGroup(P, \"reviewer_role\"),\n    Can(P, \"reviews\", \"save_review_pass\"), Field(Q, \"case_id\", C).\n\n// The finish snapshot resolves the referenced review's actual memo_version.\n// A review snapshot for that number supplies the five raw saved pass keys.\nAllow(Q) :- Request(Q, P, \"finish_review\"), InGroup(P, \"reviewer_role\"),\n    Can(P, \"reviews\", \"finish_review\"), Field(Q, \"case_id\", C),\n    Field(Q, \"memo_version\", N), Field(Q, \"review_record\", R), Field(R, \"memo_version\", N),\n    Field(R, \"pass_number\", 1), Field(R, \"pass_number\", 2), Field(R, \"pass_number\", 3),\n    Field(R, \"pass_number\", 4), Field(R, \"pass_number\", 5).\nDeny(Q, \"P37\") :- Request(Q, P, \"finish_review\"), not Allow(Q).\n// A verdict stands; prevent a second finish from changing it as well as a reset.\nDeny(Q, \"P9\") :- Request(Q, P, \"finish_review\"), Field(Q, \"memo_version\", N),\n    Field(Q, \"review_record\", R), Field(R, \"memo_version\", N), Field(R, \"verdict\", V).\n// Q's rule_finding rows are the frozen selected saved check, not live QA output.\n// The raw Parameter spelling is canonical here; whitespace/case variants remain\n// guarded by the original normalization and clean_before_approval check.\nDeny(Q, \"P25\") :- Request(Q, P, \"finish_review\"), Parameter(Q, \"verdict\", \"approve\"),\n    Field(Q, \"rule_finding\", Finding).\n\n// Delivery uses a real stored approval. Any later finished review supersedes it.\n// Positive approval is required; missing review/version never grants an error call.\nAllow(Q) :- Request(Q, P, \"deliver_memo\"), InGroup(P, \"lead_role\"),\n    Can(P, \"report\", \"deliver_memo\"), Field(Q, \"case_id\", C), Field(Q, \"memo_version\", N),\n    Field(Q, \"review_record\", R), Field(R, \"memo_version\", N), Field(R, \"verdict\", \"approve\"),\n    Field(R, \"review_position\", Position).\nDeny(Q, \"N5\") :- Request(Q, P, \"deliver_memo\"), not Allow(Q).\nDeny(Q, \"N5\") :- Request(Q, P, \"deliver_memo\"), Field(Q, \"memo_version\", N),\n    Field(Q, \"review_record\", R), Field(R, \"memo_version\", N), Field(R, \"verdict\", \"approve\"),\n    Field(R, \"review_position\", Position), Field(Q, \"review_record\", Later),\n    Field(Later, \"verdict\", V), Field(Later, \"review_position\", LaterPosition), LaterPosition > Position.\nDeny(Q, \"P9\") :- Request(Q, P, \"deliver_memo\"), Field(Q, \"review_record\", R),\n    Field(R, \"review_round\", Round), Round >= 3, Field(R, \"verdict\", V), V != \"approve\".\nDeny(Q, \"P40\") :- Request(Q, P, \"deliver_memo\"), Field(Q, \"rule_finding\", Finding).\n\n// Length is exact Unicode len, not a semantic status/content classifier.\nAllow(Q) :- Request(Q, P, \"tell_user\"), InGroup(P, \"lead_role\"),\n    Can(P, \"user_messages\", \"tell_user\"), Field(Q, \"case_id\", C),\n    Field(Q, \"character_count\", Length), Length >= 0, Length <= 300.\n// Only a locally recorded delivery of a reviewer-approved version lifts length.\n// This is neither proof of receipt nor of successful final PDF generation.\nAllow(Q) :- Request(Q, P, \"tell_user\"), InGroup(P, \"lead_role\"),\n    Can(P, \"user_messages\", \"tell_user\"), Field(Q, \"case_id\", C),\n    Field(Q, \"character_count\", Length), Length >= 0,\n    Field(Q, \"delivery_record\", D), Field(D, \"memo_version\", N),\n    Field(Q, \"review_record\", R), Field(R, \"memo_version\", N), Field(R, \"verdict\", \"approve\").\n// Preserve the final-failure path under original guards. This is deliberately\n// a P8 length exception only: it never bypasses N6 or authorizes any delivery.\n// The producer cannot identify which particular message reports final failure;\n// precise exception content remains a gap, not an assertion of message safety.\nAllow(Q) :- Request(Q, P, \"tell_user\"), InGroup(P, \"lead_role\"),\n    Can(P, \"user_messages\", \"tell_user\"), Field(Q, \"case_id\", C),\n    Field(Q, \"character_count\", Length), Length >= 0, Field(Q, \"review_record\", R),\n    Field(R, \"review_round\", Round), Round >= 3, Field(R, \"verdict\", V), V != \"approve\".\nDeny(Q, \"P8\") :- Request(Q, P, \"tell_user\"), not Allow(Q).\n\nAllow(Q) :- Request(Q, P, \"leave_note\"), InGroup(P, \"researcher_roles\"),\n    Can(P, \"case_notes\", \"leave_note\"), Field(Q, \"case_id\", C),\n    Field(Q, \"character_count\", Length), Length > 0, Length <= 600.\nDeny(Q, \"P42\") :- Request(Q, P, \"leave_note\"), not Allow(Q).\n\n// RULE-STAGE GAPS / binding mismatches (do not change frozen schemas to hide them):\n// P10: no company-type, source-register association, source type/date fields.\n// Native label/evidence joins cannot implement the planned structural gate.\n// Retain original rating vocabulary/heuristic checks; independent-label\n// correction and semantic filing identity/support/analysis remain unimplemented.\n// P7 edits / P9 requested revisions: no selected-version-object association,\n// review-item/section or revision-request link. A case_id/memo_version pair on\n// an arbitrary snapshot does not distinguish current parts from saved references.\n// Do not guess a version object, treat every section as requested, or demand all\n// sections change. Immutable saved references and original guards are retained;\n// additive edit/revision-completion checks are unimplemented gaps.\n// P25 history: review_scope uses an actual review identity; mutable review_record\n// objects are snapshot-specific. No stable review-ID link is frozen. There is\n// also no discriminator for a whole-version versus section-only check read.\n// Universal per-section successful read coverage needs a join/absence helper\n// unavailable without a new IDB. Do not substitute tool-name presence, a single\n// section, same-case history, or current-conversation history for exact reads.\n// Keep original coarser read guard; exact scoped reads/earlier-review conditions\n// remain gaps. The producer observations are task history, not model inputs.\n// P25/P37 Critical: severity is on item objects, but no review-to-item link is\n// frozen. Denying on any Critical in the case would also block valid re-reviews.\n// Retain original exact current-review Critical guard, not a new unscoped check.\n// P26 first-round ten-item limit: routed_item_count describes TWO collections,\n// with no frozen association identifying proposed vs retained-other-pass counts.\n// No native sum/arithmetic is admitted. Finite threshold pairs could compare\n// two linked counts, but cannot supply these missing collection identities.\n// This planned supported condition is unimplemented, not replaced by separate\n// ten-item bounds, a new combined count or magic Field rows.\n// Scope absence and saved-check absence depend on successful complete capture\n// and the original case lock; there is no completeness/clock field. Missing or\n// invalid prerequisites have no positive Allow, except delegated argument checks\n// on already authorized operations. Absence-specific dynamic original errors\n// cannot all be represented; never grant a callback solely to obtain such errors.\n// P8 final-failure message semantics, P13 internal material, P11/P12/N4 saved\n// findings and P34 gate/retry semantics retain original delegated heuristics.\n// Unknown or unavailable capture must never be described as clean or safe.\n// All unsupported/ambiguous inventory and binding-plan portions remain gaps:\n// missing message_bot/automatic reply/model input/output boundaries, exact brief\n// and turn accounting, authentication, semantic source/figure/confidentiality/\n// instruction judgments, user receipt, direct helper and cross-process bypasses.\n// No content lineage is manufactured from accumulated task exposure or citations.\n// DependsOn/Provenance would mean possible influence, never proven use, truth,\n// exact disclosure or approval. No absence of origins establishes cleanliness.\n// These rules do not claim complete mediation, exact delivered-content approval,\n// semantic revision resolution, or task success. Execution verification belongs\n// to the host's later stage; native initialization must use its unchanged limits.\n",
+    "hash": "cdc2b926f63259abc5064be1225f6209e5ca12875d82acdc78147ace466f68c6"
+  },
+  "initialInputs": [
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "Lead Analyst",
+        "lead_role"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "Company Analyst",
+        "company_role"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "Product Analyst",
+        "product_role"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "Market Analyst",
+        "market_role"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "Fundamentals Analyst",
+        "fundamentals_role"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "Valuation Analyst",
+        "valuation_role"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "Regulatory Analyst",
+        "regulatory_role"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "Red Team Analyst",
+        "red_team_role"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "IC Reviewer",
+        "reviewer_role"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "company_role",
+        "researcher_roles"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "product_role",
+        "researcher_roles"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "market_role",
+        "researcher_roles"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "fundamentals_role",
+        "researcher_roles"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "valuation_role",
+        "researcher_roles"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "regulatory_role",
+        "researcher_roles"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "red_team_role",
+        "researcher_roles"
+      ]
+    },
+    {
+      "predicate": "Capability",
+      "args": [
+        "lead_role",
+        "report_sections",
+        "save_memo_part"
+      ]
+    },
+    {
+      "predicate": "Capability",
+      "args": [
+        "researcher_roles",
+        "report_sections",
+        "save_memo_part"
+      ]
+    },
+    {
+      "predicate": "Capability",
+      "args": [
+        "lead_role",
+        "case",
+        "set_case_scope"
+      ]
+    },
+    {
+      "predicate": "Capability",
+      "args": [
+        "lead_role",
+        "report",
+        "save_memo_version"
+      ]
+    },
+    {
+      "predicate": "Capability",
+      "args": [
+        "lead_role",
+        "report",
+        "deliver_memo"
+      ]
+    },
+    {
+      "predicate": "Capability",
+      "args": [
+        "lead_role",
+        "user_messages",
+        "tell_user"
+      ]
+    },
+    {
+      "predicate": "Capability",
+      "args": [
+        "reviewer_role",
+        "reviews",
+        "start_review"
+      ]
+    },
+    {
+      "predicate": "Capability",
+      "args": [
+        "reviewer_role",
+        "reviews",
+        "save_review_pass"
+      ]
+    },
+    {
+      "predicate": "Capability",
+      "args": [
+        "reviewer_role",
+        "reviews",
+        "finish_review"
+      ]
+    },
+    {
+      "predicate": "Capability",
+      "args": [
+        "researcher_roles",
+        "case_notes",
+        "leave_note"
+      ]
+    }
+  ],
+  "scope": "Captured gate inputs and mediated callbacks. Outcomes follow the trusted adapter's confirmation contract; they are not independent proof of business success or authentic identity. Unmediated channels and missing observations remain outside this trace.",
+  "events": [
+    {
+      "kind": "call",
+      "id": "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+      "request": {
+        "actor": "Lead Analyst",
+        "action": "tell_user",
+        "parameters": {
+          "message": "Apple report: version 1 is frozen since 2026-10-31 and its investor-committee review is still running with no verdict. Its rating and score stay behind the delivery gate until an approved version ships, so I'm pressing the reviewer and the one outstanding section now for the fastest finish."
+        },
+        "id": "ca7a877d-d3e3-482a-9b7f-14e3430e5536"
+      },
+      "inputs": [
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Lead Analyst",
+            "lead_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Company Analyst",
+            "company_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Product Analyst",
+            "product_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Market Analyst",
+            "market_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Fundamentals Analyst",
+            "fundamentals_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Valuation Analyst",
+            "valuation_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Regulatory Analyst",
+            "regulatory_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Red Team Analyst",
+            "red_team_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "IC Reviewer",
+            "reviewer_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "company_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "product_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "market_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "fundamentals_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "valuation_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "regulatory_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "red_team_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "report_sections",
+            "save_memo_part"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "researcher_roles",
+            "report_sections",
+            "save_memo_part"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "case",
+            "set_case_scope"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "report",
+            "save_memo_version"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "report",
+            "deliver_memo"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "user_messages",
+            "tell_user"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "reviewer_role",
+            "reviews",
+            "start_review"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "reviewer_role",
+            "reviews",
+            "save_review_pass"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "reviewer_role",
+            "reviews",
+            "finish_review"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "researcher_roles",
+            "case_notes",
+            "leave_note"
+          ]
+        },
+        {
+          "predicate": "Event",
+          "args": [
+            "observed-70c8fba484ab41adbee54e94bb8d6c36",
+            "Lead Analyst",
+            "get_memo_parts"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-70c8fba484ab41adbee54e94bb8d6c36",
+            "case_id",
+            "20261123-042221-a797"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-70c8fba484ab41adbee54e94bb8d6c36",
+            "outcome",
+            "applied"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-70c8fba484ab41adbee54e94bb8d6c36",
+            "review_scope",
+            "20261123-042221-a797/R1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-70c8fba484ab41adbee54e94bb8d6c36",
+            "memo_version",
+            "1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "section_key",
+            "scoring"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "owner",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "content_hash",
+            "b843536161e19c076810a192a5f9c90d6d609b9820a9622bf9b6a7d987a0ee28"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "saved_at_text",
+            "2026-10-31T16:43:46+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-70c8fba484ab41adbee54e94bb8d6c36",
+            "returned_section",
+            "20261123-042221-a797/section/scoring/3"
+          ]
+        },
+        {
+          "predicate": "Event",
+          "args": [
+            "observed-6f9be2c6b36d435bb7c9cd3832204a59",
+            "Lead Analyst",
+            "get_memo_parts"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-6f9be2c6b36d435bb7c9cd3832204a59",
+            "case_id",
+            "20261123-042221-a797"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-6f9be2c6b36d435bb7c9cd3832204a59",
+            "outcome",
+            "applied"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-6f9be2c6b36d435bb7c9cd3832204a59",
+            "review_scope",
+            "20261123-042221-a797/R1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-6f9be2c6b36d435bb7c9cd3832204a59",
+            "memo_version",
+            "1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "section_key",
+            "scoring"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "owner",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "content_hash",
+            "b843536161e19c076810a192a5f9c90d6d609b9820a9622bf9b6a7d987a0ee28"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "saved_at_text",
+            "2026-10-31T16:43:46+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-6f9be2c6b36d435bb7c9cd3832204a59",
+            "returned_section",
+            "20261123-042221-a797/section/scoring/3"
+          ]
+        },
+        {
+          "predicate": "Event",
+          "args": [
+            "observed-e24173f05ca545b487b94a5603f1e0ad",
+            "Lead Analyst",
+            "get_latest_review"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-e24173f05ca545b487b94a5603f1e0ad",
+            "case_id",
+            "20261123-042221-a797"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-e24173f05ca545b487b94a5603f1e0ad",
+            "outcome",
+            "applied"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-e24173f05ca545b487b94a5603f1e0ad",
+            "review_scope",
+            "20261123-042221-a797/R1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "case_id",
+            "20261123-042221-a797"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "version_count",
+            "1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "scope_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/scope"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary",
+            "section_key",
+            "executive_summary"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary",
+            "owner",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary",
+            "content_hash",
+            "8b4710658e4c7a9ab0e3c79d203cda47b6632329d290f82db74a925b9592770d"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary",
+            "saved_at_text",
+            "2026-10-31T16:44:30+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview",
+            "section_key",
+            "company_overview"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview",
+            "owner",
+            "Company Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview",
+            "author",
+            "Company Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview",
+            "content_hash",
+            "47c9ded018fe67d8b9d46b84e6aab94a106d3c4f4e169196b027d629358fda4f"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview",
+            "saved_at_text",
+            "2026-10-31T16:29:42+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team",
+            "section_key",
+            "team"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team",
+            "owner",
+            "Company Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team",
+            "author",
+            "Company Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team",
+            "revision",
+            "2"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team",
+            "content_hash",
+            "429ae19770c31e88f0061eedeca5039b97c85a95056e635e0a60df757f994b9c"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team",
+            "saved_at_text",
+            "2026-10-31T16:28:55+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product",
+            "section_key",
+            "technology_product"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product",
+            "owner",
+            "Product Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product",
+            "author",
+            "Product Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product",
+            "revision",
+            "5"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product",
+            "content_hash",
+            "b62593b0e2b7ac9085bd8366f98b8015f0d27ec013e31d7e554fe46b01fea22b"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product",
+            "saved_at_text",
+            "2026-10-31T16:26:18+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market",
+            "section_key",
+            "market"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market",
+            "owner",
+            "Market Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market",
+            "author",
+            "Market Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market",
+            "revision",
+            "5"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market",
+            "content_hash",
+            "25c83ab9b3f34d0babaff7532b060b5c00bdd9bdf7f37a2565256688111f7b1c"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market",
+            "saved_at_text",
+            "2026-10-31T16:34:12+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition",
+            "section_key",
+            "competition"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition",
+            "owner",
+            "Market Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition",
+            "author",
+            "Market Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition",
+            "revision",
+            "6"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition",
+            "content_hash",
+            "3c2df7d6aed54425e8e81187c8233f1411b96514dd6da5e2ed64c49ec472eed2"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition",
+            "saved_at_text",
+            "2026-10-31T16:34:35+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model",
+            "section_key",
+            "business_model"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model",
+            "owner",
+            "Fundamentals Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model",
+            "author",
+            "Fundamentals Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model",
+            "content_hash",
+            "dccc8dd8557b6a4de17d1909ec2d9985c981a69007d800ddf857be55f4cac0ba"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model",
+            "saved_at_text",
+            "2026-10-31T16:20:13+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials",
+            "section_key",
+            "financials"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials",
+            "owner",
+            "Fundamentals Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials",
+            "author",
+            "Fundamentals Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials",
+            "revision",
+            "5"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials",
+            "content_hash",
+            "e041e987a80cc79513f0a3378ce8d1bd2aca26ae6bf971a21673f645afd00333"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials",
+            "saved_at_text",
+            "2026-10-31T16:30:49+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation",
+            "section_key",
+            "funding_valuation"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation",
+            "owner",
+            "Valuation Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation",
+            "author",
+            "Valuation Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation",
+            "revision",
+            "5"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation",
+            "content_hash",
+            "48926a18d350a47044ba4672736575303a96d8018025a36c021635e6e5b81b35"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation",
+            "saved_at_text",
+            "2026-10-31T16:29:19+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy",
+            "section_key",
+            "strategy"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy",
+            "owner",
+            "Product Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy",
+            "author",
+            "Product Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy",
+            "revision",
+            "5"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy",
+            "content_hash",
+            "6b2691e0cdd205ba32366fd4bbe3667f347b2fe698471585b749ef7cc8427885"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy",
+            "saved_at_text",
+            "2026-10-31T16:26:34+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk",
+            "section_key",
+            "risk"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk",
+            "owner",
+            "Red Team Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk",
+            "author",
+            "Red Team Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk",
+            "revision",
+            "2"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk",
+            "content_hash",
+            "d0484f940aa4728d2823286339b518e6dd24300faeccba6942473953a9b4dd76"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk",
+            "saved_at_text",
+            "2026-10-31T16:38:05+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis",
+            "section_key",
+            "thesis"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis",
+            "owner",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis",
+            "content_hash",
+            "7b113fd5c5fd28ac906638b5046c97800b356c5b2d3b09ad69c51b7301d350db"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis",
+            "saved_at_text",
+            "2026-10-31T16:42:50+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit",
+            "section_key",
+            "exit"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit",
+            "owner",
+            "Valuation Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit",
+            "author",
+            "Valuation Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit",
+            "revision",
+            "5"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit",
+            "content_hash",
+            "7ca8b7c64cb034df3afeb59868910998f79e6e834f703fa7145d5e970ca03d5e"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit",
+            "saved_at_text",
+            "2026-10-31T16:32:02+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg",
+            "section_key",
+            "esg"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg",
+            "owner",
+            "Regulatory Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg",
+            "author",
+            "Regulatory Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg",
+            "content_hash",
+            "c80a0cf63429bd904d49efa5f86cb492c902271f577b65d9bc29d0afbabef807"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg",
+            "saved_at_text",
+            "2026-10-31T16:21:14+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring",
+            "section_key",
+            "scoring"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring",
+            "owner",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring",
+            "content_hash",
+            "b843536161e19c076810a192a5f9c90d6d609b9820a9622bf9b6a7d987a0ee28"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring",
+            "saved_at_text",
+            "2026-10-31T16:43:46+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "workflow_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/thesis_table"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/thesis_table",
+            "workflow_kind",
+            "thesis_table"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/thesis_table",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/thesis_table",
+            "saved_at_text",
+            "2026-10-31T16:41:38+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "workflow_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/research_plan"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/research_plan",
+            "workflow_kind",
+            "research_plan"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/research_plan",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/research_plan",
+            "saved_at_text",
+            "2026-10-31T16:45:04+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "workflow_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/profile_requirements"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/profile_requirements",
+            "workflow_kind",
+            "profile_requirements"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/profile_requirements",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/profile_requirements",
+            "saved_at_text",
+            "2026-10-31T16:45:04+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "workflow_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/scenario_analysis"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/scenario_analysis",
+            "workflow_kind",
+            "scenario_analysis"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/scenario_analysis",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/scenario_analysis",
+            "saved_at_text",
+            "2026-10-31T16:41:20+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "workflow_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/red_team_review"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/red_team_review",
+            "workflow_kind",
+            "red_team_review"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/red_team_review",
+            "author",
+            "Red Team Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/red_team_review",
+            "saved_at_text",
+            "2026-10-31T16:38:31+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "review_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/review/0"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/review/0",
+            "memo_version",
+            "1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/review/0",
+            "review_round",
+            "1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/review/0",
+            "review_position",
+            "0"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "character_count",
+            "291"
+          ]
+        }
+      ],
+      "inputHash": "34eeff1cb07deb860b75454535dc8563f26b0bdd2a88f869e341e7d921864977",
+      "observationVersions": {
+        "backend": "c0dec5184267fa29dcb1eb7d324fd09ae0839b945fe30a37d12233a6065b3fe4"
+      },
+      "decision": {
+        "allowed": true,
+        "policyHash": "cdc2b926f63259abc5064be1225f6209e5ca12875d82acdc78147ace466f68c6",
+        "request": {
+          "actor": "Lead Analyst",
+          "action": "tell_user",
+          "parameters": {
+            "message": "Apple report: version 1 is frozen since 2026-10-31 and its investor-committee review is still running with no verdict. Its rating and score stay behind the delivery gate until an approved version ships, so I'm pressing the reviewer and the one outstanding section now for the fastest finish."
+          },
+          "id": "ca7a877d-d3e3-482a-9b7f-14e3430e5536"
+        },
+        "reasons": [],
+        "derived": {
+          "Allow": [
+            [
+              "ca7a877d-d3e3-482a-9b7f-14e3430e5536"
+            ]
+          ],
+          "Deny": [],
+          "InGroup": [
+            [
+              "Company Analyst",
+              "company_role"
+            ],
+            [
+              "Company Analyst",
+              "researcher_roles"
+            ],
+            [
+              "Fundamentals Analyst",
+              "fundamentals_role"
+            ],
+            [
+              "Fundamentals Analyst",
+              "researcher_roles"
+            ],
+            [
+              "IC Reviewer",
+              "reviewer_role"
+            ],
+            [
+              "Lead Analyst",
+              "lead_role"
+            ],
+            [
+              "Market Analyst",
+              "market_role"
+            ],
+            [
+              "Market Analyst",
+              "researcher_roles"
+            ],
+            [
+              "Product Analyst",
+              "product_role"
+            ],
+            [
+              "Product Analyst",
+              "researcher_roles"
+            ],
+            [
+              "Red Team Analyst",
+              "red_team_role"
+            ],
+            [
+              "Red Team Analyst",
+              "researcher_roles"
+            ],
+            [
+              "Regulatory Analyst",
+              "regulatory_role"
+            ],
+            [
+              "Regulatory Analyst",
+              "researcher_roles"
+            ],
+            [
+              "Valuation Analyst",
+              "researcher_roles"
+            ],
+            [
+              "Valuation Analyst",
+              "valuation_role"
+            ],
+            [
+              "company_role",
+              "researcher_roles"
+            ],
+            [
+              "fundamentals_role",
+              "researcher_roles"
+            ],
+            [
+              "market_role",
+              "researcher_roles"
+            ],
+            [
+              "product_role",
+              "researcher_roles"
+            ],
+            [
+              "red_team_role",
+              "researcher_roles"
+            ],
+            [
+              "regulatory_role",
+              "researcher_roles"
+            ],
+            [
+              "valuation_role",
+              "researcher_roles"
+            ]
+          ],
+          "Can": [
+            [
+              "Company Analyst",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "Company Analyst",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "Fundamentals Analyst",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "Fundamentals Analyst",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "IC Reviewer",
+              "reviews",
+              "finish_review"
+            ],
+            [
+              "IC Reviewer",
+              "reviews",
+              "save_review_pass"
+            ],
+            [
+              "IC Reviewer",
+              "reviews",
+              "start_review"
+            ],
+            [
+              "Lead Analyst",
+              "case",
+              "set_case_scope"
+            ],
+            [
+              "Lead Analyst",
+              "report",
+              "deliver_memo"
+            ],
+            [
+              "Lead Analyst",
+              "report",
+              "save_memo_version"
+            ],
+            [
+              "Lead Analyst",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "Lead Analyst",
+              "user_messages",
+              "tell_user"
+            ],
+            [
+              "Market Analyst",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "Market Analyst",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "Product Analyst",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "Product Analyst",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "Red Team Analyst",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "Red Team Analyst",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "Regulatory Analyst",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "Regulatory Analyst",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "Valuation Analyst",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "Valuation Analyst",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "company_role",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "company_role",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "fundamentals_role",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "fundamentals_role",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "lead_role",
+              "case",
+              "set_case_scope"
+            ],
+            [
+              "lead_role",
+              "report",
+              "deliver_memo"
+            ],
+            [
+              "lead_role",
+              "report",
+              "save_memo_version"
+            ],
+            [
+              "lead_role",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "lead_role",
+              "user_messages",
+              "tell_user"
+            ],
+            [
+              "market_role",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "market_role",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "product_role",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "product_role",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "red_team_role",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "red_team_role",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "regulatory_role",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "regulatory_role",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "researcher_roles",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "researcher_roles",
+              "report_sections",
+              "save_memo_part"
+            ],
+            [
+              "reviewer_role",
+              "reviews",
+              "finish_review"
+            ],
+            [
+              "reviewer_role",
+              "reviews",
+              "save_review_pass"
+            ],
+            [
+              "reviewer_role",
+              "reviews",
+              "start_review"
+            ],
+            [
+              "valuation_role",
+              "case_notes",
+              "leave_note"
+            ],
+            [
+              "valuation_role",
+              "report_sections",
+              "save_memo_part"
+            ]
+          ]
+        },
+        "observationVersions": {
+          "backend": "c0dec5184267fa29dcb1eb7d324fd09ae0839b945fe30a37d12233a6065b3fe4"
+        }
+      },
+      "effectCalled": true,
+      "outcome": "applied",
+      "committedInputs": [
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Lead Analyst",
+            "lead_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Company Analyst",
+            "company_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Product Analyst",
+            "product_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Market Analyst",
+            "market_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Fundamentals Analyst",
+            "fundamentals_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Valuation Analyst",
+            "valuation_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Regulatory Analyst",
+            "regulatory_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "Red Team Analyst",
+            "red_team_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "IC Reviewer",
+            "reviewer_role"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "company_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "product_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "market_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "fundamentals_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "valuation_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "regulatory_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "PrincipalGroup",
+          "args": [
+            "red_team_role",
+            "researcher_roles"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "report_sections",
+            "save_memo_part"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "researcher_roles",
+            "report_sections",
+            "save_memo_part"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "case",
+            "set_case_scope"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "report",
+            "save_memo_version"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "report",
+            "deliver_memo"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "lead_role",
+            "user_messages",
+            "tell_user"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "reviewer_role",
+            "reviews",
+            "start_review"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "reviewer_role",
+            "reviews",
+            "save_review_pass"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "reviewer_role",
+            "reviews",
+            "finish_review"
+          ]
+        },
+        {
+          "predicate": "Capability",
+          "args": [
+            "researcher_roles",
+            "case_notes",
+            "leave_note"
+          ]
+        },
+        {
+          "predicate": "Event",
+          "args": [
+            "observed-70c8fba484ab41adbee54e94bb8d6c36",
+            "Lead Analyst",
+            "get_memo_parts"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-70c8fba484ab41adbee54e94bb8d6c36",
+            "case_id",
+            "20261123-042221-a797"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-70c8fba484ab41adbee54e94bb8d6c36",
+            "outcome",
+            "applied"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-70c8fba484ab41adbee54e94bb8d6c36",
+            "review_scope",
+            "20261123-042221-a797/R1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-70c8fba484ab41adbee54e94bb8d6c36",
+            "memo_version",
+            "1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "section_key",
+            "scoring"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "owner",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "content_hash",
+            "b843536161e19c076810a192a5f9c90d6d609b9820a9622bf9b6a7d987a0ee28"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "saved_at_text",
+            "2026-10-31T16:43:46+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-70c8fba484ab41adbee54e94bb8d6c36",
+            "returned_section",
+            "20261123-042221-a797/section/scoring/3"
+          ]
+        },
+        {
+          "predicate": "Event",
+          "args": [
+            "observed-6f9be2c6b36d435bb7c9cd3832204a59",
+            "Lead Analyst",
+            "get_memo_parts"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-6f9be2c6b36d435bb7c9cd3832204a59",
+            "case_id",
+            "20261123-042221-a797"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-6f9be2c6b36d435bb7c9cd3832204a59",
+            "outcome",
+            "applied"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-6f9be2c6b36d435bb7c9cd3832204a59",
+            "review_scope",
+            "20261123-042221-a797/R1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-6f9be2c6b36d435bb7c9cd3832204a59",
+            "memo_version",
+            "1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "section_key",
+            "scoring"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "owner",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "content_hash",
+            "b843536161e19c076810a192a5f9c90d6d609b9820a9622bf9b6a7d987a0ee28"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "20261123-042221-a797/section/scoring/3",
+            "saved_at_text",
+            "2026-10-31T16:43:46+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-6f9be2c6b36d435bb7c9cd3832204a59",
+            "returned_section",
+            "20261123-042221-a797/section/scoring/3"
+          ]
+        },
+        {
+          "predicate": "Event",
+          "args": [
+            "observed-e24173f05ca545b487b94a5603f1e0ad",
+            "Lead Analyst",
+            "get_latest_review"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-e24173f05ca545b487b94a5603f1e0ad",
+            "case_id",
+            "20261123-042221-a797"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-e24173f05ca545b487b94a5603f1e0ad",
+            "outcome",
+            "applied"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "observed-e24173f05ca545b487b94a5603f1e0ad",
+            "review_scope",
+            "20261123-042221-a797/R1"
+          ]
+        },
+        {
+          "predicate": "Event",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "Lead Analyst",
+            "tell_user"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "case_id",
+            "20261123-042221-a797"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "outcome",
+            "applied"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "case_id",
+            "20261123-042221-a797"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "version_count",
+            "1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "scope_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/scope"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary",
+            "section_key",
+            "executive_summary"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary",
+            "owner",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary",
+            "content_hash",
+            "8b4710658e4c7a9ab0e3c79d203cda47b6632329d290f82db74a925b9592770d"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/executive_summary",
+            "saved_at_text",
+            "2026-10-31T16:44:30+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview",
+            "section_key",
+            "company_overview"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview",
+            "owner",
+            "Company Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview",
+            "author",
+            "Company Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview",
+            "content_hash",
+            "47c9ded018fe67d8b9d46b84e6aab94a106d3c4f4e169196b027d629358fda4f"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/company_overview",
+            "saved_at_text",
+            "2026-10-31T16:29:42+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team",
+            "section_key",
+            "team"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team",
+            "owner",
+            "Company Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team",
+            "author",
+            "Company Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team",
+            "revision",
+            "2"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team",
+            "content_hash",
+            "429ae19770c31e88f0061eedeca5039b97c85a95056e635e0a60df757f994b9c"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/team",
+            "saved_at_text",
+            "2026-10-31T16:28:55+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product",
+            "section_key",
+            "technology_product"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product",
+            "owner",
+            "Product Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product",
+            "author",
+            "Product Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product",
+            "revision",
+            "5"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product",
+            "content_hash",
+            "b62593b0e2b7ac9085bd8366f98b8015f0d27ec013e31d7e554fe46b01fea22b"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/technology_product",
+            "saved_at_text",
+            "2026-10-31T16:26:18+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market",
+            "section_key",
+            "market"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market",
+            "owner",
+            "Market Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market",
+            "author",
+            "Market Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market",
+            "revision",
+            "5"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market",
+            "content_hash",
+            "25c83ab9b3f34d0babaff7532b060b5c00bdd9bdf7f37a2565256688111f7b1c"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/market",
+            "saved_at_text",
+            "2026-10-31T16:34:12+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition",
+            "section_key",
+            "competition"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition",
+            "owner",
+            "Market Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition",
+            "author",
+            "Market Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition",
+            "revision",
+            "6"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition",
+            "content_hash",
+            "3c2df7d6aed54425e8e81187c8233f1411b96514dd6da5e2ed64c49ec472eed2"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/competition",
+            "saved_at_text",
+            "2026-10-31T16:34:35+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model",
+            "section_key",
+            "business_model"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model",
+            "owner",
+            "Fundamentals Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model",
+            "author",
+            "Fundamentals Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model",
+            "content_hash",
+            "dccc8dd8557b6a4de17d1909ec2d9985c981a69007d800ddf857be55f4cac0ba"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/business_model",
+            "saved_at_text",
+            "2026-10-31T16:20:13+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials",
+            "section_key",
+            "financials"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials",
+            "owner",
+            "Fundamentals Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials",
+            "author",
+            "Fundamentals Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials",
+            "revision",
+            "5"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials",
+            "content_hash",
+            "e041e987a80cc79513f0a3378ce8d1bd2aca26ae6bf971a21673f645afd00333"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/financials",
+            "saved_at_text",
+            "2026-10-31T16:30:49+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation",
+            "section_key",
+            "funding_valuation"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation",
+            "owner",
+            "Valuation Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation",
+            "author",
+            "Valuation Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation",
+            "revision",
+            "5"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation",
+            "content_hash",
+            "48926a18d350a47044ba4672736575303a96d8018025a36c021635e6e5b81b35"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/funding_valuation",
+            "saved_at_text",
+            "2026-10-31T16:29:19+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy",
+            "section_key",
+            "strategy"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy",
+            "owner",
+            "Product Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy",
+            "author",
+            "Product Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy",
+            "revision",
+            "5"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy",
+            "content_hash",
+            "6b2691e0cdd205ba32366fd4bbe3667f347b2fe698471585b749ef7cc8427885"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/strategy",
+            "saved_at_text",
+            "2026-10-31T16:26:34+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk",
+            "section_key",
+            "risk"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk",
+            "owner",
+            "Red Team Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk",
+            "author",
+            "Red Team Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk",
+            "revision",
+            "2"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk",
+            "content_hash",
+            "d0484f940aa4728d2823286339b518e6dd24300faeccba6942473953a9b4dd76"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/risk",
+            "saved_at_text",
+            "2026-10-31T16:38:05+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis",
+            "section_key",
+            "thesis"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis",
+            "owner",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis",
+            "content_hash",
+            "7b113fd5c5fd28ac906638b5046c97800b356c5b2d3b09ad69c51b7301d350db"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/thesis",
+            "saved_at_text",
+            "2026-10-31T16:42:50+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit",
+            "section_key",
+            "exit"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit",
+            "owner",
+            "Valuation Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit",
+            "author",
+            "Valuation Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit",
+            "revision",
+            "5"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit",
+            "content_hash",
+            "7ca8b7c64cb034df3afeb59868910998f79e6e834f703fa7145d5e970ca03d5e"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/exit",
+            "saved_at_text",
+            "2026-10-31T16:32:02+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg",
+            "section_key",
+            "esg"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg",
+            "owner",
+            "Regulatory Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg",
+            "author",
+            "Regulatory Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg",
+            "content_hash",
+            "c80a0cf63429bd904d49efa5f86cb492c902271f577b65d9bc29d0afbabef807"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/esg",
+            "saved_at_text",
+            "2026-10-31T16:21:14+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "section_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring",
+            "section_key",
+            "scoring"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring",
+            "owner",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring",
+            "revision",
+            "3"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring",
+            "content_hash",
+            "b843536161e19c076810a192a5f9c90d6d609b9820a9622bf9b6a7d987a0ee28"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/section/scoring",
+            "saved_at_text",
+            "2026-10-31T16:43:46+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "workflow_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/thesis_table"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/thesis_table",
+            "workflow_kind",
+            "thesis_table"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/thesis_table",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/thesis_table",
+            "saved_at_text",
+            "2026-10-31T16:41:38+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "workflow_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/research_plan"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/research_plan",
+            "workflow_kind",
+            "research_plan"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/research_plan",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/research_plan",
+            "saved_at_text",
+            "2026-10-31T16:45:04+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "workflow_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/profile_requirements"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/profile_requirements",
+            "workflow_kind",
+            "profile_requirements"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/profile_requirements",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/profile_requirements",
+            "saved_at_text",
+            "2026-10-31T16:45:04+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "workflow_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/scenario_analysis"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/scenario_analysis",
+            "workflow_kind",
+            "scenario_analysis"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/scenario_analysis",
+            "author",
+            "Lead Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/scenario_analysis",
+            "saved_at_text",
+            "2026-10-31T16:41:20+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "workflow_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/red_team_review"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/red_team_review",
+            "workflow_kind",
+            "red_team_review"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/red_team_review",
+            "author",
+            "Red Team Analyst"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/workflow/red_team_review",
+            "saved_at_text",
+            "2026-10-31T16:38:31+00:00"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "review_record",
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/review/0"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/review/0",
+            "memo_version",
+            "1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/review/0",
+            "review_round",
+            "1"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536/review/0",
+            "review_position",
+            "0"
+          ]
+        },
+        {
+          "predicate": "Field",
+          "args": [
+            "ca7a877d-d3e3-482a-9b7f-14e3430e5536",
+            "character_count",
+            "291"
+          ]
+        }
+      ],
+      "committedInputHash": "aeec33fce4167b97527b21b588a679aea729bda96cf34fa25caaa80f1c45b0bc",
+      "resultHash": "1d33f44580af051495f0ce41cb0193d9e1fd575dbdbf3d592b0266cca70ece31",
+      "result": {
+        "sent": true,
+        "characters": 291
+      },
+      "sequence": 0,
+      "hash": "2158a51d876dec57e2d059c05afb67f2ebb701fb270caa41f16d784177ae5d36"
+    }
+  ],
+  "id": "a7235de71d62ea84579ddc3dd87d6e1f1201cfafe360b412b6db91b4db430e97"
+}

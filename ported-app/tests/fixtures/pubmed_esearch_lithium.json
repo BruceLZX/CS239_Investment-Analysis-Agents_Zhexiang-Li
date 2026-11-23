@@ -1,0 +1,27 @@
+{
+ "header": {
+  "type": "esearch",
+  "version": "0.3"
+ },
+ "esearchresult": {
+  "count": "31997",
+  "retmax": "3",
+  "retstart": "0",
+  "idlist": [
+   "30977440",
+   "37420774",
+   "33477513"
+  ],
+  "translationset": [
+   {
+    "from": "lithium",
+    "to": "\"lithium\"[Supplementary Concept] OR \"lithium\"[All Fields] OR \"lithium\"[MeSH Terms] OR \"lithium's\"[All Fields] OR \"lithiums\"[All Fields]"
+   },
+   {
+    "from": "battery",
+    "to": "\"batterie\"[All Fields] OR \"batteries\"[All Fields] OR \"battery\"[All Fields] OR \"battery's\"[All Fields]"
+   }
+  ],
+  "querytranslation": "(\"lithium\"[Supplementary Concept] OR \"lithium\"[All Fields] OR \"lithium\"[MeSH Terms] OR \"lithium s\"[All Fields] OR \"lithiums\"[All Fields]) AND (\"batterie\"[All Fields] OR \"batteries\"[All Fields] OR \"battery\"[All Fields] OR \"battery s\"[All Fields])"
+ }
+}

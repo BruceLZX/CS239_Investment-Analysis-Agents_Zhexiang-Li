@@ -1,0 +1,234 @@
+test_01_scope_freezes_and_session_recovers (policy_port.test_port.PortTests.test_01_scope_freezes_and_session_recovers) ... ERROR
+test_02_section_ownership_and_unknown_section (policy_port.test_port.PortTests.test_02_section_ownership_and_unknown_section) ... ok
+test_03_original_evidence_refusal_once_exception (policy_port.test_port.PortTests.test_03_original_evidence_refusal_once_exception) ... ok
+test_04_message_bounds_unrelated_input_and_case_isolation (policy_port.test_port.PortTests.test_04_message_bounds_unrelated_input_and_case_isolation) ... ERROR
+test_05_notes_retain_sources_routing_answers_and_errors (policy_port.test_port.PortTests.test_05_notes_retain_sources_routing_answers_and_errors) ... FAIL
+test_06_missing_prerequisites_and_roles (policy_port.test_port.PortTests.test_06_missing_prerequisites_and_roles) ... ok
+test_07_actual_report_review_reads_delivery (policy_port.test_port.PortTests.test_07_actual_report_review_reads_delivery) ... ERROR
+test_08_compare_original_effects_and_offline_visible_model (policy_port.test_port.PortTests.test_08_compare_original_effects_and_offline_visible_model) ... ERROR
+test_09_final_failure_length_exception (policy_port.test_port.PortTests.test_09_final_failure_length_exception) ... ok
+test_10_delegated_confidentiality_and_public_search (policy_port.test_port.PortTests.test_10_delegated_confidentiality_and_public_search) ... ok
+
+======================================================================
+ERROR: test_01_scope_freezes_and_session_recovers (policy_port.test_port.PortTests.test_01_scope_freezes_and_session_recovers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/candidate/src/tools/server.py", line 95, in logged
+    result = policy.after(fn.__name__, CALLER.get(), entry['arguments'], fn(**arguments))
+                                                                         ^^^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/adapter.py", line 194, in invoke
+    return state.policy.execute(server.CALLER.get() or 'unattributed', body.__name__, arguments,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 406, in execute
+    return self._observe_call(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 389, in _observe_call
+    value = callback()
+            ^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 410, in <lambda>
+    lambda: self._execute(principal, name, arguments, function),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 428, in _execute
+    result = self.runtime.execute(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/runtime.py", line 837, in execute
+    raise error
+  File "/framework/policyweave/enforcement/runtime.py", line 797, in execute
+    result, staged = run()
+                     ^^^^^
+  File "/framework/policyweave/enforcement/runtime.py", line 636, in run
+    decision = decide(
+               ^^^^^^^
+  File "/framework/policyweave/core/policy.py", line 513, in decide
+    raise ValueError("Frozen JSON parameter is invalid.") from None
+ValueError: Frozen JSON parameter is invalid.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/work/candidate/policy_port/test_port.py", line 107, in test_01_scope_freezes_and_session_recovers
+    self.scoped()
+  File "/work/candidate/policy_port/test_port.py", line 80, in scoped
+    return self.call('set_case_scope', company='Example', ticker='EX', company_type='listed', decision='Research')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/test_port.py", line 66, in call
+    text = getattr(server, name)(**arguments)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/adapter.py", line 265, in observed
+    result = body(**arguments)
+             ^^^^^^^^^^^^^^^^^
+  File "/work/candidate/src/tools/server.py", line 105, in logged
+    raise ToolError(str(exc)) from exc
+mcp.server.mcpserver.exceptions.ToolError: Frozen JSON parameter is invalid.
+
+======================================================================
+ERROR: test_04_message_bounds_unrelated_input_and_case_isolation (policy_port.test_port.PortTests.test_04_message_bounds_unrelated_input_and_case_isolation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/candidate/src/tools/server.py", line 95, in logged
+    result = policy.after(fn.__name__, CALLER.get(), entry['arguments'], fn(**arguments))
+                                                                         ^^^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/adapter.py", line 194, in invoke
+    return state.policy.execute(server.CALLER.get() or 'unattributed', body.__name__, arguments,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 406, in execute
+    return self._observe_call(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 389, in _observe_call
+    value = callback()
+            ^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 410, in <lambda>
+    lambda: self._execute(principal, name, arguments, function),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 428, in _execute
+    result = self.runtime.execute(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/runtime.py", line 837, in execute
+    raise error
+  File "/framework/policyweave/enforcement/runtime.py", line 797, in execute
+    result, staged = run()
+                     ^^^^^
+  File "/framework/policyweave/enforcement/runtime.py", line 636, in run
+    decision = decide(
+               ^^^^^^^
+  File "/framework/policyweave/core/policy.py", line 513, in decide
+    raise ValueError("Frozen JSON parameter is invalid.") from None
+ValueError: Frozen JSON parameter is invalid.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/work/candidate/policy_port/test_port.py", line 135, in test_04_message_bounds_unrelated_input_and_case_isolation
+    self.scoped()
+  File "/work/candidate/policy_port/test_port.py", line 80, in scoped
+    return self.call('set_case_scope', company='Example', ticker='EX', company_type='listed', decision='Research')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/test_port.py", line 66, in call
+    text = getattr(server, name)(**arguments)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/adapter.py", line 265, in observed
+    result = body(**arguments)
+             ^^^^^^^^^^^^^^^^^
+  File "/work/candidate/src/tools/server.py", line 105, in logged
+    raise ToolError(str(exc)) from exc
+mcp.server.mcpserver.exceptions.ToolError: Frozen JSON parameter is invalid.
+
+======================================================================
+ERROR: test_07_actual_report_review_reads_delivery (policy_port.test_port.PortTests.test_07_actual_report_review_reads_delivery)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/candidate/src/tools/server.py", line 95, in logged
+    result = policy.after(fn.__name__, CALLER.get(), entry['arguments'], fn(**arguments))
+                                                                         ^^^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/adapter.py", line 194, in invoke
+    return state.policy.execute(server.CALLER.get() or 'unattributed', body.__name__, arguments,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 406, in execute
+    return self._observe_call(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 389, in _observe_call
+    value = callback()
+            ^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 410, in <lambda>
+    lambda: self._execute(principal, name, arguments, function),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 428, in _execute
+    result = self.runtime.execute(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/runtime.py", line 837, in execute
+    raise error
+  File "/framework/policyweave/enforcement/runtime.py", line 797, in execute
+    result, staged = run()
+                     ^^^^^
+  File "/framework/policyweave/enforcement/runtime.py", line 636, in run
+    decision = decide(
+               ^^^^^^^
+  File "/framework/policyweave/core/policy.py", line 513, in decide
+    raise ValueError("Frozen JSON parameter is invalid.") from None
+ValueError: Frozen JSON parameter is invalid.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/work/candidate/policy_port/test_port.py", line 173, in test_07_actual_report_review_reads_delivery
+    self.prepare_report()
+  File "/work/candidate/policy_port/test_port.py", line 83, in prepare_report
+    self.scoped()
+  File "/work/candidate/policy_port/test_port.py", line 80, in scoped
+    return self.call('set_case_scope', company='Example', ticker='EX', company_type='listed', decision='Research')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/test_port.py", line 66, in call
+    text = getattr(server, name)(**arguments)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/adapter.py", line 265, in observed
+    result = body(**arguments)
+             ^^^^^^^^^^^^^^^^^
+  File "/work/candidate/src/tools/server.py", line 105, in logged
+    raise ToolError(str(exc)) from exc
+mcp.server.mcpserver.exceptions.ToolError: Frozen JSON parameter is invalid.
+
+======================================================================
+ERROR: test_08_compare_original_effects_and_offline_visible_model (policy_port.test_port.PortTests.test_08_compare_original_effects_and_offline_visible_model)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/candidate/src/tools/server.py", line 95, in logged
+    result = policy.after(fn.__name__, CALLER.get(), entry['arguments'], fn(**arguments))
+                                                                         ^^^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/adapter.py", line 194, in invoke
+    return state.policy.execute(server.CALLER.get() or 'unattributed', body.__name__, arguments,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 406, in execute
+    return self._observe_call(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 389, in _observe_call
+    value = callback()
+            ^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 410, in <lambda>
+    lambda: self._execute(principal, name, arguments, function),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/api.py", line 428, in _execute
+    result = self.runtime.execute(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/framework/policyweave/enforcement/runtime.py", line 837, in execute
+    raise error
+  File "/framework/policyweave/enforcement/runtime.py", line 797, in execute
+    result, staged = run()
+                     ^^^^^
+  File "/framework/policyweave/enforcement/runtime.py", line 636, in run
+    decision = decide(
+               ^^^^^^^
+  File "/framework/policyweave/core/policy.py", line 513, in decide
+    raise ValueError("Frozen JSON parameter is invalid.") from None
+ValueError: Frozen JSON parameter is invalid.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/work/candidate/policy_port/test_port.py", line 211, in test_08_compare_original_effects_and_offline_visible_model
+    self.assertEqual(first, self.scoped())
+                            ^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/test_port.py", line 80, in scoped
+    return self.call('set_case_scope', company='Example', ticker='EX', company_type='listed', decision='Research')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/test_port.py", line 66, in call
+    text = getattr(server, name)(**arguments)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/candidate/policy_port/adapter.py", line 265, in observed
+    result = body(**arguments)
+             ^^^^^^^^^^^^^^^^^
+  File "/work/candidate/src/tools/server.py", line 105, in logged
+    raise ToolError(str(exc)) from exc
+mcp.server.mcpserver.exceptions.ToolError: Frozen JSON parameter is invalid.
+
+======================================================================
+FAIL: test_05_notes_retain_sources_routing_answers_and_errors (policy_port.test_port.PortTests.test_05_notes_retain_sources_routing_answers_and_errors)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/candidate/policy_port/test_port.py", line 160, in test_05_notes_retain_sources_routing_answers_and_errors
+    self.assertIn('Not in the source register', self.blocked('leave_note', COMPANY,
+AssertionError: 'Not in the source register' not found in 'Execution was not confirmed; this session is stopped.'
+
+----------------------------------------------------------------------
+Ran 10 tests in 2.029s
+
+FAILED (failures=1, errors=4)

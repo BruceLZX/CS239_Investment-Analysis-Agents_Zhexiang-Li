@@ -1,0 +1,22 @@
+--- policyweave/policy_adder/codex.py.orig	2026-11-20 23:12:53.957047001 +0000
++++ policyweave/policy_adder/codex.py	2026-11-20 23:12:53.957047001 +0000
+@@ -415,7 +415,7 @@
+                 continue
+             text = artifact_text(self.output / "original", relative)
+             total += len(text)
+-            if total > 300_000:
++            if total > 520_000:  # Raised from 300_000 for this app (see phase2-work/env/planning-bound.patch).
+                 raise ValueError("Planning source exceeds the bounded context; select narrower source evidence.")
+             source[relative] = text
+         context = dict(
+--- policyweave/policy_adder/codex.py.orig	2026-11-21 01:12:18.518789012 +0000
++++ policyweave/policy_adder/codex.py	2026-11-21 01:12:18.557789012 +0000
+@@ -466,6 +466,8 @@
+         if response_format is not None:
+             settings["responseFormat"] = response_format
+         connection = Connection(settings)
++        # Raised for this app (see phase2-work/env/planning-bound.patch): binding-plan replies ran six minutes and came back invalid, as one cut at 32,000 tokens would.
++        connection._tokens, connection._timeout = 64000, 1200
+         response = connection(stage, json.dumps(context, ensure_ascii=False))
+         save(self.output / (name + "-usage.json"), connection.usage)
+         save(self.output / (name + "-response.json"), dict(response=response))

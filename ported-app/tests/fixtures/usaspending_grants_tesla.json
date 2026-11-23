@@ -1,0 +1,41 @@
+{
+ "spending_level": "awards",
+ "limit": 2,
+ "results": [
+  {
+   "internal_id": 270373641,
+   "Award ID": "R44ES013622",
+   "Recipient Name": "TESLA LABORATORIES INC.",
+   "Start Date": "2004-11-01",
+   "End Date": "2011-05-31",
+   "Award Amount": 933350.0,
+   "Awarding Agency": "Department of Health and Human Services",
+   "Description": "ADVANCED TOXIC METAL CONTAMINANT REMEDIATION SYSTEM",
+   "generated_internal_id": "ASST_NON_R44ES013622_075",
+   "awarding_agency_id": 806,
+   "agency_slug": "department-of-health-and-human-services"
+  },
+  {
+   "internal_id": 259238436,
+   "Award ID": "A14AC00056",
+   "Recipient Name": "BATESLAND VOLUNTEER FIRE DEPARTMENT",
+   "Start Date": "2014-06-04",
+   "End Date": "2021-12-30",
+   "Award Amount": 68505.0,
+   "Awarding Agency": "Department of the Interior",
+   "Description": "WILDLAND URBAN INTERFACE COMMUNITY AND RURAL FIRE ASSISTANCE",
+   "generated_internal_id": "ASST_NON_A14AC00056_014",
+   "awarding_agency_id": 209,
+   "agency_slug": "department-of-the-interior"
+  }
+ ],
+ "page_metadata": {
+  "page": 1,
+  "hasNext": true,
+  "last_record_unique_id": 259238436,
+  "last_record_sort_value": "6850500"
+ },
+ "messages": [
+  "For searches, time period start and end dates are currently limited to an earliest date of 2007-10-01.  For data going back to 2000-10-01, use either the Custom Award Download feature on the website or one of our download or bulk_download API endpoints as listed on https://api.usaspending.gov/docs/endpoints. "
+ ]
+}

@@ -1,0 +1,180 @@
+{
+  "status": "12 deterministic development tests passed; partial policy port with explicit binding mismatches",
+  "command": "PATH=/opt/souffle/usr/bin:$PATH PYTHONPATH=/framework:$PWD python -m unittest discover -s policy_port -p test_port.py -t . -v",
+  "cwd": "/work/candidate",
+  "tests_run": 12,
+  "failures": 0,
+  "errors": 0,
+  "duration_seconds": 11.009,
+  "test_log": "policy_port/test-run-repair.log",
+  "native_engine": "/opt/souffle/usr/bin/souffle; actual native gate evaluations; no evaluator mock or fallback",
+  "tests": [
+    "test_01_scope_freezes_and_session_recovers (policy_port.test_port.PortTests.test_01_scope_freezes_and_session_recovers)",
+    "test_02_section_ownership_and_unknown_section (policy_port.test_port.PortTests.test_02_section_ownership_and_unknown_section)",
+    "test_03_original_evidence_refusal_once_exception (policy_port.test_port.PortTests.test_03_original_evidence_refusal_once_exception)",
+    "test_04_message_bounds_unrelated_input_and_case_isolation (policy_port.test_port.PortTests.test_04_message_bounds_unrelated_input_and_case_isolation)",
+    "test_05_notes_retain_sources_routing_answers_and_errors (policy_port.test_port.PortTests.test_05_notes_retain_sources_routing_answers_and_errors)",
+    "test_06_missing_prerequisites_and_roles (policy_port.test_port.PortTests.test_06_missing_prerequisites_and_roles)",
+    "test_07_actual_report_review_reads_delivery (policy_port.test_port.PortTests.test_07_actual_report_review_reads_delivery)",
+    "test_08_compare_original_effects_and_offline_visible_model (policy_port.test_port.PortTests.test_08_compare_original_effects_and_offline_visible_model)",
+    "test_09_final_failure_length_exception (policy_port.test_port.PortTests.test_09_final_failure_length_exception)",
+    "test_10_delegated_confidentiality_and_public_search (policy_port.test_port.PortTests.test_10_delegated_confidentiality_and_public_search)",
+    "test_11_frozen_item_limit_gap_and_original_critical_guard (policy_port.test_port.PortTests.test_11_frozen_item_limit_gap_and_original_critical_guard)",
+    "test_12_mcp_client_success_and_refusal_shapes (policy_port.test_port.PortTests.test_12_mcp_client_success_and_refusal_shapes)"
+  ],
+  "native_gate_outcomes": {
+    "set_case_scope": {
+      "applied": 6,
+      "blocked": 2
+    },
+    "tell_user": {
+      "applied": 6,
+      "blocked": 3
+    },
+    "save_memo_part": {
+      "blocked": 2,
+      "applied": 32
+    },
+    "deliver_memo": {
+      "blocked": 3,
+      "applied": 1
+    },
+    "leave_note": {
+      "applied": 2,
+      "blocked": 1,
+      "unknown": 1
+    },
+    "save_memo_version": {
+      "blocked": 2,
+      "applied": 2
+    },
+    "save_review_pass": {
+      "blocked": 1,
+      "applied": 11
+    },
+    "start_review": {
+      "blocked": 2,
+      "applied": 2
+    },
+    "finish_review": {
+      "blocked": 3,
+      "applied": 1,
+      "unknown": 1
+    }
+  },
+  "actual_producer_observations": {
+    "get_memo_parts": 2,
+    "save_research_plan": 2,
+    "save_profile_requirements": 2,
+    "run_qa_loop": 2,
+    "get_memo_check": 1,
+    "get_evidence_matrix": 1,
+    "get_latest_review": 2
+  },
+  "recorded_event_kinds": {
+    "tool_call": 110,
+    "state": 386,
+    "decision": 84,
+    "tool_result": 110,
+    "message": 9,
+    "llm_output": 1
+  },
+  "recorded_event_count": 700,
+  "evidence": {
+    "trajectory": {
+      "file": "policy_port/trajectories.json",
+      "sha256": "363014878f52cc7096776ffd9c6c0eda8052dfa860e3c4607a9972bc728d41f5"
+    },
+    "effect_comparison": [
+      {
+        "scenario": "scope replacement",
+        "baseline_company": "Other",
+        "protected_company": "Example",
+        "fixture": "offline development; baseline uses unchanged unwrapped candidate body"
+      },
+      {
+        "scenario": "P26 frozen binding mismatch",
+        "actual_first_round_important_items": 11,
+        "coverage": "unimplemented; original callback and frozen rules allow this"
+      }
+    ],
+    "source_structure_checks": [
+      {
+        "file": "src/tools/server.py",
+        "unchanged_original_ast_after_removing_additive_imports_and_decorators": true
+      },
+      {
+        "file": "src/tools/report.py",
+        "unchanged_original_ast_after_removing_additive_imports_and_decorators": true
+      },
+      {
+        "file": "src/team/rakazo_client.py",
+        "unchanged_original_ast_after_removing_additive_imports_and_decorators": true
+      }
+    ],
+    "only_modified_preexisting_files": [
+      "src/tools/server.py",
+      "src/tools/report.py",
+      "src/team/rakazo_client.py"
+    ]
+  },
+  "repairs_and_prior_runs": [
+    {
+      "attempt": "initial file creation/test discovery",
+      "result": "Relative workspace path error; no test file created and zero tests ran. Corrected path. A later edit command had the same relative-path error; no protected artifact was changed by either failed write."
+    },
+    {
+      "attempt": "first 10-test execution, also repeated in test-run-2.log",
+      "result": "4 errors and 1 failure. Inspected invalid JSON contract encoding for string ticker and runtime masking of original callback errors. Corrected scalar JSON encoding in adapter and original-error forwarding; retained runtime stopped-session uncertainty."
+    },
+    {
+      "attempt": "test-run-3.log",
+      "result": "10 tests passed after repair."
+    },
+    {
+      "attempt": "test-run-4.log",
+      "result": "11 tests passed, including a real demonstration that frozen rules allow 11 first-round Important items and that the original Critical guard still refuses approval."
+    },
+    {
+      "attempt": "test-run-5.log",
+      "result": "12 tests passed after adding exact dispatched-read observation and MCP protocol verification."
+    },
+    {
+      "attempt": "test-run-final.log",
+      "result": "12 tests passed after current-section read observations and observer outcome clarification."
+    },
+    {
+      "attempt": "Host verification supplied with repair request",
+      "result": "All 12 tests errored in setUp before application execution: TemporaryDirectory(dir=\"/work\") failed after the host relocated the checkout to /tmp/application. Consequently no planned gate or producer executed. Earlier local passing runs did not establish host verification."
+    },
+    {
+      "attempt": "test-run-repair.log",
+      "result": "12 tests passed after making TemporaryDirectory relative to the test module checkout, inside policy_port. All nine actual native gates and seven source producers executed. No frozen artifact, original callback, existing test or harness was edited."
+    }
+  ],
+  "compile_and_gate_errors": "Factory initialization and final native execution succeeded. No native compile error occurred. The earlier Frozen JSON parameter is invalid error was an adapter argument-encoding validation failure, repaired without changing binding or rules.",
+  "limitations": [
+    "No real model execution, Rakazo worker, live external provider or student harness/scenario completion run. Thread blocks and PDF subprocess output are explicitly labeled offline development fixtures; public-search provider is mocked. Native enforcement is never mocked.",
+    "Most tests omit original policy_mode deliberately to verify independent additive gates. Separate enforce-mode tests verify retained evidence refuse-once and confidentiality guards. Report/review workflow executes real callbacks but its content intentionally fails original QA; neither analytical report quality nor task success is claimed.",
+    "Passing tests do not establish complete policy coverage. P26 ten-item limit is unimplemented and contradicted by actual source execution; native Critical/read/rating/revision portions missing from frozen schema remain documented gaps or delegated original behavior.",
+    "All nine planned gate entrypoints have actual native evidence and all seven producer entrypoints have real source-result observations. This local artifact does not assert host nativeBoundaryCalls stack-audit certification, which is a separate host check.",
+    "The Critical-item callback exception preserves its original useful ToolError but leaves the external-effect session stopped. There is no fabricated rollback/reconciliation or forced retry. Ordinary authorization blocks allow later legal operations.",
+    "Model context/final reply/automatic messages, other process transports, direct helpers/alternate delivery, authentication, exact brief accounting and semantic obligations remain outside complete mediation/capture.",
+    "Supplied freeze-manifest digests disagree with supplied inventory, binding-plan and binding.py bytes. No such host-owned file was edited. Their observed hashes and supplied values are listed in port.json; independent initial-state attestation is unavailable.",
+    "All preexisting docs, prompts, fixtures and tests remain unchanged. Published application does not need authoring policy.md/policies.md at runtime; unchanged operational prompts are retained.",
+    "Timeline tool_result marks raised ToolError as unknown, including ordinary refusals. Aggregate native blocked counts use the corresponding recorded decision.allowed=false; unknown callback outcomes remain unknown. No observer exception shape is used to infer callback success."
+  ],
+  "artifacts": {
+    "adapter_sha256": "4397466bb1397029888e422dbc4390833ddde03865d5e0334d0d71a017600677",
+    "test_sha256": "edd9d449c48f8591ece4cf40383c19c5c55f2e75ff512054bab45e9be5cd025e",
+    "binding_sha256": "47dd91d944438585d8a0a39c7c9111fb5c03c60c46e1a6cac5771d9c2cf54ef0",
+    "rules_sha256": "c7a7154e32d00912ef2a9d7c724e94e8e8e1751f59479124584c544627921771"
+  },
+  "target_model_requests": 0,
+  "network_requests": 0,
+  "relocation_repair": {
+    "temporary_output_parent": "Path(__file__).resolve().parents[1] / \"policy_port\"",
+    "cleanup": "TemporaryDirectory cleanup registered by each test",
+    "verification_limit": "Verified in this workspace; host relocation verification has not been rerun here. No absolute /work dependency remains in test Python code."
+  }
+}

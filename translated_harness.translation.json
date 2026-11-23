@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "inputHash": "e1528b7fac79a321e0473be83b7090ba064daf70cf8f287432f02ca72b387cd9",
+  "outputHash": "38679763cae31a3d50c861cda494d1644e7aa2c50ffab519df1bf4fb0045cee9",
+  "cases": [
+    "S01",
+    "S02",
+    "S03",
+    "S04",
+    "S05",
+    "S06",
+    "S07",
+    "S08",
+    "S09",
+    "S10"
+  ],
+  "limitations": [
+    "Live execution requires the existing Rakazo service, its configured DeepSeek provider, the original checkout's authenticated session and .env, and the selected application's dependencies; no replacement configuration or model fixtures are supplied.",
+    "Rakazo runs agents remotely. No remote-side recording/export entrypoint is supplied, so parent-process capture covers local MCP execution and any app-owned visible-message observations, not remote model execution internals.",
+    "Report rendering can invoke a PDF subprocess. No child-side recording/export entrypoint is supplied for that renderer; local callback observations do not record effects inside the child.",
+    "The fixed MCP port 8766 and shared Rakazo team require serial episodes with Docker-to-host connectivity; concurrent samples would conflict."
+  ],
+  "validation": "Syntax, retained helper definitions and assertions; no execution or semantic equivalence claim."
+}

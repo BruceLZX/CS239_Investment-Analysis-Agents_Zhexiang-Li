@@ -1,0 +1,66 @@
+{
+ "count": 12,
+ "message": "Results returned successfully",
+ "results": [
+  {
+   "modelYear": "2026",
+   "make": "TESLA",
+   "model": "MODEL Y"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TESLA",
+   "model": "MODEL Y"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TESLA",
+   "model": "MODEL S"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TESLA",
+   "model": "MODEL X"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TESLA",
+   "model": "CYBERTRUCK"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TESLA",
+   "model": "CYBERTRUCK"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TESLA",
+   "model": "MODEL 3 EARLY RELEASE"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TESLA",
+   "model": "MODEL 3 EARLY RELEASE"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TESLA",
+   "model": "MODEL Y"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TESLA",
+   "model": "MODEL Y"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TESLA",
+   "model": "MODEL 3"
+  },
+  {
+   "modelYear": "2026",
+   "make": "TESLA",
+   "model": "MODEL 3"
+  }
+ ]
+}

@@ -1,0 +1,41 @@
+{
+ "spending_level": "awards",
+ "limit": 2,
+ "results": [
+  {
+   "internal_id": 257475282,
+   "Award ID": "9406545001",
+   "Recipient Name": "TESLA LABORATORIES INC.",
+   "Issued Date": "2017-04-11",
+   "End Date": null,
+   "Loan Value": 3300000.0,
+   "Awarding Agency": "Small Business Administration",
+   "Description": "TO AID SMALL BUSINESSES WHICH ARE UNABLE TO OBTAIN FINANCING IN THE PRIVATE CREDIT MARKETPLACE",
+   "generated_internal_id": "ASST_NON_9406545001_073",
+   "awarding_agency_id": 803,
+   "agency_slug": "small-business-administration"
+  },
+  {
+   "internal_id": 256487383,
+   "Award ID": "9050828402",
+   "Recipient Name": "TESLA RESELLER GROUP INC",
+   "Issued Date": "2021-02-15",
+   "End Date": null,
+   "Loan Value": 1780130.0,
+   "Awarding Agency": "Small Business Administration",
+   "Description": "TO AID SMALL BUSINESSES IN MAINTAINING WORK FORCE DURING COVID-19 PANDEMIC.",
+   "generated_internal_id": "ASST_NON_9050828402_073",
+   "awarding_agency_id": 803,
+   "agency_slug": "small-business-administration"
+  }
+ ],
+ "page_metadata": {
+  "page": 1,
+  "hasNext": true,
+  "last_record_unique_id": 256487383,
+  "last_record_sort_value": "178013000"
+ },
+ "messages": [
+  "For searches, time period start and end dates are currently limited to an earliest date of 2007-10-01.  For data going back to 2000-10-01, use either the Custom Award Download feature on the website or one of our download or bulk_download API endpoints as listed on https://api.usaspending.gov/docs/endpoints. "
+ ]
+}

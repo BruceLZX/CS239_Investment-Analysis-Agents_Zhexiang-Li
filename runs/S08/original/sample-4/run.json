@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "side": "original",
+  "case": "S08",
+  "sample": 4,
+  "executionStatus": "completed",
+  "matchExpectedOutcome": true,
+  "trajectories": []
+}

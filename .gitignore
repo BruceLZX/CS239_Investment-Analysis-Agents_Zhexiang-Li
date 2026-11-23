@@ -1,7 +1,13 @@
 .venv/
 .env
 # Per-run case files, tool logs, raw Rakazo transcripts and the saved login session.
-runs/
+src/runs/
+ported-app/src/runs/
+# Phase 2 harness runs keep result.json and trajectories; each sample's app files (case, PDFs) stay local.
+runs/**/artifacts/
+# Trajectories are committed packed (trajectory.json.xz, trajectory.jsonl.xz); phase2-env/trajectories.py unpacks them.
+runs/**/trajectory.json
+runs/**/trajectory.jsonl
 __pycache__/
 .pytest_cache/
 .DS_Store

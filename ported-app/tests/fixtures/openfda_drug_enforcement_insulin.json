@@ -1,0 +1,40 @@
+{
+ "meta": {
+  "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+  "terms": "https://open.fda.gov/terms/",
+  "license": "https://open.fda.gov/license/",
+  "last_updated": "2026-10-21",
+  "results": {
+   "skip": 0,
+   "limit": 3,
+   "total": 2
+  }
+ },
+ "results": [
+  {
+   "status": "Terminated",
+   "city": "Plainsboro",
+   "state": "NJ",
+   "country": "United States",
+   "classification": "Class I",
+   "product_type": "Drugs",
+   "event_id": "87537",
+   "recalling_firm": "Novo Nordisk Inc",
+   "address_1": "800 Scudders Mill Rd",
+   "address_2": "N/A",
+   "postal_code": "08536-1606",
+   "voluntary_mandated": "Voluntary: Firm initiated",
+   "initial_firm_notification": "Letter",
+   "distribution_pattern": "Nationwide in the USA",
+   "recall_number": "D-0615-2021",
+   "product_description": "NovoLog FlexPen (insulin aspart) Injection, 100 units/mL, 3 mL Prefilled Insulin Syringe pen, Sample. Not for Resale, Rx Only, Novo Nordisk Inc., Plainsboro, NJ 08536, NDC 0169-6339-90 (Pen), NDC 0169-6339-98 (Kit)",
+   "product_quantity": "N/A",
+   "reason_for_recall": "Temperature Abuse: product samples were stored at temperatures below 32* F which is not in accordance with storage requirements that could cause a lack of efficacy and damage to the cartridge and pen-injectors.",
+   "recall_initiation_date": "20210322",
+   "center_classification_date": "20210610",
+   "termination_date": "20221209",
+   "report_date": "20210421",
+   "code_info": "KS6BS11, Exp 11/30/2021"
+  }
+ ]
+}
